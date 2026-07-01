@@ -1,0 +1,47 @@
+import type { Node, Edge, Viewport } from '@xyflow/react'
+
+export type NodeType = 'text' | 'image' | 'video' | 'audio' | 'group'
+export type NodeStatus = 'idle' | 'generating' | 'done' | 'error'
+
+export interface NodeData {
+  label: string
+  prompt: string
+  model?: string
+  outputUrl?: string
+  outputText?: string
+  status: NodeStatus
+  errorMessage?: string
+  duration?: number
+  [key: string]: unknown
+}
+
+export type CanvasNode = Node<NodeData, NodeType>
+export type CanvasEdge = Edge
+
+export interface CanvasProject {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+  nodes: CanvasNode[]
+  edges: CanvasEdge[]
+  viewport: Viewport
+}
+
+export const NODE_META: Record<NodeType, { label: string; icon: string; color: string; description: string }> = {
+  text: { label: 'Text', icon: 'T', color: 'var(--tn-node-text)', description: 'Script / Prompt' },
+  image: { label: 'Image', icon: '🖼', color: 'var(--tn-node-image)', description: 'Text to Image' },
+  video: { label: 'Video', icon: '🎬', color: 'var(--tn-node-video)', description: 'Image to Video' },
+  audio: { label: 'Audio', icon: '🔊', color: 'var(--tn-node-audio)', description: 'TTS / Music' },
+  group: { label: 'Group', icon: '▦', color: 'var(--tn-text-muted)', description: 'Group nodes' },
+}
+
+export function createDefaultNodeData(type: NodeType): NodeData {
+  const meta = NODE_META[type]
+  return {
+    label: meta.label,
+    prompt: '',
+    status: 'idle',
+    model: type === 'image' ? 'wanx2.1-t2i-turbo' : type === 'video' ? 'wan2.1-i2v-turbo' : type === 'audio' ? 'edge-tts' : undefined,
+  }
+}

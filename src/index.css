@@ -1,0 +1,78 @@
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+:root {
+  --tn-bg: #09090b;
+  --tn-bg-elevated: #111113;
+  --tn-bg-panel: #18181b;
+  --tn-bg-hover: #27272a;
+  --tn-border: #27272a;
+  --tn-border-subtle: #1f1f23;
+  --tn-text: #fafafa;
+  --tn-text-secondary: #a1a1aa;
+  --tn-text-muted: #71717a;
+  --tn-node-text: #60a5fa;
+  --tn-node-image: #a78bfa;
+  --tn-node-video: #fbbf24;
+  --tn-node-audio: #34d399;
+  --tn-radius: 8px;
+  --tn-radius-lg: 12px;
+  --tn-sidebar-w: 56px;
+  --tn-topbar-h: 48px;
+  --tn-taskbar-h: 72px;
+  --tn-panel-w: 320px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--tn-bg);
+  color: var(--tn-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.react-flow__background { background-color: var(--tn-bg) !important; }
+.react-flow__minimap {
+  background: var(--tn-bg-panel) !important;
+  border: 1px solid var(--tn-border) !important;
+  border-radius: var(--tn-radius) !important;
+}
+.react-flow__controls {
+  border: 1px solid var(--tn-border) !important;
+  border-radius: var(--tn-radius) !important;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: var(--tn-bg-panel) !important;
+  border-bottom: 1px solid var(--tn-border) !important;
+  fill: var(--tn-text-secondary) !important;
+}
+.react-flow__controls-button:hover { background: var(--tn-bg-hover) !important; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--tn-border); border-radius: 3px; }
+
+.tn-card {
+  background: var(--tn-bg-panel);
+  border: 1px solid var(--tn-border-subtle);
+  border-radius: var(--tn-radius-lg);
+  transition: border-color .2s, transform .2s;
+}
+.tn-card:hover { border-color: var(--tn-border); transform: translateY(-1px); }
+
+.tn-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--tn-radius);
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; border: none;
+}
+.tn-btn-primary { background: var(--tn-text); color: var(--tn-bg); }
+.tn-btn-primary:hover { opacity: .9; }
+.tn-btn-ghost {
+  background: transparent; color: var(--tn-text-secondary);
+  border: 1px solid var(--tn-border);
+}
+.tn-btn-ghost:hover { background: var(--tn-bg-hover); color: var(--tn-text); }
