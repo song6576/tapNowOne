@@ -7,17 +7,21 @@ import { TaskBar } from '../components/shell/TaskBar'
 import { CanvasContextMenu } from '../components/shell/CanvasContextMenu'
 import { FlowCanvas } from '../components/FlowCanvas'
 import { RightPanel } from '../components/RightPanel'
+import { CanvasQuickActions } from '../components/canvas/CanvasQuickActions'
 import { useCanvasStore } from '../store/canvasStore'
 import { MOCK_TASKS, MOCK_PROJECTS } from '../mock/data'
 import type { CanvasProject } from '../types'
 import type { NodeType } from '../types'
 import type { GenerationTask } from '../mock/data'
+import { useI18n } from '../store/langStore'
 
 export function CanvasPage() {
   const { projectId } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
+  const { t } = useI18n()
   const project = useCanvasStore((s) => s.project)
+  const nodes = useCanvasStore((s) => s.nodes)
   const setProjectName = useCanvasStore((s) => s.setProjectName)
   const init = useCanvasStore((s) => s.init)
   const resetCanvas = useCanvasStore((s) => s.resetCanvas)
@@ -28,9 +32,15 @@ export function CanvasPage() {
 
   const [tasks] = useState<GenerationTask[]>(MOCK_TASKS)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [promoDismissed, setPromoDismissed] = useState(false)
 
   useEffect(() => {
-    const state = location.state as { newProject?: boolean; project?: CanvasProject; forkFrom?: string } | null
+    const state = location.state as {
+      newProject?: boolean
+      project?: CanvasProject
+      forkFrom?: string
+      initialPrompt?: string
+    } | null
 
     if (state?.newProject && state.project) {
       resetCanvas()
@@ -72,6 +82,16 @@ export function CanvasPage() {
       return
     }
 
+    if (state?.initialPrompt?.trim()) {
+      resetCanvas()
+      applyStoryboard(
+        [{ label: 'Prompt', prompt: state.initialPrompt.trim() }],
+        state.initialPrompt.trim(),
+      )
+      window.history.replaceState({}, '')
+      return
+    }
+
     init()
   }, [projectId, init, resetCanvas, loadProject, applyStoryboard, navigate, location.state])
 
@@ -90,6 +110,22 @@ export function CanvasPage() {
     )
   }, [applyStoryboard])
 
+  const handleQuickVideo = useCallback(() => {
+    addNode('video')
+  }, [addNode])
+
+  const handleQuickImage = useCallback(() => {
+    addNode('image')
+  }, [addNode])
+
+  const handleQuickAudio = useCallback(() => {
+    addNode('audio')
+  }, [addNode])
+
+  const handleQuickDigital = useCallback(() => {
+    applyStoryboard([{ label: '数字人', prompt: 'Digital human avatar scene' }], 'Digital human')
+  }, [applyStoryboard])
+
   const handleTaskClick = useCallback((task: GenerationTask) => {
     if (task.nodeId) selectNode(task.nodeId)
   }, [selectNode])
@@ -99,30 +135,53 @@ export function CanvasPage() {
     setContextMenu({ x: e.clientX, y: e.clientY })
   }, [])
 
-  return (
-    <ReactFlowProvider>
-      <div className="flex h-full flex-col bg-[var(--tn-bg)]">
-        <CanvasTopBar
-          projectName={project.name}
-          onProjectNameChange={setProjectName}
-          projectId={projectId}
-        />
-        <div className="flex flex-1 overflow-hidden" onContextMenu={handleContextMenu}>
-          <CanvasToolbar onAddNode={handleAddNode} onLoadDemo={handleLoadDemo} />
-          <FlowCanvas />
-          <RightPanel />
-        </div>
-        <TaskBar tasks={tasks} onTaskClick={handleTaskClick} />
+  const isEmpty = nodes.length === 0
 
-        {contextMenu && (
-          <CanvasContextMenu
-            x={contextMenu.x}
-            y={contextMenu.y}
-            onAdd={handleAddNode}
-            onClose={() => setContextMenu(null)}
+  return (
+      <ReactFlowProvider>
+        <div className="relative flex h-full flex-col bg-[var(--tn-bg)]">
+          <CanvasTopBar
+            projectName={project.name}
+            onProjectNameChange={setProjectName}
+            projectId={projectId}
+            updatedAt={project.updatedAt}
           />
-        )}
-      </div>
-    </ReactFlowProvider>
+          <div className="relative flex flex-1 overflow-hidden" onContextMenu={handleContextMenu}>
+            <CanvasToolbar onAddNode={handleAddNode} onLoadDemo={handleLoadDemo} />
+            <FlowCanvas />
+            {isEmpty && (
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+                <CanvasQuickActions
+                  onTextToVideo={handleQuickVideo}
+                  onImageToVideo={handleQuickImage}
+                  onSmartVideo={handleLoadDemo}
+                  onAudioToVideo={handleQuickAudio}
+                  onDigitalHuman={handleQuickDigital}
+                />
+              </div>
+            )}
+            <RightPanel />
+          </div>
+          <TaskBar tasks={tasks} onTaskClick={handleTaskClick} />
+
+          {!promoDismissed && (
+            <div className="canvas-promo-banner">
+              <span>{t.canvas.promoBanner}</span>
+              <button type="button" onClick={() => setPromoDismissed(true)} className="ui-clickable text-white/50 hover:text-white">
+                ×
+              </button>
+            </div>
+          )}
+
+          {contextMenu && (
+            <CanvasContextMenu
+              x={contextMenu.x}
+              y={contextMenu.y}
+              onAdd={handleAddNode}
+              onClose={() => setContextMenu(null)}
+            />
+          )}
+        </div>
+      </ReactFlowProvider>
   )
 }

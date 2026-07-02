@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { TapNowLogo } from '../components/auth/TapNowLogo'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
-import { LanguageDropdown, type AppLang } from '../components/ui/LanguageDropdown'
+import { LanguageDropdown } from '../components/ui/LanguageDropdown'
 import { GOOGLE_CLIENT_ID } from '../config'
 import { useAuthStore } from '../store/authStore'
+import { useI18n } from '../store/langStore'
 import { useToastStore } from '../store/toastStore'
 import { useSmsCooldown } from '../hooks/useSmsCooldown'
 import { getStoredSmsPhone, hasSmsSentForPhone } from '../utils/smsCooldown'
@@ -55,79 +56,7 @@ function BackIconButton({ onClick, title }: { onClick: () => void; title: string
   )
 }
 
-const copy = {
-  zh: {
-    title: '登录或注册',
-    subtitle: '让创意成真',
-    google: '使用 Google 继续',
-    phone: '使用手机号继续',
-    emailBtn: '使用邮箱继续',
-    or: '或',
-    email: '电子邮件地址',
-    continue: '继续',
-    sendCode: '发送验证码',
-    resendCode: '重新发送',
-    codePlaceholder: '验证码',
-    codeSent: '验证码已发送',
-    password: '密码',
-    name: '昵称',
-    back: '返回',
-    switchLogin: '已有账号？登录',
-    switchRegister: '没有账号？注册',
-    terms: '注册即表示您同意我们的',
-    termsLink: '服务条款',
-    community: '社区准则',
-    privacy: '隐私政策',
-    phoneTitle: '手机号登录',
-    phoneHint: '请输入手机号，我们将发送验证码（演示模式暂未接入）',
-    phonePlaceholder: '手机号码',
-    comingSoon: 'Google 登录即将上线',
-    googleFailed: 'Google 登录失败',
-    agreeTerms: '请先同意服务条款',
-    loginSuccess: '登录成功',
-    registerSuccess: '注册成功',
-    authFailed: '操作失败',
-  },
-  en: {
-    title: 'Log in or sign up',
-    subtitle: 'Make creativity come true',
-    google: 'Continue with Google',
-    phone: 'Continue with phone',
-    emailBtn: 'Continue with email',
-    or: 'or',
-    email: 'Email address',
-    continue: 'Continue',
-    sendCode: 'Send verification code',
-    resendCode: 'Resend',
-    codePlaceholder: 'Verification code',
-    codeSent: 'Verification code sent',
-    password: 'Password',
-    name: 'Display name',
-    back: 'Back',
-    switchLogin: 'Already have an account? Log in',
-    switchRegister: "Don't have an account? Sign up",
-    terms: 'By signing up, you agree to our',
-    termsLink: 'Terms of Service',
-    community: 'Community Guidelines',
-    privacy: 'Privacy Policy',
-    phoneTitle: 'Phone sign in',
-    phoneHint: 'Enter your phone number to receive a code (demo only)',
-    phonePlaceholder: 'Phone number',
-    comingSoon: 'Google sign-in coming soon',
-    googleFailed: 'Google sign-in failed',
-    agreeTerms: 'Please agree to the terms first',
-    loginSuccess: 'Signed in successfully',
-    registerSuccess: 'Account created successfully',
-    authFailed: 'Something went wrong',
-  },
-} as const
-
-function getCopy(lang: AppLang) {
-  return lang === 'en' ? copy.en : copy.zh
-}
-
 export function LoginPage() {
-  const [lang, setLang] = useState<AppLang>('zh')
   const [step, setStep] = useState<Step>('main')
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email')
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -156,7 +85,8 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const t = getCopy(lang)
+  const { t: messages } = useI18n()
+  const t = messages.login
 
   const redirectAfterLogin = () => {
     const from = (location.state as { from?: string } | null)?.from
@@ -250,7 +180,7 @@ export function LoginPage() {
     <div className="login-page relative min-h-screen overflow-auto bg-black text-white">
       <header className="fixed inset-x-0 top-0 z-10 flex items-center justify-between px-6 py-5 md:px-10">
         <TapNowLogo size="sm" />
-        <LanguageDropdown value={lang} onChange={setLang} />
+        <LanguageDropdown />
       </header>
 
       <main className="flex min-h-screen items-center justify-center px-6 pb-12 pt-24">

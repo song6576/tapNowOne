@@ -1,21 +1,9 @@
 import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { HoverDropdown } from '../ui/HoverDropdown'
+import { UserMenuLanguageItem } from './UserMenuLanguageItem'
 import { useAuthStore } from '../../store/authStore'
-
-const MENU_PRIMARY = [
-  { icon: '+', label: '创建团队', accent: true },
-  { icon: '👤', label: '个人主页' },
-  { icon: '🌐', label: '简体中文' },
-  { icon: '💎', label: '赚取 Tapies' },
-  { icon: '⚙', label: '账户管理' },
-]
-
-const MENU_SECONDARY = [
-  { icon: '🤝', label: '合作中心' },
-  { icon: '❓', label: '帮助中心' },
-  { icon: '↪', label: '登出账号', action: 'logout' as const },
-]
+import { useI18n } from '../../store/langStore'
 
 function UserAvatar({ name, avatarUrl, size = 'sm' }: { name: string; avatarUrl?: string | null; size?: 'sm' | 'lg' }) {
   const dim = size === 'lg' ? 'h-12 w-12 text-lg' : 'h-8 w-8 text-sm'
@@ -40,6 +28,8 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const { t } = useI18n()
+  const m = t.userMenu
 
   if (!user) return null
 
@@ -50,8 +40,21 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
     }
   }
 
+  const primaryItems = [
+    { icon: '+', label: m.createTeam, accent: true },
+    { icon: '👤', label: m.profile },
+    { icon: '💎', label: m.earnTapies },
+    { icon: '⚙', label: m.account },
+  ]
+
+  const secondaryItems = [
+    { icon: '🤝', label: m.partners },
+    { icon: '❓', label: m.help },
+    { icon: '↪', label: m.logout, action: 'logout' as const },
+  ]
+
   const panel = (
-    <div className="user-menu-panel ui-glass-panel w-[280px] overflow-hidden">
+    <div className="user-menu-panel ui-glass-panel w-[280px] overflow-visible">
       <div className="border-b border-white/[0.06] p-4">
         <div className="flex items-center gap-3">
           <UserAvatar name={user.name} avatarUrl={user.avatar_url} size="lg" />
@@ -63,7 +66,22 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
       </div>
 
       <ul className="py-2">
-        {MENU_PRIMARY.map((item) => (
+        {primaryItems.slice(0, 2).map((item) => (
+          <li key={item.label}>
+            <button
+              type="button"
+              onClick={() => handleItem()}
+              className="ui-clickable flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-white/[0.04]"
+            >
+              <span className={item.accent ? 'text-blue-400' : 'text-white/50'}>{item.icon}</span>
+              <span className={item.accent ? 'text-blue-400' : 'text-white/80'}>{item.label}</span>
+            </button>
+          </li>
+        ))}
+
+        <UserMenuLanguageItem />
+
+        {primaryItems.slice(2).map((item) => (
           <li key={item.label}>
             <button
               type="button"
@@ -78,7 +96,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
       </ul>
 
       <div className="border-t border-white/[0.06] py-2">
-        {MENU_SECONDARY.map((item) => (
+        {secondaryItems.map((item) => (
           <button
             key={item.label}
             type="button"
@@ -96,6 +114,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
   return (
     <HoverDropdown
       align="right"
+      panelClassName="overflow-visible"
       trigger={
         <button
           type="button"

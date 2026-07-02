@@ -1,11 +1,13 @@
 import { memo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AI_MODELS } from '../../mock/data'
+import { useI18n } from '../../store/langStore'
 
 export const HeroPrompt = memo(function HeroPrompt() {
   const [prompt, setPrompt] = useState('')
   const [model, setModel] = useState(AI_MODELS[0])
   const navigate = useNavigate()
+  const { t } = useI18n()
 
   const submit = () => {
     const text = prompt.trim()
@@ -22,7 +24,7 @@ export const HeroPrompt = memo(function HeroPrompt() {
           </svg>
         </span>
         <h1 className="text-[26px] font-semibold tracking-tight text-white md:text-[28px]">
-          今天要做点什么？
+          {t.home.heroTitle}
         </h1>
       </div>
 
@@ -36,7 +38,7 @@ export const HeroPrompt = memo(function HeroPrompt() {
               submit()
             }
           }}
-          placeholder="体验 Brains"
+          placeholder={t.home.heroPlaceholder}
           rows={3}
           className="home-prompt-input"
         />

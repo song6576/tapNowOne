@@ -5,14 +5,17 @@ import './index.css'
 import App from './App.tsx'
 import { GOOGLE_CLIENT_ID } from './config'
 import { useAuthStore } from './store/authStore'
+import { useLangStore } from './store/langStore'
 import { ToastContainer } from './components/ui/Toast'
 
 function Bootstrap() {
-  const init = useAuthStore((s) => s.init)
+  const initAuth = useAuthStore((s) => s.init)
+  const initLang = useLangStore((s) => s.init)
 
   useEffect(() => {
-    void init()
-  }, [init])
+    initLang()
+    void initAuth()
+  }, [initAuth, initLang])
 
   return (
     <>

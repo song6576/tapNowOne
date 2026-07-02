@@ -1,45 +1,89 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { TabBar } from '../components/ui/TabBar'
+import { SearchInput } from '../components/ui/SearchInput'
+import { FilterPills } from '../components/ui/FilterPills'
+import { TapTVCard } from '../components/taptv/TapTVCard'
+import { PublishModal } from '../components/taptv/PublishModal'
 import { mockGetTapTV } from '../mock/api'
-import type { TapTVItem } from '../mock/data'
+import { TAPTV_CATEGORY_IDS, type TapTVCategory, type TapTVItem, type TapTVSort } from '../mock/data'
+import { useI18n } from '../store/langStore'
 
 export function TapTVPage() {
   const navigate = useNavigate()
+  const { t } = useI18n()
+  const tv = t.taptv
   const [items, setItems] = useState<TapTVItem[]>([])
+  const [sort, setSort] = useState<TapTVSort>('featured')
+  const [category, setCategory] = useState<TapTVCategory>('all')
+  const [search, setSearch] = useState('')
+  const [publishOpen, setPublishOpen] = useState(false)
 
   useEffect(() => { mockGetTapTV().then(setItems) }, [])
 
+  const sortTabs = [
+    { id: 'featured' as const, label: tv.sortFeatured },
+    { id: 'following' as const, label: tv.sortFollowing },
+    { id: 'hot' as const, label: tv.sortHot },
+    { id: 'latest' as const, label: tv.sortLatest },
+  ]
+
+  const categoryOptions = TAPTV_CATEGORY_IDS.map((id) => ({
+    id,
+    label: tv.categories[id],
+  }))
+
+  const filtered = useMemo(() => {
+    let list = [...items]
+    if (category !== 'all') {
+      list = list.filter((item) => item.category === category)
+    }
+    const q = search.trim().toLowerCase()
+    if (q) {
+      list = list.filter(
+        (item) => item.title.toLowerCase().includes(q) || item.author.toLowerCase().includes(q),
+      )
+    }
+    switch (sort) {
+      case 'featured':
+        list.sort((a, b) => Number(b.featured) - Number(a.featured))
+        break
+      case 'hot':
+        list.sort((a, b) => b.likes - a.likes)
+        break
+      case 'latest':
+        list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+        break
+      case 'following':
+        list = list.slice(0, 4)
+        break
+    }
+    return list
+  }, [items, sort, category, search])
+
   return (
-    <main className="home-page flex-1 overflow-y-auto px-5 py-8 md:px-8">
+    <main className="home-page flex-1 overflow-y-auto px-5 py-6 md:px-8">
       <div className="mx-auto max-w-[1200px]">
-        <div className="mb-8">
-          <h1 className="text-xl font-semibold text-white">TapTV</h1>
-          <p className="mt-1 text-sm text-white/40">探索全球创作者的 Canvas，Fork 任意工作流学习 remix</p>
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <TabBar<TapTVSort> tabs={sortTabs} active={sort} onChange={setSort} />
+          <div className="flex flex-wrap items-center gap-2">
+            <SearchInput value={search} onChange={setSearch} placeholder={t.workspace.search} className="w-full sm:w-[200px]" />
+            <button type="button" className="home-primary-pill" onClick={() => setPublishOpen(true)}>
+              + {tv.publish}
+            </button>
+          </div>
         </div>
 
+        <FilterPills<TapTVCategory> options={categoryOptions} active={category} onChange={setCategory} className="mb-6" />
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="home-project-card overflow-hidden text-left"
-              onClick={() => navigate(`/taptv/${item.id}`)}
-            >
-              <div className="aspect-[4/3] w-full" style={{ background: item.cover }} />
-              <div className="p-3">
-                <h3 className="text-sm font-medium text-white/90">{item.title}</h3>
-                <p className="mt-1 text-xs text-white/35">@{item.author} · {item.nodeCount} nodes</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {item.tags.map((t) => (
-                    <span key={t} className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-white/45">{t}</span>
-                  ))}
-                </div>
-                <p className="mt-2 text-[10px] text-white/35">♡ {item.likes} · ⑂ {item.forks} forks</p>
-              </div>
-            </button>
+          {filtered.map((item) => (
+            <TapTVCard key={item.id} item={item} onClick={() => navigate(`/taptv/${item.id}`)} />
           ))}
         </div>
       </div>
+
+      <PublishModal open={publishOpen} onClose={() => setPublishOpen(false)} />
     </main>
   )
 }

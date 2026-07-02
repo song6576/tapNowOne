@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { TapNowLogo } from '../auth/TapNowLogo'
 import { NAV_ITEMS } from '../../mock/data'
+import { useI18n } from '../../store/langStore'
 import { UserMenuDropdown } from './UserMenuDropdown'
 
 function NavIcon({ type }: { type: string }) {
@@ -40,6 +41,8 @@ function NavIcon({ type }: { type: string }) {
 }
 
 export const HomeTopNav = memo(function HomeTopNav() {
+  const { t } = useI18n()
+
   return (
     <header className="home-topnav fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.06] bg-black/80 px-5 backdrop-blur-md md:px-8">
       <div className="flex items-center gap-3">
@@ -49,7 +52,7 @@ export const HomeTopNav = memo(function HomeTopNav() {
         <button
           type="button"
           className="ui-clickable flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white/70"
-          title="下载客户端"
+          title={t.nav.downloadClient}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
@@ -63,10 +66,10 @@ export const HomeTopNav = memo(function HomeTopNav() {
             <span
               key={item.path}
               className="flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white/25"
-              title="即将上线"
+              title={t.nav.arenaSoon}
             >
               <NavIcon type={item.icon} />
-              {item.label}
+              {t.nav[item.labelKey]}
             </span>
           ) : (
             <NavLink
@@ -82,7 +85,7 @@ export const HomeTopNav = memo(function HomeTopNav() {
               }
             >
               <NavIcon type={item.icon} />
-              {item.label}
+              {t.nav[item.labelKey]}
             </NavLink>
           ),
         )}
@@ -90,12 +93,12 @@ export const HomeTopNav = memo(function HomeTopNav() {
 
       <div className="flex items-center gap-2 md:gap-4">
         <button type="button" className="ui-clickable hidden text-sm text-white/55 hover:text-white/85 sm:block">
-          价格方案
+          {t.nav.pricing}
         </button>
         <button
           type="button"
           className="ui-clickable flex h-9 w-9 items-center justify-center rounded-full text-white/55 transition hover:bg-white/5 hover:text-white/85"
-          title="通知"
+          title={t.nav.notifications}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" strokeLinejoin="round" />

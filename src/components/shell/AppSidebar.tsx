@@ -1,11 +1,14 @@
 import { NavLink } from 'react-router-dom'
 import { NAV_ITEMS, MOCK_USER } from '../../mock/data'
+import { useI18n } from '../../store/langStore'
 
 interface AppSidebarProps {
   collapsed?: boolean
 }
 
 export function AppSidebar({ collapsed }: AppSidebarProps) {
+  const { t } = useI18n()
+
   return (
     <aside
       className="flex shrink-0 flex-col items-center border-r border-[var(--tn-border-subtle)] bg-[var(--tn-bg-elevated)]"
@@ -31,7 +34,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           <NavLink
             key={item.path}
             to={item.path}
-            title={item.label}
+            title={t.nav[item.labelKey]}
             className={({ isActive }) =>
               `flex h-10 w-10 items-center justify-center rounded-lg text-sm transition-colors ${
                 isActive

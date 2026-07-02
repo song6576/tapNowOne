@@ -78,17 +78,6 @@ export function FlowCanvas() {
           className="!bottom-3 !right-[calc(var(--tn-panel-w)+12px)]"
         />
       </ReactFlow>
-
-      {nodes.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-sm font-medium text-[var(--tn-text-muted)]">Empty Canvas</p>
-            <p className="mt-2 text-xs text-zinc-600">
-              Right-click to add nodes · or use left toolbar
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

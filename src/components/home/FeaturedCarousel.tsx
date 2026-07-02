@@ -1,10 +1,14 @@
 import { memo, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { FeaturedItem } from '../../mock/data'
+import { useI18n } from '../../store/langStore'
 
-const FeaturedCard = memo(function FeaturedCard({ item }: { item: FeaturedItem }) {
+const FeaturedCard = memo(function FeaturedCard({ item, onClick }: { item: FeaturedItem; onClick?: () => void }) {
   return (
-    <article
-      className="home-featured-card snap-start"
+    <button
+      type="button"
+      onClick={onClick}
+      className="home-featured-card snap-start ui-clickable text-left"
       style={{ contentVisibility: 'auto', containIntrinsicSize: '0 220px' }}
     >
       <div className="home-featured-cover" style={{ background: item.cover }}>
@@ -15,7 +19,7 @@ const FeaturedCard = memo(function FeaturedCard({ item }: { item: FeaturedItem }
           )}
         </div>
       </div>
-    </article>
+    </button>
   )
 })
 
@@ -25,6 +29,8 @@ interface FeaturedCarouselProps {
 
 export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: FeaturedCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const { t } = useI18n()
 
   const scroll = useCallback((dir: -1 | 1) => {
     const el = scrollRef.current
@@ -36,7 +42,7 @@ export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: Featur
 
   return (
     <section className="relative mx-auto w-full max-w-[1200px]">
-      <h2 className="mb-5 text-lg font-medium text-white">精选推荐</h2>
+      <h2 className="mb-5 text-lg font-medium text-white">{t.home.featured}</h2>
 
       <div className="relative">
         <button
@@ -55,7 +61,11 @@ export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: Featur
           className="home-carousel-track flex gap-4 overflow-x-auto pb-2 scroll-smooth"
         >
           {items.map((item) => (
-            <FeaturedCard key={item.id} item={item} />
+            <FeaturedCard
+              key={item.id}
+              item={item}
+              onClick={() => item.link && navigate(item.link)}
+            />
           ))}
         </div>
 

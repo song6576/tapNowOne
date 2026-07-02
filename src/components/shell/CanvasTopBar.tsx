@@ -2,21 +2,30 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MOCK_PROJECTS, MOCK_USER } from '../../mock/data'
 import { useCanvasStore } from '../../store/canvasStore'
+import { useI18n } from '../../store/langStore'
 import { SettingsDrawer } from './SettingsDrawer'
+import { formatRelativeTime } from '../../utils/time'
 
 interface CanvasTopBarProps {
   projectName: string
   onProjectNameChange: (name: string) => void
   projectId?: string
+  updatedAt?: string
 }
 
-export function CanvasTopBar({ projectName, onProjectNameChange, projectId }: CanvasTopBarProps) {
+export function CanvasTopBar({ projectName, onProjectNameChange, projectId, updatedAt }: CanvasTopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const navigate = useNavigate()
   const persist = useCanvasStore((s) => s.persist)
   const exportVideo = useCanvasStore((s) => s.exportVideo)
   const exporting = useCanvasStore((s) => s.exporting)
+  const { t } = useI18n()
+  const c = t.canvas
+
+  const modifiedLabel = updatedAt
+    ? `${c.lastModified} ${formatRelativeTime(updatedAt)}`
+    : `${c.lastModified} ${c.justNow}`
 
   const handleExport = async () => {
     try {
@@ -29,13 +38,12 @@ export function CanvasTopBar({ projectName, onProjectNameChange, projectId }: Ca
 
   return (
     <>
-      <header className="flex h-[var(--tn-topbar-h)] shrink-0 items-center gap-2 border-b border-[var(--tn-border-subtle)] bg-[var(--tn-bg-elevated)] px-3">
-        {/* Project menu — TapNow 左上角 */}
+      <header className="canvas-topbar flex h-[var(--tn-topbar-h)] shrink-0 items-center gap-3 border-b border-[var(--tn-border-subtle)] bg-[var(--tn-bg-elevated)] px-4">
         <div className="relative">
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-[var(--tn-bg-hover)]"
+            className="ui-clickable flex items-center gap-2 rounded-lg px-1 py-1"
           >
             <Link to="/home" onClick={(e) => e.stopPropagation()}>
               <img
@@ -45,8 +53,6 @@ export function CanvasTopBar({ projectName, onProjectNameChange, projectId }: Ca
                 onError={(e) => { (e.target as HTMLImageElement).alt = 'TN' }}
               />
             </Link>
-            <span className="max-w-[140px] truncate font-medium">{projectName || 'Untitled'}</span>
-            <span className="text-[var(--tn-text-muted)]">▾</span>
           </button>
 
           {menuOpen && (
@@ -62,7 +68,7 @@ export function CanvasTopBar({ projectName, onProjectNameChange, projectId }: Ca
                 </button>
                 <div className="my-1 border-t border-[var(--tn-border-subtle)]" />
                 <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--tn-text-muted)]">Recent</p>
-                {MOCK_PROJECTS.map((p) => (
+                {MOCK_PROJECTS.slice(0, 4).map((p) => (
                   <button
                     key={p.id}
                     type="button"
@@ -85,34 +91,43 @@ export function CanvasTopBar({ projectName, onProjectNameChange, projectId }: Ca
           )}
         </div>
 
-        <input
-          type="text"
-          value={projectName}
-          onChange={(e) => onProjectNameChange(e.target.value)}
-          className="ml-2 max-w-[200px] rounded-md border border-transparent bg-transparent px-2 py-1 text-sm text-[var(--tn-text-secondary)] outline-none hover:border-[var(--tn-border)] focus:border-[var(--tn-border)] focus:text-white"
-        />
+        <div className="min-w-0">
+          <input
+            type="text"
+            value={projectName}
+            onChange={(e) => onProjectNameChange(e.target.value)}
+            placeholder={c.untitled}
+            className="block max-w-[220px] truncate bg-transparent text-sm font-medium text-white outline-none"
+          />
+          <p className="text-[11px] text-white/35">{modifiedLabel}</p>
+        </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <button type="button" disabled={exporting} onClick={handleExport} className="tn-btn tn-btn-ghost hidden text-[10px] sm:inline-flex disabled:opacity-50">
-            {exporting ? 'Exporting...' : 'Export Video'}
+          <button type="button" disabled={exporting} onClick={handleExport} className="canvas-topbar-btn hidden sm:inline-flex">
+            {exporting ? '...' : 'Export'}
           </button>
-          <button type="button" onClick={persist} className="tn-btn tn-btn-ghost hidden text-[10px] md:inline-flex">
+          <button type="button" onClick={persist} className="canvas-topbar-btn hidden md:inline-flex">
             Save
           </button>
-          <div className="flex items-center gap-1 rounded-full bg-[var(--tn-bg-panel)] px-2.5 py-1 text-xs text-[var(--tn-text-secondary)]">
-            <span className="text-[var(--tn-node-video)]">⚡</span>
+          <div className="canvas-credits-pill">
+            <span>⚡</span>
             {MOCK_USER.credits.toLocaleString()}
           </div>
+          <button type="button" className="canvas-community-btn ui-clickable">
+            ✨ {c.community}
+          </button>
+          <button type="button" className="canvas-topbar-icon ui-clickable" title={c.share}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--tn-text-muted)] hover:bg-[var(--tn-bg-hover)]"
+            className="canvas-topbar-icon ui-clickable"
           >
             ⚙
           </button>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--tn-bg-hover)] text-[10px] font-medium">
-            {MOCK_USER.name[0]}
-          </div>
         </div>
       </header>
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />

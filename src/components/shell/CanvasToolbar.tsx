@@ -6,31 +6,61 @@ interface CanvasToolbarProps {
   onLoadDemo?: () => void
 }
 
+const EXTRA_TOOLS = [
+  { icon: '🔍', title: 'Search' },
+  { icon: '📁', title: 'Assets' },
+  { icon: '▦', title: 'Layers' },
+  { icon: 'T', title: 'Text' },
+  { icon: '🕐', title: 'History' },
+] as const
+
 export function CanvasToolbar({ onAddNode, onLoadDemo }: CanvasToolbarProps) {
   return (
-    <aside className="flex w-12 shrink-0 flex-col items-center gap-0.5 border-r border-[var(--tn-border-subtle)] bg-[var(--tn-bg-elevated)] py-2">
-      {NODE_MENU_ITEMS.map((item) => (
+    <aside className="canvas-sidebar flex w-12 shrink-0 flex-col items-center gap-1 border-r border-[var(--tn-border-subtle)] bg-[var(--tn-bg-elevated)] py-3">
+      <button
+        type="button"
+        title="Add node"
+        onClick={() => onAddNode('text')}
+        className="canvas-sidebar-add ui-clickable"
+      >
+        +
+      </button>
+
+      {EXTRA_TOOLS.map((tool) => (
+        <button
+          key={tool.title}
+          type="button"
+          title={tool.title}
+          className="canvas-sidebar-btn ui-clickable"
+        >
+          <span className="text-sm leading-none">{tool.icon}</span>
+        </button>
+      ))}
+
+      <div className="my-1 h-px w-6 bg-[var(--tn-border-subtle)]" />
+
+      {NODE_MENU_ITEMS.slice(0, 3).map((item) => (
         <button
           key={item.type}
           type="button"
           title={`${item.label} — ${item.desc}`}
           onClick={() => onAddNode(item.type as NodeType | 'group')}
-          className="flex h-10 w-10 flex-col items-center justify-center rounded-lg text-[var(--tn-text-muted)] transition-colors hover:bg-[var(--tn-bg-hover)] hover:text-white"
+          className="canvas-sidebar-btn ui-clickable"
         >
-          <span className="text-base leading-none">{item.icon}</span>
+          <span className="text-sm leading-none">{item.icon}</span>
         </button>
       ))}
 
-      <div className="my-2 h-px w-6 bg-[var(--tn-border-subtle)]" />
-
-      <button
-        type="button"
-        title="Load demo workflow"
-        onClick={onLoadDemo}
-        className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--tn-text-muted)] hover:bg-[var(--tn-bg-hover)] hover:text-[var(--tn-node-video)]"
-      >
-        ⚡
-      </button>
+      <div className="mt-auto">
+        <button
+          type="button"
+          title="Load demo workflow"
+          onClick={onLoadDemo}
+          className="canvas-sidebar-accent ui-clickable"
+        >
+          ⚡
+        </button>
+      </div>
     </aside>
   )
 }
