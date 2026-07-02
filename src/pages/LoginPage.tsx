@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { TapNowLogo } from '../components/auth/TapNowLogo'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
@@ -6,8 +6,25 @@ import { LanguageDropdown, type AppLang } from '../components/ui/LanguageDropdow
 import { GOOGLE_CLIENT_ID } from '../config'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
+import { useSmsCooldown } from '../hooks/useSmsCooldown'
+import { getStoredSmsPhone, hasSmsSentForPhone } from '../utils/smsCooldown'
 
-type Step = 'email' | 'auth' | 'phone'
+type Step = 'main' | 'auth'
+type LoginMethod = 'email' | 'phone'
+
+function EmailIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <rect x="2" y="4" width="20" height="16" rx="2.5" />
+      <path d="M2 7l10 7 10-7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function isValidPhone(value: string): boolean {
+  const cleaned = value.replace(/[\s-]/g, '')
+  return /^1[3-9]\d{9}$/.test(cleaned)
+}
 
 function GoogleIcon() {
   return (
@@ -44,9 +61,14 @@ const copy = {
     subtitle: '让创意成真',
     google: '使用 Google 继续',
     phone: '使用手机号继续',
+    emailBtn: '使用邮箱继续',
     or: '或',
     email: '电子邮件地址',
     continue: '继续',
+    sendCode: '发送验证码',
+    resendCode: '重新发送',
+    codePlaceholder: '验证码',
+    codeSent: '验证码已发送',
     password: '密码',
     name: '昵称',
     back: '返回',
@@ -71,9 +93,14 @@ const copy = {
     subtitle: 'Make creativity come true',
     google: 'Continue with Google',
     phone: 'Continue with phone',
+    emailBtn: 'Continue with email',
     or: 'or',
     email: 'Email address',
     continue: 'Continue',
+    sendCode: 'Send verification code',
+    resendCode: 'Resend',
+    codePlaceholder: 'Verification code',
+    codeSent: 'Verification code sent',
     password: 'Password',
     name: 'Display name',
     back: 'Back',
@@ -101,13 +128,25 @@ function getCopy(lang: AppLang) {
 
 export function LoginPage() {
   const [lang, setLang] = useState<AppLang>('zh')
-  const [step, setStep] = useState<Step>('email')
+  const [step, setStep] = useState<Step>('main')
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>('email')
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
   const [agreed, setAgreed] = useState(false)
+
+  const { remaining: smsRemaining, canSend: canSendSms, triggerCooldown } = useSmsCooldown(phone)
+
+  useEffect(() => {
+    const storedPhone = getStoredSmsPhone()
+    if (storedPhone && hasSmsSentForPhone(storedPhone)) {
+      setPhone(storedPhone)
+      setLoginMethod('phone')
+    }
+  }, [])
 
   const login = useAuthStore((s) => s.login)
   const register = useAuthStore((s) => s.register)
@@ -178,8 +217,34 @@ export function LoginPage() {
     }
   }
 
+  const handleSendCode = () => {
+    if (!agreed) {
+      requireTerms()
+      return
+    }
+    if (!isValidPhone(phone) || !canSendSms) return
+    triggerCooldown()
+    showToast({ type: 'success', message: t.codeSent })
+  }
+
+  const phoneValid = isValidPhone(phone)
+  const smsSent = hasSmsSentForPhone(phone)
+  const sendBtnLabel = smsRemaining > 0
+    ? `${smsRemaining}s`
+    : smsSent
+      ? t.resendCode
+      : t.sendCode
+
+  const switchToPhone = () => {
+    setLoginMethod('phone')
+  }
+
+  const switchToEmail = () => {
+    setLoginMethod('email')
+  }
+
   const outlineBtn =
-    'flex h-[52px] w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[15px] text-white transition hover:border-white/35 hover:bg-white/[0.03]'
+    'ui-clickable flex h-[52px] w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[16px] text-white transition hover:border-white/35 hover:bg-white/[0.03]'
 
   return (
     <div className="login-page relative min-h-screen overflow-auto bg-black text-white">
@@ -194,14 +259,14 @@ export function LoginPage() {
             <TapNowLogo size="lg" />
           </div>
 
-          <h1 className="text-center text-[28px] font-semibold tracking-tight text-white">
-            {step === 'phone' ? t.phoneTitle : t.title}
+          <h1 className="text-center text-[32px] font-semibold tracking-tight text-white">
+            {t.title}
           </h1>
-          <p className="mt-2 text-center text-[15px] text-white/45">
-            {step === 'phone' ? t.phoneHint : t.subtitle}
+          <p className="mt-2 text-center text-[16px] text-white/45">
+            {t.subtitle}
           </p>
 
-          {step === 'email' && (
+          {step === 'main' && (
             <div className="mt-10 space-y-3">
               {GOOGLE_CLIENT_ID ? (
                 <GoogleSignInButton
@@ -220,48 +285,88 @@ export function LoginPage() {
                   {t.google}
                 </button>
               )}
-              <button
-                type="button"
-                className={outlineBtn}
-                onClick={() => setStep('phone')}
-              >
-                <PhoneIcon />
-                {t.phone}
-              </button>
+
+              {loginMethod === 'email' ? (
+                <button type="button" className={outlineBtn} onClick={switchToPhone}>
+                  <PhoneIcon />
+                  {t.phone}
+                </button>
+              ) : (
+                <button type="button" className={outlineBtn} onClick={switchToEmail}>
+                  <EmailIcon />
+                  {t.emailBtn}
+                </button>
+              )}
 
               <div className="flex items-center gap-4 py-4">
                 <div className="h-px flex-1 bg-white/10" />
-                <span className="text-sm text-white/35">{t.or}</span>
+                <span className="text-[15px] text-white/35">{t.or}</span>
                 <div className="h-px flex-1 bg-white/10" />
               </div>
 
-              <form onSubmit={handleEmailContinue} className="space-y-4">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t.email}
-                  className="login-input"
-                />
-                <button
-                  type="submit"
-                  disabled={!email.trim()}
-                  className="login-primary-btn"
-                >
-                  {t.continue}
-                </button>
-              </form>
+              {loginMethod === 'email' ? (
+                <form onSubmit={handleEmailContinue} className="login-method-panel space-y-4">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t.email}
+                    className="login-input"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!email.trim()}
+                    className="login-primary-btn"
+                  >
+                    {t.continue}
+                  </button>
+                </form>
+              ) : (
+                <div className="login-method-panel space-y-4">
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder={t.phonePlaceholder}
+                    className="login-input"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                  />
+                  {phoneValid && (
+                    <div className="login-code-row">
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder={t.codePlaceholder}
+                        className="login-code-input"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSendCode}
+                        disabled={!canSendSms}
+                        className="login-code-btn"
+                      >
+                        {sendBtnLabel}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           {step === 'auth' && (
             <div className="mt-10 space-y-4">
               <div className="flex items-center gap-2">
-                <BackIconButton onClick={() => setStep('email')} title={t.back} />
+                <BackIconButton onClick={() => setStep('main')} title={t.back} />
               </div>
 
-              <div className="rounded-full border border-white/15 px-4 py-3 text-sm text-white/70">
+              <div className="rounded-full border border-white/15 px-4 py-3 text-[15px] text-white/70">
                 <span className="truncate">{email}</span>
               </div>
 
@@ -294,50 +399,35 @@ export function LoginPage() {
               <button
                 type="button"
                 onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                className="w-full text-center text-sm text-white/45 hover:text-white/70"
+                className="ui-clickable w-full text-center text-[15px] text-white/45 hover:text-white/70"
               >
                 {mode === 'login' ? t.switchRegister : t.switchLogin}
               </button>
             </div>
           )}
 
-          {step === 'phone' && (
-            <div className="mt-10 space-y-4">
-              <div className="flex items-center gap-2">
-                <BackIconButton onClick={() => setStep('email')} title={t.back} />
-              </div>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={t.phonePlaceholder}
-                className="login-input"
-              />
-              <button
-                type="button"
-                disabled
-                className="login-primary-btn opacity-50"
-              >
-                {t.continue}
-              </button>
-            </div>
-          )}
-
-          {step === 'email' && (
-            <label className="mt-8 flex cursor-pointer items-start gap-3 text-[13px] leading-relaxed text-white/40">
+          {step === 'main' && (
+            <label className="mt-8 flex cursor-pointer items-start gap-3 text-[14px] leading-relaxed text-white/40">
               <input
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="login-checkbox mt-0.5"
+                className="login-terms-checkbox-input"
               />
+              <span className={`login-terms-checkbox ${agreed ? 'is-checked' : ''}`} aria-hidden>
+                {agreed && (
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
+                    <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
               <span>
                 {t.terms}{' '}
-                <a href="#" className="text-white/55 underline underline-offset-2 hover:text-white/75">{t.termsLink}</a>
+                <a href="#" className="ui-clickable text-white/55 underline underline-offset-2 hover:text-white/75">{t.termsLink}</a>
                 {' '}|{' '}
-                <a href="#" className="text-white/55 underline underline-offset-2 hover:text-white/75">{t.community}</a>
+                <a href="#" className="ui-clickable text-white/55 underline underline-offset-2 hover:text-white/75">{t.community}</a>
                 {' '}|{' '}
-                <a href="#" className="text-white/55 underline underline-offset-2 hover:text-white/75">{t.privacy}</a>
+                <a href="#" className="ui-clickable text-white/55 underline underline-offset-2 hover:text-white/75">{t.privacy}</a>
               </span>
             </label>
           )}

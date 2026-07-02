@@ -30,11 +30,11 @@ export function LanguageDropdown({ value, onChange, className = '' }: LanguageDr
     <HoverDropdown
       align="right"
       className={className}
-      panelClassName="min-w-[160px] overflow-hidden rounded-xl border border-white/10 bg-[#1a1a1a] py-1 shadow-2xl"
+      panelClassName="ui-glass-panel min-w-[160px] overflow-hidden py-1"
       trigger={
         <button
           type="button"
-          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-white/80 transition hover:bg-white/5 hover:text-white"
+          className="ui-glass-trigger flex items-center gap-1.5 px-3 py-2 text-[15px] text-white/85"
         >
           {current.label}
           <ChevronDown />
@@ -46,7 +46,7 @@ export function LanguageDropdown({ value, onChange, className = '' }: LanguageDr
           key={opt.id}
           type="button"
           onClick={() => onChange(opt.id)}
-          className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-white/90 transition hover:bg-white/5"
+          className="ui-clickable flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-white/90 transition hover:bg-white/5"
         >
           <span>
             {opt.label}

@@ -77,7 +77,40 @@ html, body, #root {
 }
 .tn-btn-ghost:hover { background: var(--tn-bg-hover); color: var(--tn-text); }
 
+/* ── Shared UI: glass trigger / panel for dropdowns (iOS-style radius) ── */
+.ui-glass-trigger {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ui-glass-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.ui-glass-trigger--pill {
+  border-radius: 9999px;
+}
+
+.ui-glass-panel {
+  background: rgba(22, 22, 22, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.ui-clickable { cursor: pointer; }
+
 /* Login page — TapNow style */
+.login-page {
+  font-size: 16px;
+}
+
 .login-page .login-input {
   width: 100%;
   height: 52px;
@@ -86,7 +119,7 @@ html, body, #root {
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: transparent;
   color: #fff;
-  font-size: 15px;
+  font-size: 16px;
   outline: none;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -103,7 +136,7 @@ html, body, #root {
   border-radius: 9999px;
   background: #3d5f6b;
   color: #fff;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
@@ -111,12 +144,88 @@ html, body, #root {
 .login-page .login-primary-btn:hover:not(:disabled) { background: #4a7280; }
 .login-page .login-primary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-.login-page .login-checkbox {
-  width: 16px;
-  height: 16px;
+/* iOS-style terms checkbox */
+.login-terms-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
-  accent-color: #3d5f6b;
-  border-radius: 3px;
+  margin-top: 2px;
+  border-radius: 5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: #000;
+  transition: background 0.15s, border-color 0.15s;
+}
+.login-terms-checkbox.is-checked {
+  background: #007aff;
+  border-color: #007aff;
+}
+.login-terms-checkbox-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.login-method-panel {
+  animation: login-method-in 0.22s ease-out;
+}
+@keyframes login-method-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.login-code-input {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  padding: 0 20px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.login-code-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+.login-code-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.login-code-btn {
+  flex-shrink: 0;
+  min-width: 118px;
+  height: 52px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 9999px;
+  background: #3d5f6b;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.login-code-btn:hover:not(:disabled) { background: #4a7280; }
+.login-code-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* ── Home page — TapNow style ── */

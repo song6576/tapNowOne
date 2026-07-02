@@ -4,9 +4,9 @@ interface TapNowLogoProps {
 }
 
 const sizes = {
-  sm: { icon: 22, text: 'text-sm' },
-  md: { icon: 32, text: 'text-lg' },
-  lg: { icon: 40, text: 'text-xl' },
+  sm: { icon: 28, text: 'text-base' },
+  md: { icon: 38, text: 'text-xl' },
+  lg: { icon: 52, text: 'text-3xl' },
 }
 
 export function TapNowLogo({ size = 'md', showText = true }: TapNowLogoProps) {

@@ -48,7 +48,7 @@ export const HomeTopNav = memo(function HomeTopNav() {
         </NavLink>
         <button
           type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white/70"
+          className="ui-clickable flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white/70"
           title="下载客户端"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -74,7 +74,7 @@ export const HomeTopNav = memo(function HomeTopNav() {
               to={item.path}
               end={item.path === '/home'}
               className={({ isActive }) =>
-                `flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
+                `ui-clickable flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
                   isActive
                     ? 'bg-white/10 text-white'
                     : 'text-white/55 hover:bg-white/5 hover:text-white/85'
@@ -89,12 +89,12 @@ export const HomeTopNav = memo(function HomeTopNav() {
       </nav>
 
       <div className="flex items-center gap-2 md:gap-4">
-        <button type="button" className="hidden text-sm text-white/55 hover:text-white/85 sm:block">
+        <button type="button" className="ui-clickable hidden text-sm text-white/55 hover:text-white/85 sm:block">
           价格方案
         </button>
         <button
           type="button"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-white/55 transition hover:bg-white/5 hover:text-white/85"
+          className="ui-clickable flex h-9 w-9 items-center justify-center rounded-full text-white/55 transition hover:bg-white/5 hover:text-white/85"
           title="通知"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

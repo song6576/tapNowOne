@@ -51,7 +51,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
   }
 
   const panel = (
-    <div className="user-menu-panel w-[280px] overflow-hidden rounded-2xl border border-white/10 bg-[#141414] shadow-2xl">
+    <div className="user-menu-panel ui-glass-panel w-[280px] overflow-hidden">
       <div className="border-b border-white/[0.06] p-4">
         <div className="flex items-center gap-3">
           <UserAvatar name={user.name} avatarUrl={user.avatar_url} size="lg" />
@@ -68,7 +68,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
             <button
               type="button"
               onClick={() => handleItem()}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-white/[0.04]"
+              className="ui-clickable flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-white/[0.04]"
             >
               <span className={item.accent ? 'text-blue-400' : 'text-white/50'}>{item.icon}</span>
               <span className={item.accent ? 'text-blue-400' : 'text-white/80'}>{item.label}</span>
@@ -83,7 +83,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
             key={item.label}
             type="button"
             onClick={() => handleItem(item.action)}
-            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/[0.04] hover:text-white"
+            className="ui-clickable flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/[0.04] hover:text-white"
           >
             <span className="text-white/45">{item.icon}</span>
             {item.label}
@@ -99,7 +99,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
       trigger={
         <button
           type="button"
-          className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition hover:bg-white/5"
+          className="ui-glass-trigger ui-glass-trigger--pill flex items-center gap-2 py-1 pl-1 pr-3"
         >
           <UserAvatar name={user.name} avatarUrl={user.avatar_url} />
           <span className="hidden max-w-[80px] truncate text-sm text-white/70 md:inline">
