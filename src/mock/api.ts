@@ -1,7 +1,17 @@
 /**
  * Mock API — 模拟异步请求，后续替换 api/client.ts 中的真实调用
  */
-import { MOCK_PROJECTS, MOCK_TAPTV, MOCK_TASKS, MOCK_USER, type MockProject, type TapTVItem, type GenerationTask } from './data'
+import {
+  MOCK_FEATURED,
+  MOCK_PROJECTS,
+  MOCK_TAPTV,
+  MOCK_TASKS,
+  MOCK_USER,
+  type FeaturedItem,
+  type MockProject,
+  type TapTVItem,
+  type GenerationTask,
+} from './data'
 
 const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms))
 
@@ -18,6 +28,11 @@ export async function mockListProjects(): Promise<MockProject[]> {
 export async function mockGetTapTV(): Promise<TapTVItem[]> {
   await delay()
   return MOCK_TAPTV
+}
+
+export async function mockGetFeatured(): Promise<FeaturedItem[]> {
+  await delay(200)
+  return MOCK_FEATURED
 }
 
 export async function mockGetTapTVItem(id: string): Promise<TapTVItem | undefined> {

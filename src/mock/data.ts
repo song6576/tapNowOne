@@ -5,11 +5,11 @@
 
 export const MOCK_USER = {
   id: 'u-demo',
-  name: 'Creator',
-  email: 'demo@tapnow.local',
+  name: 'songhai220430',
+  email: 'songhai220430@gmail.com',
   avatar: '',
-  credits: 1280,
-  plan: 'Free',
+  credits: 177,
+  plan: 'FREE',
   uid: 'TN-8X4K2M9P',
 }
 
@@ -18,12 +18,63 @@ export type MockProject = {
   name: string
   updatedAt: string
   thumbnail?: string
+  tag?: string
 }
 
 export const MOCK_PROJECTS: MockProject[] = [
-  { id: 'p1', name: '咖啡广告 30s', updatedAt: '2026-07-01T10:00:00Z', thumbnail: 'linear-gradient(135deg,#1e1b4b,#312e81)' },
-  { id: 'p2', name: '产品发布短片', updatedAt: '2026-06-28T15:30:00Z', thumbnail: 'linear-gradient(135deg,#134e4a,#065f46)' },
-  { id: 'p3', name: '分镜测试', updatedAt: '2026-06-25T09:00:00Z', thumbnail: 'linear-gradient(135deg,#431407,#7c2d12)' },
+  {
+    id: 'p1',
+    name: 'Creative Co...',
+    updatedAt: '2026-07-01T18:00:00Z',
+    thumbnail: 'linear-gradient(135deg,#1a1a2e 0%,#4a5568 50%,#718096 100%)',
+    tag: '体验 Midjourney V8.1...',
+  },
+  {
+    id: 'p2',
+    name: 'Creative Co...',
+    updatedAt: '2026-07-01T10:00:00Z',
+    thumbnail: 'linear-gradient(135deg,#2d1b4e 0%,#553c9a 50%,#9f7aea 100%)',
+    tag: '体验 Midjourney V8.1...',
+  },
+  {
+    id: 'p3',
+    name: 'Creative Co...',
+    updatedAt: '2026-06-30T08:00:00Z',
+    thumbnail: 'linear-gradient(135deg,#1a365d 0%,#2b6cb0 50%,#63b3ed 100%)',
+    tag: '体验 Midjourney V8.1...',
+  },
+]
+
+export type FeaturedItem = {
+  id: string
+  title: string
+  subtitle?: string
+  cover: string
+  link?: string
+}
+
+export const MOCK_FEATURED: FeaturedItem[] = [
+  {
+    id: 'f1',
+    title: 'Unfold The Wondrous',
+    cover: 'linear-gradient(160deg,#1a1a1a 0%,#4a3728 40%,#8b6914 100%)',
+  },
+  {
+    id: 'f2',
+    title: '10000 PARALLEL UNIVERSES',
+    cover: 'linear-gradient(160deg,#ff0080 0%,#7928ca 35%,#0070f3 70%,#00dfd8 100%)',
+  },
+  {
+    id: 'f3',
+    title: 'Playlist',
+    subtitle: 'Lightweight editable timeline on canvas',
+    cover: 'linear-gradient(160deg,#18181b 0%,#27272a 50%,#3f3f46 100%)',
+  },
+  {
+    id: 'f4',
+    title: 'Neon Dreams',
+    cover: 'linear-gradient(160deg,#0f0f23 0%,#e11d48 50%,#7c3aed 100%)',
+  },
 ]
 
 export type TapTVItem = {
@@ -72,7 +123,10 @@ export const NODE_MENU_ITEMS = [
 ]
 
 export const NAV_ITEMS = [
-  { path: '/home', label: 'Home', icon: '⌂' },
-  { path: '/taptv', label: 'TapTV', icon: '▶' },
-  { path: '/home/projects', label: 'Projects', icon: '▤' },
+  { path: '/home', label: '主页', icon: 'home' as const },
+  { path: '/home/projects', label: '工作空间', icon: 'workspace' as const },
+  { path: '/taptv', label: 'TapTV', icon: 'taptv' as const },
+  { path: '/arena', label: '竞技场', icon: 'arena' as const, disabled: true },
 ]
+
+export const AI_MODELS = ['Kimi 2.6', 'GPT-4o', 'Claude 3.5', 'Qwen Max']

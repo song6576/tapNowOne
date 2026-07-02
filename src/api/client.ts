@@ -46,9 +46,9 @@ const API_BASE = '/api'
 
 async function parseError(res: Response): Promise<string> {
   const err = await res.json().catch(() => ({}))
-  const detail = err.detail
+  const detail = err.detail ?? err.message
   if (typeof detail === 'string') return detail
-  if (Array.isArray(detail)) return detail.map((d: { msg?: string }) => d.msg).join(', ')
+  if (Array.isArray(detail)) return detail.join(', ')
   return `请求失败 (${res.status})`
 }
 
@@ -78,6 +78,28 @@ export async function register(email: string, password: string, name: string): P
   })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
+}
+
+export async function loginWithGoogle(credential: string): Promise<{ access_token: string; user: User }> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 20000)
+  try {
+    const res = await fetch(`${API_BASE}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+      signal: controller.signal,
+    })
+    if (!res.ok) throw new Error(await parseError(res))
+    return res.json()
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('登录请求超时，请检查后端网络或代理')
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 export async function fetchMe(): Promise<User> {

@@ -1,112 +1,414 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { TapNowLogo } from '../components/auth/TapNowLogo'
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
+import { GOOGLE_CLIENT_ID } from '../config'
 import { useAuthStore } from '../store/authStore'
 
+type Lang = 'en' | 'zh' | 'ja' | 'ko' | 'fr'
+type Step = 'email' | 'auth' | 'phone'
+
+const LANG_OPTIONS: { id: Lang; label: string; beta?: boolean }[] = [
+  { id: 'en', label: 'English' },
+  { id: 'zh', label: '简体中文' },
+  { id: 'ja', label: '日本語' },
+  { id: 'ko', label: '한국어', beta: true },
+  { id: 'fr', label: 'Français', beta: true },
+]
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.616z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+      <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" />
+      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" />
+    </svg>
+  )
+}
+
+function PhoneIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ChevronDown({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={`transition-transform ${open ? 'rotate-180' : ''}`}
+      aria-hidden
+    >
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function LanguageSelector({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = LANG_OPTIONS.find((o) => o.id === lang) ?? LANG_OPTIONS[1]
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-white/80 transition hover:bg-white/5 hover:text-white"
+      >
+        {current.label}
+        <ChevronDown open={open} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-1 min-w-[160px] overflow-hidden rounded-xl border border-white/10 bg-[#1a1a1a] py-1 shadow-2xl">
+          {LANG_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => { onChange(opt.id); setOpen(false) }}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-white/90 hover:bg-white/5"
+            >
+              <span>
+                {opt.label}
+                {opt.beta && <span className="ml-1 text-white/40">Beta</span>}
+              </span>
+              {lang === opt.id && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/70">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const copy = {
+  zh: {
+    title: '登录或注册',
+    subtitle: '让创意成真',
+    google: '使用 Google 继续',
+    phone: '使用手机号继续',
+    or: '或',
+    email: '电子邮件地址',
+    continue: '继续',
+    password: '密码',
+    name: '昵称',
+    back: '返回',
+    switchLogin: '已有账号？登录',
+    switchRegister: '没有账号？注册',
+    terms: '注册即表示您同意我们的',
+    termsLink: '服务条款',
+    community: '社区准则',
+    privacy: '隐私政策',
+    phoneTitle: '手机号登录',
+    phoneHint: '请输入手机号，我们将发送验证码（演示模式暂未接入）',
+    phonePlaceholder: '手机号码',
+    comingSoon: 'Google 登录即将上线',
+    googleNotConfigured: '请配置 VITE_GOOGLE_CLIENT_ID',
+    googleFailed: 'Google 登录失败',
+    agreeTerms: '请先同意服务条款',
+    guest: '暂不登录，本地模式使用',
+  },
+  en: {
+    title: 'Log in or sign up',
+    subtitle: 'Make creativity come true',
+    google: 'Continue with Google',
+    phone: 'Continue with phone',
+    or: 'or',
+    email: 'Email address',
+    continue: 'Continue',
+    password: 'Password',
+    name: 'Display name',
+    back: 'Back',
+    switchLogin: 'Already have an account? Log in',
+    switchRegister: "Don't have an account? Sign up",
+    terms: 'By signing up, you agree to our',
+    termsLink: 'Terms of Service',
+    community: 'Community Guidelines',
+    privacy: 'Privacy Policy',
+    phoneTitle: 'Phone sign in',
+    phoneHint: 'Enter your phone number to receive a code (demo only)',
+    phonePlaceholder: 'Phone number',
+    comingSoon: 'Google sign-in coming soon',
+    googleNotConfigured: 'Set VITE_GOOGLE_CLIENT_ID first',
+    googleFailed: 'Google sign-in failed',
+    agreeTerms: 'Please agree to the terms first',
+    guest: 'Continue without signing in',
+  },
+} as const
+
 export function LoginPage() {
+  const [lang, setLang] = useState<Lang>('zh')
+  const [step, setStep] = useState<Step>('email')
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState('')
+  const [hint, setHint] = useState('')
+
   const login = useAuthStore((s) => s.login)
   const register = useAuthStore((s) => s.register)
+  const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
   const loading = useAuthStore((s) => s.loading)
   const navigate = useNavigate()
+  const location = useLocation()
 
-  const submit = async (e: React.FormEvent) => {
+  const redirectAfterLogin = () => {
+    const from = (location.state as { from?: string } | null)?.from
+    navigate(from && from !== '/login' ? from : '/home', { replace: true })
+  }
+
+  const t = lang === 'en' ? copy.en : copy.zh
+
+  const handleGoogleSuccess = async (credential: string) => {
+    setError('')
+    setHint('')
+    if (!agreed) {
+      setError(t.agreeTerms)
+      return
+    }
+    try {
+      await loginWithGoogle(credential)
+      redirectAfterLogin()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.googleFailed)
+    }
+  }
+
+  const handleEmailContinue = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (!agreed) {
+      setError(t.agreeTerms)
+      return
+    }
+    if (!email.trim()) return
+    setStep('auth')
+  }
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     try {
       if (mode === 'login') {
         await login(email, password)
       } else {
-        await register(email, password, name)
+        await register(email, password, name || email.split('@')[0])
       }
-      navigate('/')
+      redirectAfterLogin()
     } catch (err) {
       setError(err instanceof Error ? err.message : '操作失败')
     }
   }
 
+  const outlineBtn =
+    'flex h-[52px] w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[15px] text-white transition hover:border-white/35 hover:bg-white/[0.03]'
+
   return (
-    <div className="flex h-full items-center justify-center bg-[#0a0a0f]">
-      <div className="w-full max-w-sm rounded-2xl border border-[#1e1e2e] bg-[#12121a] p-8 shadow-xl">
-        <div className="mb-6 text-center">
-          <span className="text-2xl font-bold text-indigo-400">◉ TapFlow</span>
-          <p className="mt-2 text-sm text-slate-500">Agentic Creative Canvas</p>
-        </div>
+    <div className="login-page relative min-h-screen overflow-auto bg-black text-white">
+      <header className="fixed inset-x-0 top-0 z-10 flex items-center justify-between px-6 py-5 md:px-10">
+        <TapNowLogo size="sm" />
+        <LanguageSelector lang={lang} onChange={setLang} />
+      </header>
 
-        <div className="mb-6 flex rounded-lg bg-[#0a0a0f] p-1">
-          <button
-            type="button"
-            onClick={() => setMode('login')}
-            className={`flex-1 rounded-md py-1.5 text-sm ${mode === 'login' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
-          >
-            登录
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('register')}
-            className={`flex-1 rounded-md py-1.5 text-sm ${mode === 'register' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
-          >
-            注册
-          </button>
-        </div>
+      <main className="flex min-h-screen items-center justify-center px-6 pb-12 pt-24">
+        <div className="w-full max-w-[400px]">
+          <div className="mb-8 flex justify-center">
+            <TapNowLogo size="lg" />
+          </div>
 
-        <form onSubmit={submit} className="space-y-4">
-          {mode === 'register' && (
-            <div>
-              <label className="mb-1 block text-xs text-slate-400">昵称</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-md border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-500"
-                placeholder="你的名字"
-              />
+          <h1 className="text-center text-[28px] font-semibold tracking-tight text-white">
+            {step === 'phone' ? t.phoneTitle : t.title}
+          </h1>
+          <p className="mt-2 text-center text-[15px] text-white/45">
+            {step === 'phone' ? t.phoneHint : t.subtitle}
+          </p>
+
+          {step === 'email' && (
+            <div className="mt-10 space-y-3">
+              {GOOGLE_CLIENT_ID ? (
+                <GoogleSignInButton
+                  label={t.google}
+                  disabled={loading}
+                  onSuccess={handleGoogleSuccess}
+                  onError={(message) => setError(message || t.googleFailed)}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={outlineBtn}
+                  onClick={() => setHint(t.googleNotConfigured)}
+                >
+                  <GoogleIcon />
+                  {t.google}
+                </button>
+              )}
+              <button
+                type="button"
+                className={outlineBtn}
+                onClick={() => { setStep('phone'); setError(''); setHint('') }}
+              >
+                <PhoneIcon />
+                {t.phone}
+              </button>
+
+              <div className="flex items-center gap-4 py-4">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="text-sm text-white/35">{t.or}</span>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
+
+              <form onSubmit={handleEmailContinue} className="space-y-4">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t.email}
+                  className="login-input"
+                />
+                <button
+                  type="submit"
+                  disabled={!email.trim()}
+                  className="login-primary-btn"
+                >
+                  {t.continue}
+                </button>
+              </form>
             </div>
           )}
-          <div>
-            <label className="mb-1 block text-xs text-slate-400">邮箱</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-500"
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-slate-400">密码</label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-500"
-              placeholder="至少 6 位"
-            />
-          </div>
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {step === 'auth' && (
+            <div className="mt-10 space-y-4">
+              <div className="flex items-center justify-between rounded-full border border-white/15 px-4 py-3 text-sm text-white/70">
+                <span className="truncate">{email}</span>
+                <button
+                  type="button"
+                  onClick={() => setStep('email')}
+                  className="shrink-0 text-white/45 hover:text-white/80"
+                >
+                  {t.back}
+                </button>
+              </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-          >
-            {loading ? '处理中...' : mode === 'login' ? '登录' : '注册'}
-          </button>
-        </form>
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+                {mode === 'register' && (
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t.name}
+                    className="login-input"
+                  />
+                )}
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t.password}
+                  className="login-input"
+                  autoFocus
+                />
 
-        <div className="mt-6 text-center">
-          <Link to="/canvas" className="text-xs text-slate-500 hover:text-indigo-400">
-            暂不登录，本地模式使用 →
-          </Link>
+                {error && <p className="text-center text-sm text-red-400">{error}</p>}
+
+                <button type="submit" disabled={loading} className="login-primary-btn">
+                  {loading ? '...' : t.continue}
+                </button>
+              </form>
+
+              <button
+                type="button"
+                onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}
+                className="w-full text-center text-sm text-white/45 hover:text-white/70"
+              >
+                {mode === 'login' ? t.switchRegister : t.switchLogin}
+              </button>
+            </div>
+          )}
+
+          {step === 'phone' && (
+            <div className="mt-10 space-y-4">
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder={t.phonePlaceholder}
+                className="login-input"
+              />
+              <button
+                type="button"
+                disabled
+                className="login-primary-btn opacity-50"
+              >
+                {t.continue}
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep('email')}
+                className="w-full text-center text-sm text-white/45 hover:text-white/70"
+              >
+                {t.back}
+              </button>
+            </div>
+          )}
+
+          {import.meta.env.DEV && GOOGLE_CLIENT_ID && step === 'email' && (
+            <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-left text-[11px] leading-relaxed text-white/40">
+              <p>调试：当前页面来源 <code className="text-white/60">{window.location.origin}</code></p>
+              <p className="mt-1 break-all">Client ID <code className="text-white/60">{GOOGLE_CLIENT_ID}</code></p>
+              <p className="mt-1">请在 Google Console 打开<strong className="text-white/55">同一个</strong> Client ID 的详情页，确认「JavaScript 来源」包含上方来源。</p>
+            </div>
+          )}
+
+          {(hint || (error && step === 'email')) && (
+            <p className="mt-4 text-center text-sm text-amber-400/90">{hint || error}</p>
+          )}
+
+          {step === 'email' && (
+            <label className="mt-8 flex cursor-pointer items-start gap-3 text-[13px] leading-relaxed text-white/40">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => { setAgreed(e.target.checked); setError('') }}
+                className="login-checkbox mt-0.5"
+              />
+              <span>
+                {t.terms}{' '}
+                <a href="#" className="text-white/55 underline underline-offset-2 hover:text-white/75">{t.termsLink}</a>
+                {' '}|{' '}
+                <a href="#" className="text-white/55 underline underline-offset-2 hover:text-white/75">{t.community}</a>
+                {' '}|{' '}
+                <a href="#" className="text-white/55 underline underline-offset-2 hover:text-white/75">{t.privacy}</a>
+              </span>
+            </label>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   )
 }
