@@ -1,3 +1,4 @@
+/** 通用骨架块 */
 interface SkeletonProps {
   className?: string
 }

@@ -1,3 +1,4 @@
+/** 登录页：Google / 邮箱 / 手机验证码多步流程，需勾选协议 */
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { TapNowLogo } from '../components/auth/TapNowLogo'
@@ -10,7 +11,7 @@ import { useToastStore } from '../store/toastStore'
 import { useSmsCooldown } from '../hooks/useSmsCooldown'
 import { getStoredSmsPhone, hasSmsSentForPhone } from '../utils/smsCooldown'
 
-type Step = 'main' | 'auth'
+type Step = 'main' | 'auth' // main=选方式；auth=邮箱密码第二步
 type LoginMethod = 'email' | 'phone'
 
 function EmailIcon() {
@@ -88,6 +89,7 @@ export function LoginPage() {
   const { t: messages } = useI18n()
   const t = messages.login
 
+  /** 登录成功后回到 ProtectedRoute 记录的 from，否则 /home */
   const redirectAfterLogin = () => {
     const from = (location.state as { from?: string } | null)?.from
     navigate(from && from !== '/login' ? from : '/home', { replace: true })

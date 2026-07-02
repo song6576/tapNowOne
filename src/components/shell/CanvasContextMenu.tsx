@@ -1,3 +1,4 @@
+/** 画布右键菜单：在点击位置添加节点 */
 import { NODE_MENU_ITEMS } from '../../mock/data'
 import type { NodeType } from '../../types'
 

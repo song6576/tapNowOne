@@ -1,3 +1,4 @@
+/** 水平 Tab 切换条 */
 interface TabBarProps<T extends string> {
   tabs: { id: T; label: string }[]
   active: T

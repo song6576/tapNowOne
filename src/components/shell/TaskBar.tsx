@@ -1,3 +1,4 @@
+/** 画布底部任务条：生成任务进度 */
 import type { GenerationTask } from '../../mock/data'
 
 interface TaskBarProps {

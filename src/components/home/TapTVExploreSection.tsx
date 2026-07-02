@@ -1,3 +1,4 @@
+/** 首页探索 TapTV 区块：4 列卡片网格 + 查看全部 */
 import { memo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { TapTVItem } from '../../mock/data'
@@ -15,9 +16,9 @@ export const TapTVExploreSection = memo(function TapTVExploreSection({ items }: 
   if (items.length === 0) return null
 
   return (
-    <section className="relative mx-auto w-full max-w-[1200px]">
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-lg font-medium text-white">{t.home.exploreTapTV}</h2>
+    <section className="w-full">
+      <div className="home-section-header">
+        <h2 className="home-featured-heading">{t.home.exploreTapTV}</h2>
         <Link to="/taptv" className="text-sm text-white/40 transition hover:text-white/70">
           {t.home.viewAll}
         </Link>

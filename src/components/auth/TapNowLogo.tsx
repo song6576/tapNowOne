@@ -1,3 +1,4 @@
+/** TapNow Logo 组件 */
 interface TapNowLogoProps {
   size?: 'sm' | 'md' | 'lg'
   showText?: boolean

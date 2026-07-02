@@ -1,3 +1,4 @@
+/** 旧版顶栏 */
 import { Link } from 'react-router-dom'
 import { MOCK_USER } from '../../mock/data'
 

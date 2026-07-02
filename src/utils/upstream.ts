@@ -1,5 +1,7 @@
+/** 上游节点输入解析：从连线 source 收集 text 输出与 image URL */
 import type { CanvasNode, CanvasEdge, NodeType } from '../types'
 
+/** 遍历指向 nodeId 的入边，汇总上游 text/image 输出 */
 export function getUpstreamInputs(
   nodeId: string,
   nodes: CanvasNode[],

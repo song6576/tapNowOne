@@ -1,3 +1,4 @@
+/** 带图标的搜索输入框 */
 interface SearchInputProps {
   value: string
   onChange: (value: string) => void

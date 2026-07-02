@@ -1,9 +1,10 @@
+/** 最近项目行加载骨架屏 */
 import { memo } from 'react'
 import { Skeleton } from '../ui/Skeleton'
 
 export const ProjectRowSkeleton = memo(function ProjectRowSkeleton() {
   return (
-    <section className="mx-auto w-full max-w-[960px]">
+    <section className="w-full">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <div

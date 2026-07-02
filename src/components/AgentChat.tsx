@@ -1,3 +1,4 @@
+/** Agent 对话面板：普通聊天、分镜指令、Run Workflow */
 import { useCanvasStore } from '../store/canvasStore'
 import { agentChat, agentStoryboard } from '../services/api'
 import { buildCanvasContext } from '../utils/workflow'
@@ -34,6 +35,7 @@ export function AgentChat() {
     setLoading(true)
 
     try {
+      // 特殊指令：生成分镜 → 调用 agentStoryboard 并在画布创建节点
       if (text.startsWith('生成分镜：') || text.startsWith('生成分镜:')) {
         const script = text.replace(/^生成分镜[：:]/, '').trim()
         const scenes = await agentStoryboard(script)
@@ -43,6 +45,7 @@ export function AgentChat() {
           { role: 'assistant', content: `Created ${count} storyboard nodes. Click Generate on each, or Run Workflow.` },
         ])
       } else {
+        // 普通对话：附带画布摘要作为 Agent 上下文
         const context = buildCanvasContext(nodes, edges)
         const reply = await agentChat(text, context)
         setMessages((m) => [...m, { role: 'assistant', content: reply }])

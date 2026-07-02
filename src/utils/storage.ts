@@ -1,3 +1,4 @@
+/** 画布项目 localStorage：加载/保存/导入/导出 JSON */
 import type { CanvasProject } from '../types'
 
 const STORAGE_KEY = 'tapflow_project'

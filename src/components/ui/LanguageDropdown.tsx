@@ -1,3 +1,4 @@
+/** 登录页语言下拉 */
 import { HoverDropdown } from './HoverDropdown'
 import { useLangStore } from '../../store/langStore'
 import { LANG_OPTIONS, type AppLang } from '../../utils/lang'

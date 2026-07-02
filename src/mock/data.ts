@@ -173,4 +173,28 @@ export const NAV_ITEMS = [
   { path: '/arena', labelKey: 'arena' as const, icon: 'arena' as const, disabled: true },
 ]
 
-export const AI_MODELS = ['Kimi 2.6', 'GPT-4o', 'Claude 3.5', 'Qwen Max']
+export type AiModelTier = 'standard' | 'premium' | 'upcoming'
+
+export type AiModelOption = {
+  id: string
+  label: string
+  icon: string
+  tier: AiModelTier
+}
+
+export const AI_MODEL_OPTIONS: AiModelOption[] = [
+  { id: 'kimi-2.7', label: 'Kimi 2.7', icon: 'K', tier: 'standard' },
+  { id: 'kimi-2.6', label: 'Kimi 2.6', icon: 'K', tier: 'standard' },
+  { id: 'gpt-4o', label: 'GPT-4o', icon: 'G', tier: 'standard' },
+  { id: 'claude-3.5', label: 'Claude 3.5', icon: 'C', tier: 'standard' },
+  { id: 'qwen-max', label: 'Qwen Max', icon: 'Q', tier: 'standard' },
+  { id: 'sonnet-4.6', label: 'Sonnet 4.6', icon: '✦', tier: 'premium' },
+  { id: 'opus-4.8', label: 'Opus 4.8', icon: '✦', tier: 'premium' },
+  { id: 'opus-4.7', label: 'Opus 4.7', icon: '✦', tier: 'premium' },
+  { id: 'opus-4.6', label: 'Opus 4.6', icon: '✦', tier: 'premium' },
+  { id: 'fable-5', label: 'Fable 5', icon: 'F', tier: 'upcoming' },
+  { id: 'gpt-5.5', label: 'GPT-5.5', icon: 'G', tier: 'upcoming' },
+]
+
+/** @deprecated 使用 AI_MODEL_OPTIONS */
+export const AI_MODELS = AI_MODEL_OPTIONS.filter((m) => m.tier === 'standard').map((m) => m.label)

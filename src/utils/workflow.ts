@@ -1,3 +1,4 @@
+/** 工作流拓扑排序与 Agent 画布上下文摘要 */
 import type { CanvasNode, CanvasEdge } from '../types'
 
 const GENERATABLE = new Set(['image', 'video', 'audio'])

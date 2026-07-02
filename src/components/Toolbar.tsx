@@ -1,3 +1,4 @@
+/** 旧版工具栏 + demo 工作流 */
 import type { NodeType } from '../types'
 import { NODE_META } from '../types'
 import { useCanvasStore } from '../store/canvasStore'

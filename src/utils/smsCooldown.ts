@@ -1,3 +1,4 @@
+/** 短信验证码发送冷却：60s 内同号码不可重复发送 */
 const SMS_COOLDOWN_KEY = 'tapflow_sms_cooldown'
 export const SMS_COOLDOWN_SECONDS = 60
 

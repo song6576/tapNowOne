@@ -1,3 +1,4 @@
+/** 横向 Pill 筛选（TapTV 分类等） */
 interface FilterPillsProps<T extends string> {
   options: { id: T; label: string }[]
   active: T

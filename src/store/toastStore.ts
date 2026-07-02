@@ -1,3 +1,4 @@
+/** 全局 Toast 队列：showToast 自动定时 dismiss */
 import { create } from 'zustand'
 
 export type ToastType = 'info' | 'success' | 'error' | 'warning'

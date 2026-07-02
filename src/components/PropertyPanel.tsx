@@ -1,3 +1,4 @@
+/** 节点属性面板：prompt/模型编辑、单节点生成 */
 import { useState } from 'react'
 import { useCanvasStore } from '../store/canvasStore'
 import { NODE_META, type NodeType } from '../types'

@@ -1,3 +1,4 @@
+/** ReactFlow nodeTypes 注册表 */
 import type { NodeTypes } from '@xyflow/react'
 import { TextNode } from './TextNode'
 import { ImageNode } from './ImageNode'

@@ -1,3 +1,4 @@
+/** 视频合成：按工作流顺序收集 image/video 片段与音频轨 */
 import type { CanvasNode, CanvasEdge } from '../types'
 import { getWorkflowOrder } from './workflow'
 

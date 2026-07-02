@@ -1,5 +1,9 @@
+/**
+ * 画布领域类型：节点/边/项目结构，以及各节点类型的默认元数据。
+ */
 import type { Node, Edge, Viewport } from '@xyflow/react'
 
+/** 画布支持的节点种类 */
 export type NodeType = 'text' | 'image' | 'video' | 'audio' | 'group'
 export type NodeStatus = 'idle' | 'generating' | 'done' | 'error'
 
@@ -36,6 +40,7 @@ export const NODE_META: Record<NodeType, { label: string; icon: string; color: s
   group: { label: 'Group', icon: '▦', color: 'var(--tn-text-muted)', description: 'Group nodes' },
 }
 
+/** 新建节点时的默认 data 字段（含各类型默认模型） */
 export function createDefaultNodeData(type: NodeType): NodeData {
   const meta = NODE_META[type]
   return {

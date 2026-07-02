@@ -1,5 +1,6 @@
 /**
- * 统一 API 入口 — Mock / 真实后端自动切换
+ * 统一 API 入口 — 根据 config.USE_MOCK 在 mock 与真实后端间切换。
+ * 组件层应优先 import 本文件，而非直接调用 api/client 或 mock/api。
  */
 import { USE_MOCK } from '../config'
 import * as mock from '../mock/api'
@@ -9,6 +10,7 @@ export const listProjects = USE_MOCK ? mock.mockListProjects : real.listProjects
 export const getTapTV = USE_MOCK ? mock.mockGetTapTV : (() => Promise.reject(new Error('TapTV API 待接入')))
 export const getTapTVItem = USE_MOCK ? mock.mockGetTapTVItem : (() => Promise.reject(new Error('TapTV API 待接入')))
 
+/** Agent 对话：Mock 返回占位文案，真实模式走 Qwen */
 export async function agentChat(message: string, context?: string): Promise<string> {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 600))
@@ -29,6 +31,7 @@ export async function agentStoryboard(script: string) {
   return real.agentStoryboard(script)
 }
 
+/** 单节点生成：Mock 即时返回 SVG；真实模式 submit + poll */
 export async function generateNode(payload: Parameters<typeof real.submitGenerate>[0]): Promise<string> {
   if (USE_MOCK) {
     const r = await mock.mockGenerate(payload)

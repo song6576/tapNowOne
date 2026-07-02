@@ -1,3 +1,4 @@
+/** 节点通用外壳：Handle、生成状态遮罩 */
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { NodeData, NodeType } from '../../types'
 import { NODE_META } from '../../types'

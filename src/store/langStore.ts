@@ -1,3 +1,4 @@
+/** 全局语言：localStorage 持久化 + document.lang 同步 */
 import { create } from 'zustand'
 import { getMessages } from '../i18n/messages'
 import {
@@ -14,6 +15,7 @@ interface LangStore {
 }
 
 function applyDocumentLang(lang: AppLang) {
+  // 同步 <html lang>，利于 SEO 与无障碍
   document.documentElement.lang = htmlLangAttr(lang)
 }
 

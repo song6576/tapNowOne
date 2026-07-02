@@ -1,3 +1,4 @@
+/** TapTV 卡片：封面、标题、作者、点赞 */
 import { memo } from 'react'
 import type { TapTVItem } from '../../mock/data'
 

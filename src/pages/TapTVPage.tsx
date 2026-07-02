@@ -1,3 +1,4 @@
+/** TapTV 列表：排序 Tab、分类 Pills、搜索、发布弹窗 */
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TabBar } from '../components/ui/TabBar'
@@ -33,6 +34,7 @@ export function TapTVPage() {
     label: tv.categories[id],
   }))
 
+  /** 分类 → 搜索 → 排序 Tab 的链式筛选 */
   const filtered = useMemo(() => {
     let list = [...items]
     if (category !== 'all') {

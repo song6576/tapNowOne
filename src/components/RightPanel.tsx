@@ -1,3 +1,4 @@
+/** 右侧面板：Inspector / Agent 双 Tab */
 import { useState } from 'react'
 import { PropertyPanel } from './PropertyPanel'
 import { AgentChat } from './AgentChat'

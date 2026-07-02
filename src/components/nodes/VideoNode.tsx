@@ -1,3 +1,4 @@
+/** 视频生成节点 */
 import type { NodeProps } from '@xyflow/react'
 import type { NodeData } from '../../types'
 import { BaseNode } from './BaseNode'

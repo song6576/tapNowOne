@@ -1,3 +1,4 @@
+/** TapTV 详情：展示作品信息，Fork 到画布 */
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { mockGetTapTVItem } from '../mock/api'

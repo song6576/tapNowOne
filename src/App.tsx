@@ -1,3 +1,7 @@
+/**
+ * 根路由：GuestRoute 保护登录页，ProtectedRoute 保护业务页。
+ * Canvas 为全屏布局，其余页面走 AppLayout（顶栏 + 内容）。
+ */
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { GuestRoute, ProtectedRoute } from './components/auth/AuthRoutes'
 import { AppLayout } from './layouts/AppLayout'

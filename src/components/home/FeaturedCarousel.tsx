@@ -1,22 +1,28 @@
-import { memo, useCallback, useRef } from 'react'
+/** 首页精选轮播：横向 snap 滚动，中间卡片放大，红条指示当前项 */
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { FeaturedItem } from '../../mock/data'
 import { useI18n } from '../../store/langStore'
 
-const FeaturedCard = memo(function FeaturedCard({ item, onClick }: { item: FeaturedItem; onClick?: () => void }) {
+const FeaturedCard = memo(function FeaturedCard({
+  item,
+  isCenter,
+  onClick,
+}: {
+  item: FeaturedItem
+  isCenter?: boolean
+  onClick?: () => void
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="home-featured-card snap-start ui-clickable text-left"
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 220px' }}
+      className={`home-featured-card snap-center ui-clickable text-left ${isCenter ? 'home-featured-card--center' : ''}`}
     >
       <div className="home-featured-cover" style={{ background: item.cover }}>
         <div className="home-featured-overlay">
-          <h3 className="text-lg font-semibold text-white drop-shadow-md">{item.title}</h3>
-          {item.subtitle && (
-            <p className="mt-1 max-w-[240px] text-xs text-white/70">{item.subtitle}</p>
-          )}
+          <h3 className="home-featured-title">{item.title}</h3>
+          {item.subtitle && <p className="home-featured-subtitle">{item.subtitle}</p>}
         </div>
       </div>
     </button>
@@ -31,24 +37,67 @@ export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: Featur
   const scrollRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const { t } = useI18n()
+  const [activeIndex, setActiveIndex] = useState(0)
 
-  const scroll = useCallback((dir: -1 | 1) => {
+  /** 根据视口中心与卡片中心距离，判定当前「居中」项索引 */
+  const updateActiveIndex = useCallback(() => {
+    const el = scrollRef.current
+    if (!el || items.length === 0) return
+    const cards = Array.from(el.querySelectorAll<HTMLElement>('.home-featured-card'))
+    if (cards.length === 0) return
+    const center = el.scrollLeft + el.clientWidth / 2
+    let closest = 0
+    let minDist = Infinity
+    cards.forEach((card, i) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2
+      const dist = Math.abs(center - cardCenter)
+      if (dist < minDist) {
+        minDist = dist
+        closest = i
+      }
+    })
+    setActiveIndex(closest)
+  }, [items.length])
+
+  useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-    el.scrollBy({ left: dir * 340, behavior: 'smooth' })
+    updateActiveIndex()
+    el.addEventListener('scroll', updateActiveIndex, { passive: true })
+    window.addEventListener('resize', updateActiveIndex)
+    return () => {
+      el.removeEventListener('scroll', updateActiveIndex)
+      window.removeEventListener('resize', updateActiveIndex)
+    }
+  }, [updateActiveIndex, items])
+
+  const scrollToIndex = useCallback((index: number) => {
+    const el = scrollRef.current
+    if (!el) return
+    const cards = el.querySelectorAll<HTMLElement>('.home-featured-card')
+    const target = cards[index]
+    if (!target) return
+    const left = target.offsetLeft - (el.clientWidth - target.offsetWidth) / 2
+    el.scrollTo({ left, behavior: 'smooth' })
   }, [])
+
+  const go = useCallback((dir: -1 | 1) => {
+    const next = Math.max(0, Math.min(items.length - 1, activeIndex + dir))
+    scrollToIndex(next)
+  }, [activeIndex, items.length, scrollToIndex])
 
   if (items.length === 0) return null
 
   return (
-    <section className="relative mx-auto w-full max-w-[1200px]">
-      <h2 className="mb-5 text-lg font-medium text-white">{t.home.featured}</h2>
+    <section className="home-featured-carousel">
+      <h2 className="home-featured-heading">{t.home.featured}</h2>
 
-      <div className="relative">
+      <div className="home-featured-stage">
         <button
           type="button"
-          onClick={() => scroll(-1)}
-          className="home-carousel-btn absolute -left-3 top-1/2 z-10 hidden -translate-y-1/2 md:flex"
+          onClick={() => go(-1)}
+          disabled={activeIndex <= 0}
+          className="home-carousel-btn home-carousel-btn--prev ui-clickable"
           aria-label="上一项"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -56,14 +105,12 @@ export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: Featur
           </svg>
         </button>
 
-        <div
-          ref={scrollRef}
-          className="home-carousel-track flex gap-4 overflow-x-auto pb-2 scroll-smooth"
-        >
-          {items.map((item) => (
+        <div ref={scrollRef} className="home-carousel-track">
+          {items.map((item, i) => (
             <FeaturedCard
               key={item.id}
               item={item}
+              isCenter={i === activeIndex}
               onClick={() => item.link && navigate(item.link)}
             />
           ))}
@@ -71,8 +118,9 @@ export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: Featur
 
         <button
           type="button"
-          onClick={() => scroll(1)}
-          className="home-carousel-btn absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 md:flex"
+          onClick={() => go(1)}
+          disabled={activeIndex >= items.length - 1}
+          className="home-carousel-btn home-carousel-btn--next ui-clickable"
           aria-label="下一项"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -1,3 +1,7 @@
+/**
+ * 全站 i18n 文案包（en / zh / ko / fr）。
+ * ko、fr 暂 fallback 到英文，见 getMessages 实现。
+ */
 import type { AppLang } from '../utils/lang'
 
 export type Messages = {
@@ -50,6 +54,12 @@ export type Messages = {
     editedAt: string
     exploreTapTV: string
     viewAll: string
+    model: {
+      auto: string
+      subscribe: string
+      comingSoon: string
+      howToChoose: string
+    }
   }
   workspace: {
     personal: string
@@ -57,7 +67,29 @@ export type Messages = {
     search: string
     showAll: string
     newProject: string
+    newFolder: string
     empty: string
+    colPreview: string
+    colName: string
+    colType: string
+    colContent: string
+    colCreated: string
+    colUpdated: string
+    typeFolder: string
+    typeProject: string
+    projectCountUnit: string
+    filter: {
+      filterSection: string
+      sortSection: string
+      orderSection: string
+      showAll: string
+      foldersOnly: string
+      projectsOnly: string
+      sortUpdated: string
+      sortCreated: string
+      newestFirst: string
+      oldestFirst: string
+    }
   }
   taptv: {
     sortFeatured: string
@@ -107,9 +139,15 @@ export type Messages = {
     textToVideo: string
     imageToVideo: string
     smartVideo: string
-    audioToVideo: string
-    digitalHuman: string
+    mixVideo: string
+    lyrics: string
     promoBanner: string
+    backToWorkspace: string
+    scenes: string
+    projectSection: string
+    rename: string
+    newProject: string
+    delete: string
   }
   userMenu: {
     createTeam: string
@@ -172,14 +210,42 @@ const zh: Messages = {
     editedAt: '编辑于',
     exploreTapTV: '探索 TapTV',
     viewAll: '查看全部',
+    model: {
+      auto: 'Auto',
+      subscribe: '订阅解锁',
+      comingSoon: '即将上线',
+      howToChoose: '如何选择模型？',
+    },
   },
   workspace: {
     personal: '个人',
     team: '团队项目',
     search: '搜索',
     showAll: '显示全部',
-    newProject: '新增项目',
+    newProject: '新建项目',
+    newFolder: '新建文件夹',
     empty: '暂无匹配项目',
+    colPreview: '预览',
+    colName: '名称',
+    colType: '类型',
+    colContent: '内容',
+    colCreated: '创建时间',
+    colUpdated: '最近更新',
+    typeFolder: '文件夹',
+    typeProject: '项目',
+    projectCountUnit: '个项目',
+    filter: {
+      filterSection: '筛选',
+      sortSection: '排序方式',
+      orderSection: '顺序',
+      showAll: '显示全部',
+      foldersOnly: '仅文件夹',
+      projectsOnly: '仅项目',
+      sortUpdated: '按最近修改',
+      sortCreated: '按创建日期',
+      newestFirst: '最新优先',
+      oldestFirst: '最早优先',
+    },
   },
   taptv: {
     sortFeatured: '编辑精选',
@@ -224,14 +290,20 @@ const zh: Messages = {
     justNow: '刚刚',
     community: '社区',
     share: '分享',
-    aiHint: '直接自由生成，或查看模板',
-    aiSubHint: '索尔',
+    aiHint: '画布自由生成，或查看模板',
+    aiSubHint: '草稿',
     textToVideo: '文字生成视频',
     imageToVideo: '图片生成视频',
-    smartVideo: '智能视频生成',
-    audioToVideo: '音频生成视频',
-    digitalHuman: '数字人',
-    promoBanner: '体验 Seedance 2.0 Mini 继续这个项目',
+    smartVideo: '智能生成视频',
+    mixVideo: '混合生成视频',
+    lyrics: '歌词',
+    promoBanner: '体验 Seedance 2.0 Mini 快速生成一条视频',
+    backToWorkspace: '返回工作空间',
+    scenes: '场景',
+    projectSection: '项目',
+    rename: '重命名',
+    newProject: '新建项目',
+    delete: '删除',
   },
   userMenu: {
     createTeam: '创建团队',
@@ -294,6 +366,12 @@ const en: Messages = {
     editedAt: 'Edited',
     exploreTapTV: 'Explore TapTV',
     viewAll: 'View all',
+    model: {
+      auto: 'Auto',
+      subscribe: 'Subscribe to unlock',
+      comingSoon: 'Coming soon',
+      howToChoose: 'How to choose a model?',
+    },
   },
   workspace: {
     personal: 'Personal',
@@ -301,7 +379,29 @@ const en: Messages = {
     search: 'Search',
     showAll: 'Show all',
     newProject: 'New project',
-    empty: 'No matching projects',
+    newFolder: 'New folder',
+    empty: 'No matching items',
+    colPreview: 'Preview',
+    colName: 'Name',
+    colType: 'Type',
+    colContent: 'Content',
+    colCreated: 'Created',
+    colUpdated: 'Last updated',
+    typeFolder: 'Folder',
+    typeProject: 'Project',
+    projectCountUnit: 'projects',
+    filter: {
+      filterSection: 'Filter',
+      sortSection: 'Sort by',
+      orderSection: 'Order',
+      showAll: 'Show all',
+      foldersOnly: 'Folders only',
+      projectsOnly: 'Projects only',
+      sortUpdated: 'Last modified',
+      sortCreated: 'Creation date',
+      newestFirst: 'Newest first',
+      oldestFirst: 'Oldest first',
+    },
   },
   taptv: {
     sortFeatured: 'Editor\'s pick',
@@ -346,14 +446,20 @@ const en: Messages = {
     justNow: 'just now',
     community: 'Community',
     share: 'Share',
-    aiHint: 'Generate freely, or browse templates',
-    aiSubHint: 'Thor',
+    aiHint: 'Generate on canvas, or browse templates',
+    aiSubHint: 'Draft',
     textToVideo: 'Text to video',
     imageToVideo: 'Image to video',
     smartVideo: 'Smart video',
-    audioToVideo: 'Audio to video',
-    digitalHuman: 'Digital human',
-    promoBanner: 'Try Seedance 2.0 Mini to continue this project',
+    mixVideo: 'Mixed video',
+    lyrics: 'Lyrics',
+    promoBanner: 'Try Seedance 2.0 Mini to quickly generate a video',
+    backToWorkspace: 'Back to workspace',
+    scenes: 'Scenes',
+    projectSection: 'Project',
+    rename: 'Rename',
+    newProject: 'New project',
+    delete: 'Delete',
   },
   userMenu: {
     createTeam: 'Create team',

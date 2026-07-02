@@ -1,3 +1,4 @@
+/** 主应用顶栏：Logo、导航、用户菜单 */
 import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { TapNowLogo } from '../auth/TapNowLogo'

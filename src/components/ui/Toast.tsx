@@ -1,3 +1,4 @@
+/** Toast 容器：订阅 toastStore 渲染队列 */
 import { useToastStore } from '../../store/toastStore'
 
 export function ToastContainer() {

@@ -1,3 +1,4 @@
+/** 发布到 TapTV 表单弹窗（当前为 Mock 提交 + Toast） */
 import { useState } from 'react'
 import { Modal } from '../ui/Modal'
 import { useI18n } from '../../store/langStore'

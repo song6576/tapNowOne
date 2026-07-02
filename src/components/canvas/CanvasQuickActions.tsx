@@ -1,3 +1,4 @@
+/** 空画布中心快捷操作：文生视频、图生视频等 */
 import { memo } from 'react'
 import { useI18n } from '../../store/langStore'
 
@@ -5,24 +6,24 @@ interface CanvasQuickActionsProps {
   onTextToVideo: () => void
   onImageToVideo: () => void
   onSmartVideo: () => void
-  onAudioToVideo: () => void
-  onDigitalHuman: () => void
+  onMixVideo: () => void
+  onLyrics: () => void
 }
 
 const QUICK_ACTIONS = [
-  { key: 'textToVideo' as const, icon: '📺' },
+  { key: 'textToVideo' as const, icon: '▶' },
   { key: 'imageToVideo' as const, icon: '🖼' },
   { key: 'smartVideo' as const, icon: '✨' },
-  { key: 'audioToVideo' as const, icon: '🎵' },
-  { key: 'digitalHuman' as const, icon: '👤' },
+  { key: 'mixVideo' as const, icon: '⚡' },
+  { key: 'lyrics' as const, icon: '♪' },
 ] as const
 
 export const CanvasQuickActions = memo(function CanvasQuickActions({
   onTextToVideo,
   onImageToVideo,
   onSmartVideo,
-  onAudioToVideo,
-  onDigitalHuman,
+  onMixVideo,
+  onLyrics,
 }: CanvasQuickActionsProps) {
   const { t } = useI18n()
   const c = t.canvas
@@ -31,15 +32,16 @@ export const CanvasQuickActions = memo(function CanvasQuickActions({
     textToVideo: onTextToVideo,
     imageToVideo: onImageToVideo,
     smartVideo: onSmartVideo,
-    audioToVideo: onAudioToVideo,
-    digitalHuman: onDigitalHuman,
+    mixVideo: onMixVideo,
+    lyrics: onLyrics,
   }
 
   return (
     <div className="canvas-quick-actions pointer-events-auto">
       <div className="canvas-quick-badge">
-        <span className="text-white/90">✨ {c.aiSubHint}</span>
-        <span className="text-white/45">{c.aiHint}</span>
+        <span className="canvas-quick-badge-icon">✨</span>
+        <span className="font-medium text-white/90">{c.aiSubHint}</span>
+        <span className="text-white/40">{c.aiHint}</span>
       </div>
       <div className="canvas-quick-row">
         {QUICK_ACTIONS.map((action) => (
@@ -49,7 +51,7 @@ export const CanvasQuickActions = memo(function CanvasQuickActions({
             onClick={handlers[action.key]}
             className="canvas-quick-btn ui-clickable"
           >
-            <span className="text-base">{action.icon}</span>
+            <span className="canvas-quick-btn-icon">{action.icon}</span>
             <span>{c[action.key]}</span>
           </button>
         ))}

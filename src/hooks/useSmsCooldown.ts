@@ -1,3 +1,4 @@
+/** 短信冷却 React Hook：剩余秒数、canSend、triggerCooldown */
 import { useCallback, useEffect, useState } from 'react'
 import {
   getSmsCooldownRemaining,
@@ -20,6 +21,7 @@ export function useSmsCooldown(phone: string) {
     refresh()
   }, [refresh])
 
+  // 每秒刷新剩余冷却秒数
   useEffect(() => {
     if (remaining <= 0) return
     const id = window.setInterval(refresh, 1000)

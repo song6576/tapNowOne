@@ -1,3 +1,4 @@
+/** Google 登录：透明 overlay 覆盖官方按钮样式 */
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 
 type Props = {

@@ -1,3 +1,4 @@
+/** ReactFlow 画布：节点交互、viewport 同步、Delete 删节点 */
 import { useCallback, useEffect } from 'react'
 import {
   ReactFlow,
@@ -11,7 +12,7 @@ import {
 import { useCanvasStore } from '../store/canvasStore'
 import { nodeTypes } from './nodes'
 
-export function FlowCanvas() {
+export function FlowCanvas({ hideChrome = false }: { hideChrome?: boolean }) {
   const nodes = useCanvasStore((s) => s.nodes)
   const edges = useCanvasStore((s) => s.edges)
   const project = useCanvasStore((s) => s.project)
@@ -34,6 +35,7 @@ export function FlowCanvas() {
     [setViewport],
   )
 
+  // Delete/Backspace 删除选中节点；输入框内编辑时不拦截
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -66,17 +68,21 @@ export function FlowCanvas() {
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#27272a" />
-        <Controls showInteractive={false} position="bottom-left" />
-        <MiniMap
-          nodeColor={(n) => {
-            const colors: Record<string, string> = {
-              text: '#60a5fa', image: '#a78bfa', video: '#fbbf24', audio: '#34d399',
-            }
-            return colors[n.type ?? 'text'] ?? '#71717a'
-          }}
-          maskColor="rgba(9,9,11,0.85)"
-          className="!bottom-3 !right-[calc(var(--tn-panel-w)+12px)]"
-        />
+        {!hideChrome && (
+          <>
+            <Controls showInteractive={false} position="bottom-left" />
+            <MiniMap
+              nodeColor={(n) => {
+                const colors: Record<string, string> = {
+                  text: '#60a5fa', image: '#a78bfa', video: '#fbbf24', audio: '#34d399',
+                }
+                return colors[n.type ?? 'text'] ?? '#71717a'
+              }}
+              maskColor="rgba(9,9,11,0.85)"
+              className="!bottom-3 !right-[calc(var(--tn-panel-w)+12px)]"
+            />
+          </>
+        )}
       </ReactFlow>
     </div>
   )

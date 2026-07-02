@@ -1,3 +1,4 @@
+/** 首页：Hero 输入框 + 最近项目 + 精选轮播 + 探索 TapTV（mock 并行加载） */
 import { useEffect, useState } from 'react'
 import { HeroPrompt } from '../components/home/HeroPrompt'
 import { ProjectRow } from '../components/home/ProjectRow'
@@ -14,6 +15,7 @@ export function HomePage() {
   const [taptv, setTaptv] = useState<TapTVItem[]>([])
   const [loading, setLoading] = useState(true)
 
+  // 并行拉取首页三块数据；组件卸载时 cancelled 防止 setState 泄漏
   useEffect(() => {
     let cancelled = false
     Promise.all([mockListProjects(), mockGetFeatured(), mockGetTapTV()])
@@ -32,20 +34,26 @@ export function HomePage() {
 
   return (
     <main className="home-page flex flex-1 flex-col overflow-y-auto">
-      <div className="home-page-grid flex flex-1 flex-col">
-        <div className="mx-auto flex w-full max-w-[960px] flex-1 flex-col justify-center px-5 py-10 md:px-8">
-          <HeroPrompt />
-          <div className="mt-10">
-            {loading ? <ProjectRowSkeleton /> : <ProjectRow projects={projects} />}
+      <div className="home-page-grid flex flex-col">
+        <section className="home-hero-section home-section-pad pb-6 pt-8 md:pt-10">
+          <div className="home-hero-stack">
+            <HeroPrompt />
+            <div className="mt-8">
+              {loading ? <ProjectRowSkeleton /> : <ProjectRow projects={projects} />}
+            </div>
           </div>
-        </div>
-
-        <section className="border-t border-white/[0.04] px-5 py-10 md:px-8">
-          {loading ? <FeaturedCarouselSkeleton /> : <FeaturedCarousel items={featured} />}
         </section>
 
-        <section className="border-t border-white/[0.04] px-5 py-10 md:px-8">
-          {!loading && <TapTVExploreSection items={taptv} />}
+        <section className="home-featured-section home-section-pad border-t border-white/[0.04] py-10 md:py-12">
+          <div className="home-wide-stack">
+            {loading ? <FeaturedCarouselSkeleton /> : <FeaturedCarousel items={featured} />}
+          </div>
+        </section>
+
+        <section className="home-section-pad border-t border-white/[0.04] py-10 md:py-12">
+          <div className="home-wide-stack">
+            {!loading && <TapTVExploreSection items={taptv} />}
+          </div>
         </section>
       </div>
     </main>

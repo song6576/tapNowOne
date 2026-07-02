@@ -1,3 +1,4 @@
+/** 语言选项与 localStorage 读取、html lang 属性映射 */
 export type AppLang = 'en' | 'zh' | 'ko' | 'fr'
 
 export const LANG_KEY = 'tapflow_lang'

@@ -1,3 +1,4 @@
+/** 认证 localStorage：token、user 读写与 Authorization 头 */
 const TOKEN_KEY = 'tapflow_token'
 const USER_KEY = 'tapflow_user'
 

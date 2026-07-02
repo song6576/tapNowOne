@@ -1,3 +1,4 @@
+/** 设置抽屉 */
 import { MOCK_USER } from '../../mock/data'
 
 interface SettingsDrawerProps {

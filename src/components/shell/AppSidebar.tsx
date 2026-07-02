@@ -1,3 +1,4 @@
+/** 旧版侧边栏（部分页面可能未使用） */
 import { NavLink } from 'react-router-dom'
 import { NAV_ITEMS, MOCK_USER } from '../../mock/data'
 import { useI18n } from '../../store/langStore'

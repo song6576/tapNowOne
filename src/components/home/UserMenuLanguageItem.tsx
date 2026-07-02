@@ -1,3 +1,4 @@
+/** 用户菜单内语言切换子项 */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLangStore } from '../../store/langStore'
 import { getLangLabel, LANG_OPTIONS } from '../../utils/lang'

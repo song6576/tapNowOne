@@ -1,7 +1,9 @@
+/** 首页最近项目：新建 + 最多 3 个项目卡片，链接到工作空间 */
 import { memo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { MockProject } from '../../mock/data'
 import { useI18n } from '../../store/langStore'
+import { useWorkspaceStore } from '../../store/workspaceStore'
 import { formatRelativeTime } from '../../utils/time'
 
 const ProjectCard = memo(function ProjectCard({
@@ -50,13 +52,19 @@ interface ProjectRowProps {
 export const ProjectRow = memo(function ProjectRow({ projects }: ProjectRowProps) {
   const navigate = useNavigate()
   const { t } = useI18n()
+  const createProject = useWorkspaceStore((s) => s.createProject)
+
+  const handleNewProject = () => {
+    const proj = createProject(null)
+    navigate(`/canvas/${proj.id}`)
+  }
 
   return (
-    <section className="mx-auto w-full max-w-[960px]">
+    <section className="w-full">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <button
           type="button"
-          onClick={() => navigate('/canvas')}
+          onClick={handleNewProject}
           className="home-project-card home-project-new flex flex-col items-center justify-center gap-2 py-10"
         >
           <span className="text-2xl text-white/50">+</span>

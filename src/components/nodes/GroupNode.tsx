@@ -1,3 +1,4 @@
+/** 分组容器节点 */
 import type { NodeProps } from '@xyflow/react'
 import type { NodeData } from '../../types'
 

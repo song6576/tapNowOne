@@ -1,3 +1,4 @@
+/** 用户头像下拉：设置、语言、登出 */
 import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { HoverDropdown } from '../ui/HoverDropdown'

@@ -1,3 +1,4 @@
+/** 画布核心状态：ReactFlow 节点/边、持久化、单节点生成、工作流、分镜、导出 */
 import { create } from 'zustand'
 import {
   applyNodeChanges,
@@ -52,6 +53,7 @@ interface CanvasStore {
 }
 
 let nodeCounter = 0
+/** 防抖写入 localStorage，避免拖拽节点时频繁 IO */
 let persistTimer: ReturnType<typeof setTimeout> | null = null
 
 function nextNodePosition(index = 0): { x: number; y: number } {
@@ -68,6 +70,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   cloudId: null,
   exporting: false,
 
+  /** 从 localStorage 恢复上次编辑的画布（无 projectId 路由时使用） */
   init: () => {
     const saved = loadProject()
     if (saved) {
@@ -111,7 +114,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   onConnect: (connection) => {
-    if (connection.source === connection.target) return
+    if (connection.source === connection.target) return // 禁止自环
     set((s) => ({
       edges: addEdge(
         {
@@ -190,7 +193,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   schedulePersist: () => {
     if (persistTimer) clearTimeout(persistTimer)
-    persistTimer = setTimeout(() => get().persist(), 800)
+    persistTimer = setTimeout(() => get().persist(), 800) // 800ms 防抖
   },
 
   persist: () => {
@@ -203,6 +206,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     return nodes.find((n) => n.id === selectedNodeId)
   },
 
+  /** 单节点 AI 生成：合并上游 prompt/图片，调用 services/api.generateNode */
   generateNode: async (nodeId) => {
     const { nodes, edges, updateNodeData } = get()
     const node = nodes.find((n) => n.id === nodeId)
@@ -234,6 +238,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }
   },
 
+  /** 按拓扑顺序批量生成；已 done 且有 outputUrl 的节点跳过 */
   runWorkflow: async () => {
     set({ workflowRunning: true })
     let done = 0
@@ -256,6 +261,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }
   },
 
+  /** Agent 分镜：创建 1 个 text 节点 + N 个 image 节点，text → image 连线 */
   applyStoryboard: (scenes, script) => {
     const textId = crypto.randomUUID()
     const textNode: CanvasNode = {

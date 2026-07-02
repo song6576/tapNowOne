@@ -1,3 +1,7 @@
+/**
+ * 真实后端 HTTP 客户端（/api 前缀，由 dev proxy 转发）。
+ * 认证、项目 CRUD、生成任务、Agent 对话均在此定义。
+ */
 import { authHeaders } from '../utils/auth'
 import type { User } from '../utils/auth'
 import type { CanvasProject } from '../types'
@@ -44,6 +48,7 @@ export type StoryboardScene = {
 
 const API_BASE = '/api'
 
+/** 统一解析 FastAPI 风格错误响应 */
 async function parseError(res: Response): Promise<string> {
   const err = await res.json().catch(() => ({}))
   const detail = err.detail ?? err.message
@@ -168,6 +173,7 @@ export async function getTask(taskId: string): Promise<TaskResult> {
   return res.json()
 }
 
+/** 轮询异步生成任务，直到完成/失败/超时 */
 export async function pollTask(taskId: string, intervalMs = 1500, maxAttempts = 120): Promise<TaskResult> {
   for (let i = 0; i < maxAttempts; i++) {
     const task = await getTask(taskId)

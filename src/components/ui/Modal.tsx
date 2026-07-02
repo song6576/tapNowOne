@@ -1,3 +1,4 @@
+/** 通用模态框：遮罩、标题、关闭 */
 import { useEffect, type ReactNode } from 'react'
 
 interface ModalProps {

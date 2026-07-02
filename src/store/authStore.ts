@@ -1,3 +1,4 @@
+/** 认证状态：登录/注册/Google 登录、token 校验、登出 */
 import { create } from 'zustand'
 import { clearAuth, getStoredUser, setAuth, type User } from '../utils/auth'
 import * as api from '../api/client'
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   loading: false,
   initialized: false,
 
+  /** 应用启动：有 token 则请求 /auth/me 校验，失败则清本地凭证 */
   init: async () => {
     const token = localStorage.getItem('tapflow_token')
     if (!token) {
