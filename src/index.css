@@ -282,7 +282,63 @@ html, body, #root {
 .user-menu-panel {
   animation: menu-in 0.18s ease-out;
 }
+.dropdown-panel {
+  animation: menu-in 0.18s ease-out;
+}
 @keyframes menu-in {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Toast ── */
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.toast-enter { animation: toast-slide-in 0.25s ease; }
+
+/* ── Logo animation ── */
+@keyframes logo-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-2px, -3px) scale(1.04); }
+  66% { transform: translate(2px, 2px) scale(0.96); }
+}
+.logo-circle-1 { animation: logo-float 4s ease-in-out infinite; transform-origin: center; }
+.logo-circle-2 { animation: logo-float 4s ease-in-out infinite 0.6s; transform-origin: center; }
+.logo-circle-3 { animation: logo-float 4s ease-in-out infinite 1.2s; transform-origin: center; }
+
+/* ── Skeleton ── */
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+/* ── Login back button ── */
+.login-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.login-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
 }

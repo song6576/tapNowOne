@@ -14,13 +14,13 @@ export function TapNowLogo({ size = 'md', showText = true }: TapNowLogoProps) {
 
   return (
     <div className="flex items-center gap-2.5">
-      <svg width={icon} height={icon} viewBox="0 0 40 40" fill="none" aria-hidden>
-        <circle cx="14" cy="20" r="11" fill="#47bfff" fillOpacity="0.85" />
-        <circle cx="22" cy="20" r="11" fill="#e879f9" fillOpacity="0.8" />
-        <circle cx="30" cy="20" r="11" fill="#fbbf24" fillOpacity="0.85" />
+      <svg width={icon} height={icon} viewBox="0 0 40 40" fill="none" aria-hidden className="overflow-visible">
+        <circle className="logo-circle-1" cx="14" cy="20" r="11" fill="#47bfff" fillOpacity="0.85" />
+        <circle className="logo-circle-2" cx="22" cy="20" r="11" fill="#e879f9" fillOpacity="0.8" />
+        <circle className="logo-circle-3" cx="30" cy="20" r="11" fill="#fbbf24" fillOpacity="0.85" />
       </svg>
       {showText && (
-        <span className={`${text} font-semibold tracking-tight text-white`}>TapNow</span>
+        <span className={`${text} font-semibold tracking-tight text-white`}>TapNowOne</span>
       )}
     </div>
   )

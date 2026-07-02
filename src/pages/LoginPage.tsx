@@ -1,20 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { TapNowLogo } from '../components/auth/TapNowLogo'
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
+import { LanguageDropdown, type AppLang } from '../components/ui/LanguageDropdown'
 import { GOOGLE_CLIENT_ID } from '../config'
 import { useAuthStore } from '../store/authStore'
+import { useToastStore } from '../store/toastStore'
 
-type Lang = 'en' | 'zh' | 'ja' | 'ko' | 'fr'
 type Step = 'email' | 'auth' | 'phone'
-
-const LANG_OPTIONS: { id: Lang; label: string; beta?: boolean }[] = [
-  { id: 'en', label: 'English' },
-  { id: 'zh', label: '简体中文' },
-  { id: 'ja', label: '日本語' },
-  { id: 'ko', label: '한국어', beta: true },
-  { id: 'fr', label: 'Français', beta: true },
-]
 
 function GoogleIcon() {
   return (
@@ -35,69 +28,13 @@ function PhoneIcon() {
   )
 }
 
-function ChevronDown({ open }: { open: boolean }) {
+function BackIconButton({ onClick, title }: { onClick: () => void; title: string }) {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={`transition-transform ${open ? 'rotate-180' : ''}`}
-      aria-hidden
-    >
-      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function LanguageSelector({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const current = LANG_OPTIONS.find((o) => o.id === lang) ?? LANG_OPTIONS[1]
-
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [])
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-white/80 transition hover:bg-white/5 hover:text-white"
-      >
-        {current.label}
-        <ChevronDown open={open} />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full z-20 mt-1 min-w-[160px] overflow-hidden rounded-xl border border-white/10 bg-[#1a1a1a] py-1 shadow-2xl">
-          {LANG_OPTIONS.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => { onChange(opt.id); setOpen(false) }}
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-white/90 hover:bg-white/5"
-            >
-              <span>
-                {opt.label}
-                {opt.beta && <span className="ml-1 text-white/40">Beta</span>}
-              </span>
-              {lang === opt.id && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/70">
-                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <button type="button" onClick={onClick} className="login-back-btn" title={title} aria-label={title}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
   )
 }
 
@@ -123,10 +60,11 @@ const copy = {
     phoneHint: '请输入手机号，我们将发送验证码（演示模式暂未接入）',
     phonePlaceholder: '手机号码',
     comingSoon: 'Google 登录即将上线',
-    googleNotConfigured: '请配置 VITE_GOOGLE_CLIENT_ID',
     googleFailed: 'Google 登录失败',
     agreeTerms: '请先同意服务条款',
-    guest: '暂不登录，本地模式使用',
+    loginSuccess: '登录成功',
+    registerSuccess: '注册成功',
+    authFailed: '操作失败',
   },
   en: {
     title: 'Log in or sign up',
@@ -149,15 +87,20 @@ const copy = {
     phoneHint: 'Enter your phone number to receive a code (demo only)',
     phonePlaceholder: 'Phone number',
     comingSoon: 'Google sign-in coming soon',
-    googleNotConfigured: 'Set VITE_GOOGLE_CLIENT_ID first',
     googleFailed: 'Google sign-in failed',
     agreeTerms: 'Please agree to the terms first',
-    guest: 'Continue without signing in',
+    loginSuccess: 'Signed in successfully',
+    registerSuccess: 'Account created successfully',
+    authFailed: 'Something went wrong',
   },
 } as const
 
+function getCopy(lang: AppLang) {
+  return lang === 'en' ? copy.en : copy.zh
+}
+
 export function LoginPage() {
-  const [lang, setLang] = useState<Lang>('zh')
+  const [lang, setLang] = useState<AppLang>('zh')
   const [step, setStep] = useState<Step>('email')
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
@@ -165,43 +108,52 @@ export function LoginPage() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [agreed, setAgreed] = useState(false)
-  const [error, setError] = useState('')
-  const [hint, setHint] = useState('')
 
   const login = useAuthStore((s) => s.login)
   const register = useAuthStore((s) => s.register)
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
   const loading = useAuthStore((s) => s.loading)
+  const showToast = useToastStore((s) => s.showToast)
   const navigate = useNavigate()
   const location = useLocation()
+
+  const t = getCopy(lang)
 
   const redirectAfterLogin = () => {
     const from = (location.state as { from?: string } | null)?.from
     navigate(from && from !== '/login' ? from : '/home', { replace: true })
   }
 
-  const t = lang === 'en' ? copy.en : copy.zh
+  const successAndRedirect = (message: string) => {
+    showToast({ type: 'success', message })
+    window.setTimeout(redirectAfterLogin, 600)
+  }
+
+  const requireTerms = () => {
+    showToast({ type: 'warning', message: t.agreeTerms })
+    return false
+  }
 
   const handleGoogleSuccess = async (credential: string) => {
-    setError('')
-    setHint('')
     if (!agreed) {
-      setError(t.agreeTerms)
+      requireTerms()
       return
     }
     try {
       await loginWithGoogle(credential)
-      redirectAfterLogin()
+      successAndRedirect(t.loginSuccess)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.googleFailed)
+      showToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : t.googleFailed,
+      })
     }
   }
 
   const handleEmailContinue = (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
     if (!agreed) {
-      setError(t.agreeTerms)
+      requireTerms()
       return
     }
     if (!email.trim()) return
@@ -210,16 +162,19 @@ export function LoginPage() {
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
     try {
       if (mode === 'login') {
         await login(email, password)
+        successAndRedirect(t.loginSuccess)
       } else {
         await register(email, password, name || email.split('@')[0])
+        successAndRedirect(t.registerSuccess)
       }
-      redirectAfterLogin()
     } catch (err) {
-      setError(err instanceof Error ? err.message : '操作失败')
+      showToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : t.authFailed,
+      })
     }
   }
 
@@ -230,7 +185,7 @@ export function LoginPage() {
     <div className="login-page relative min-h-screen overflow-auto bg-black text-white">
       <header className="fixed inset-x-0 top-0 z-10 flex items-center justify-between px-6 py-5 md:px-10">
         <TapNowLogo size="sm" />
-        <LanguageSelector lang={lang} onChange={setLang} />
+        <LanguageDropdown value={lang} onChange={setLang} />
       </header>
 
       <main className="flex min-h-screen items-center justify-center px-6 pb-12 pt-24">
@@ -253,13 +208,13 @@ export function LoginPage() {
                   label={t.google}
                   disabled={loading}
                   onSuccess={handleGoogleSuccess}
-                  onError={(message) => setError(message || t.googleFailed)}
+                  onError={(message) => showToast({ type: 'error', message: message || t.googleFailed })}
                 />
               ) : (
                 <button
                   type="button"
                   className={outlineBtn}
-                  onClick={() => setHint(t.googleNotConfigured)}
+                  onClick={() => showToast({ type: 'info', message: t.comingSoon })}
                 >
                   <GoogleIcon />
                   {t.google}
@@ -268,7 +223,7 @@ export function LoginPage() {
               <button
                 type="button"
                 className={outlineBtn}
-                onClick={() => { setStep('phone'); setError(''); setHint('') }}
+                onClick={() => setStep('phone')}
               >
                 <PhoneIcon />
                 {t.phone}
@@ -302,15 +257,12 @@ export function LoginPage() {
 
           {step === 'auth' && (
             <div className="mt-10 space-y-4">
-              <div className="flex items-center justify-between rounded-full border border-white/15 px-4 py-3 text-sm text-white/70">
+              <div className="flex items-center gap-2">
+                <BackIconButton onClick={() => setStep('email')} title={t.back} />
+              </div>
+
+              <div className="rounded-full border border-white/15 px-4 py-3 text-sm text-white/70">
                 <span className="truncate">{email}</span>
-                <button
-                  type="button"
-                  onClick={() => setStep('email')}
-                  className="shrink-0 text-white/45 hover:text-white/80"
-                >
-                  {t.back}
-                </button>
               </div>
 
               <form onSubmit={handleAuthSubmit} className="space-y-4">
@@ -334,8 +286,6 @@ export function LoginPage() {
                   autoFocus
                 />
 
-                {error && <p className="text-center text-sm text-red-400">{error}</p>}
-
                 <button type="submit" disabled={loading} className="login-primary-btn">
                   {loading ? '...' : t.continue}
                 </button>
@@ -343,7 +293,7 @@ export function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}
+                onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
                 className="w-full text-center text-sm text-white/45 hover:text-white/70"
               >
                 {mode === 'login' ? t.switchRegister : t.switchLogin}
@@ -353,6 +303,9 @@ export function LoginPage() {
 
           {step === 'phone' && (
             <div className="mt-10 space-y-4">
+              <div className="flex items-center gap-2">
+                <BackIconButton onClick={() => setStep('email')} title={t.back} />
+              </div>
               <input
                 type="tel"
                 value={phone}
@@ -367,26 +320,7 @@ export function LoginPage() {
               >
                 {t.continue}
               </button>
-              <button
-                type="button"
-                onClick={() => setStep('email')}
-                className="w-full text-center text-sm text-white/45 hover:text-white/70"
-              >
-                {t.back}
-              </button>
             </div>
-          )}
-
-          {import.meta.env.DEV && GOOGLE_CLIENT_ID && step === 'email' && (
-            <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-left text-[11px] leading-relaxed text-white/40">
-              <p>调试：当前页面来源 <code className="text-white/60">{window.location.origin}</code></p>
-              <p className="mt-1 break-all">Client ID <code className="text-white/60">{GOOGLE_CLIENT_ID}</code></p>
-              <p className="mt-1">请在 Google Console 打开<strong className="text-white/55">同一个</strong> Client ID 的详情页，确认「JavaScript 来源」包含上方来源。</p>
-            </div>
-          )}
-
-          {(hint || (error && step === 'email')) && (
-            <p className="mt-4 text-center text-sm text-amber-400/90">{hint || error}</p>
           )}
 
           {step === 'email' && (
@@ -394,7 +328,7 @@ export function LoginPage() {
               <input
                 type="checkbox"
                 checked={agreed}
-                onChange={(e) => { setAgreed(e.target.checked); setError('') }}
+                onChange={(e) => setAgreed(e.target.checked)}
                 className="login-checkbox mt-0.5"
               />
               <span>

@@ -1,7 +1,8 @@
 import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { TapNowLogo } from '../auth/TapNowLogo'
-import { NAV_ITEMS, MOCK_USER } from '../../mock/data'
+import { NAV_ITEMS } from '../../mock/data'
+import { UserMenuDropdown } from './UserMenuDropdown'
 
 function NavIcon({ type }: { type: string }) {
   const cls = 'h-[18px] w-[18px]'
@@ -38,12 +39,7 @@ function NavIcon({ type }: { type: string }) {
   }
 }
 
-interface HomeTopNavProps {
-  userMenuOpen: boolean
-  onUserMenuToggle: () => void
-}
-
-export const HomeTopNav = memo(function HomeTopNav({ userMenuOpen, onUserMenuToggle }: HomeTopNavProps) {
+export const HomeTopNav = memo(function HomeTopNav() {
   return (
     <header className="home-topnav fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.06] bg-black/80 px-5 backdrop-blur-md md:px-8">
       <div className="flex items-center gap-3">
@@ -105,20 +101,7 @@ export const HomeTopNav = memo(function HomeTopNav({ userMenuOpen, onUserMenuTog
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <button
-          type="button"
-          onClick={onUserMenuToggle}
-          className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition ${
-            userMenuOpen ? 'bg-white/10' : 'hover:bg-white/5'
-          }`}
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-rose-500 text-sm font-medium text-white">
-            {MOCK_USER.name[0] ?? 'U'}
-          </span>
-          <span className="hidden max-w-[80px] truncate text-sm text-white/70 md:inline">
-            {MOCK_USER.name.slice(0, 8)}...
-          </span>
-        </button>
+        <UserMenuDropdown />
       </div>
     </header>
   )

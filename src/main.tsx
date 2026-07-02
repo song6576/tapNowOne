@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import { GOOGLE_CLIENT_ID } from './config'
 import { useAuthStore } from './store/authStore'
+import { ToastContainer } from './components/ui/Toast'
 
 function Bootstrap() {
   const init = useAuthStore((s) => s.init)
@@ -13,7 +14,12 @@ function Bootstrap() {
     void init()
   }, [init])
 
-  return <App />
+  return (
+    <>
+      <App />
+      <ToastContainer />
+    </>
+  )
 }
 
 const clientId = GOOGLE_CLIENT_ID ?? ''
