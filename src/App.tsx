@@ -6,6 +6,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { GuestRoute, ProtectedRoute } from './components/auth/AuthRoutes'
 import { AppLayout } from './layouts/AppLayout'
 import { HomePage } from './pages/HomePage'
+import { ProfilePage } from './pages/ProfilePage'
 import { TapTVPage } from './pages/TapTVPage'
 import { TapTVDetailPage } from './pages/TapTVDetailPage'
 import { ProjectsPage } from './pages/ProjectsPage'
@@ -28,6 +29,7 @@ export default function App() {
           {/* 主应用页面 — 顶部导航 */}
           <Route element={<AppLayout />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/home/profile" element={<ProfilePage />} />
             <Route path="/home/projects" element={<ProjectsPage />} />
             <Route path="/taptv" element={<TapTVPage />} />
             <Route path="/taptv/:id" element={<TapTVDetailPage />} />

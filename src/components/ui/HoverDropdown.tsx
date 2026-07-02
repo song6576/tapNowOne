@@ -9,6 +9,11 @@ interface HoverDropdownProps {
   panelClassName?: string
   /** hover：悬浮打开；click：点击打开（适合表单内选择） */
   mode?: 'hover' | 'click'
+  /** 受控开关；传入时配合 onOpenChange 使用 */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** hover 模式下关闭延迟（ms），默认 200 */
+  closeDelay?: number
 }
 
 export function HoverDropdown({
@@ -18,8 +23,18 @@ export function HoverDropdown({
   className = '',
   panelClassName = '',
   mode = 'hover',
+  open: openProp,
+  onOpenChange,
+  closeDelay = 200,
 }: HoverDropdownProps) {
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : internalOpen
+
+  const setOpen = useCallback((next: boolean) => {
+    if (!isControlled) setInternalOpen(next)
+    onOpenChange?.(next)
+  }, [isControlled, onOpenChange])
   const ref = useRef<HTMLDivElement>(null)
   const closeTimer = useRef<number | null>(null)
 
@@ -39,16 +54,16 @@ export function HoverDropdown({
   const handleLeave = () => {
     if (mode !== 'hover') return
     clearCloseTimer()
-    closeTimer.current = window.setTimeout(() => setOpen(false), 120)
+    closeTimer.current = window.setTimeout(() => setOpen(false), closeDelay)
   }
 
   const handleTriggerClick = () => {
-    if (mode === 'click') setOpen((v) => !v)
+    if (mode === 'click') setOpen(!open)
   }
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') setOpen(false)
-  }, [])
+  }, [setOpen])
 
   useEffect(() => {
     if (!open) return
@@ -63,7 +78,7 @@ export function HoverDropdown({
     }
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
-  }, [mode, open])
+  }, [mode, open, setOpen])
 
   return (
     <div
@@ -77,10 +92,12 @@ export function HoverDropdown({
       </div>
       {open && (
         <div
-          className={`absolute top-full z-50 pt-1 ${align === 'right' ? 'right-0' : 'left-0'}`}
+          className={`absolute top-full z-50 ${align === 'right' ? 'right-0' : 'left-0'}`}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >
+          {/* 透明桥接区：消除 trigger 与面板之间的 hover 断档 */}
+          <div className="h-2" aria-hidden />
           <div className={`dropdown-panel ${panelClassName}`}>
             {children}
           </div>

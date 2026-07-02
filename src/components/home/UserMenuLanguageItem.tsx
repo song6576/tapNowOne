@@ -76,7 +76,7 @@ export function UserMenuLanguageItem() {
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >
-          <div className="ui-glass-panel dropdown-panel min-w-[168px] overflow-hidden py-1">
+          <div className="user-menu-submenu-panel dropdown-panel min-w-[168px] overflow-hidden py-1">
             {LANG_OPTIONS.map((opt) => (
               <button
                 key={opt.id}

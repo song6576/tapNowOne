@@ -157,6 +157,179 @@ export type Messages = {
     partners: string
     help: string
     logout: string
+    teamSuffix: string
+    freeBadge: string
+    unlimitedQuota: string
+  }
+  createTeamModal: {
+    title: string
+    subtitle: string
+    noticeTitle: string
+    noticeBody: string
+    teamName: string
+    teamNamePlaceholder: string
+    cancel: string
+    confirm: string
+    success: string
+  }
+  profile: {
+    changeBanner: string
+    following: string
+    followers: string
+    favorites: string
+    share: string
+    tabPortfolio: string
+    tabSaved: string
+    savedLocked: string
+    featuredWorks: string
+    featuredEmpty: string
+    addFeatured: string
+    tabWorks: string
+    tabSeries: string
+    filterAll: string
+    worksEmpty: string
+  }
+  account: {
+    personalProfile: string
+    username: string
+    bio: string
+    social: string
+    socialPlaceholder: string
+    country: string
+    city: string
+    countryPlaceholder: string
+    cityPlaceholder: string
+    profession: string
+    professionPlaceholder: string
+    showJoinDate: string
+    email: string
+    comingSoon: string
+    sections: {
+      subscription: string
+      benefits: string
+      general: string
+      support: string
+    }
+    nav: {
+      subscription: string
+      modelMarket: string
+      recharge: string
+      teamBenefits: string
+      rewards: string
+      billing: string
+      usage: string
+      personal: string
+      team: string
+      tutorials: string
+      agentTutorials: string
+      logout: string
+    }
+    version: string
+  }
+  helpMenu: {
+    contact: string
+    tutorials: string
+    shortcuts: string
+    feedback: string
+  }
+  accountViews: {
+    subscription: {
+      title: string
+      subtitle: string
+      currency: string
+      subscribe: string
+      viewBenefits: string
+      cycles: { monthly: string; yearly: string; enterprise: string }
+      plans: { id: string; name: string; price: string; original: string; note: string; badge?: string; highlight?: boolean }[]
+    }
+    modelMarket: {
+      title: string
+      subtitle: string
+      buyNow: string
+      cards: { id: string; model: string; tier: string; price: string; tapies: string; bg: string }[]
+    }
+    recharge: {
+      title: string
+      freeBadge: string
+      balanceLabel: string
+      getTapies: string
+      rate: string
+      payAmount: string
+      submit: string
+    }
+    teamBenefits: {
+      balanceTitle: string
+      balanceHint: string
+      recharge: string
+      freePlan: string
+      upgradeHint: string
+      upgrade: string
+      yourTeam: string
+      teamId: string
+      copyTeamId: string
+      quotaTitle: string
+      quotaEmpty: string
+    }
+    rewards: {
+      title: string
+      inputLabel: string
+      inputPlaceholder: string
+      redeem: string
+      historyTitle: string
+      columns: string[]
+    }
+    billing: {
+      tabBills: string
+      tabTransactions: string
+      feedback: string
+      billsTitle: string
+      issueInvoice: string
+      billColumns: string[]
+      billsEmpty: string
+      billsEmptySub: string
+      txColumns: string[]
+      completed: string
+    }
+    usage: {
+      title: string
+      subtitle: string
+      totalUsage: string
+      agentUsage: string
+      statTotal: string
+      statPeak: string
+      statWeekly: string
+      statActive: string
+      statStreak: string
+      activityTitle: string
+      periods: { daily: string; weekly: string; cumulative: string }
+    }
+    teamSettings: {
+      title: string
+      teamIdLabel: string
+      copyTeamId: string
+      copiedTeamId: string
+      searchPlaceholder: string
+      inviteMember: string
+      colMember: string
+      colUsage: string
+      colRole: string
+      unlimitedQuota: string
+      you: string
+      owner: string
+    }
+    agentTutorials: {
+      modelsTitle: string
+      modelsDesc: string
+      modelName: string
+      modelTask: string
+      models: { name: string; task: string }[]
+      consumptionTitle: string
+      consumptionDesc: string
+      taskType: string
+      taskSuitable: string
+      estimatedTapies: string
+      tasks: { type: string; suitable: string; tapies: string }[]
+    }
   }
 }
 
@@ -313,6 +486,201 @@ const zh: Messages = {
     partners: '合作中心',
     help: '帮助中心',
     logout: '登出账号',
+    teamSuffix: '的团队',
+    freeBadge: 'FREE',
+    unlimitedQuota: '无额度限制',
+  },
+  createTeamModal: {
+    title: '创建团队',
+    subtitle: '新团队将拥有独立的工作空间',
+    noticeTitle: '重要提示',
+    noticeBody: '新团队拥有独立的计费账户，初始 Tapies 为 0。原有的权益与积分无法继承至新团队。',
+    teamName: '团队名称',
+    teamNamePlaceholder: '请输入团队名称',
+    cancel: '取消',
+    confirm: '确认',
+    success: '团队创建成功',
+  },
+  profile: {
+    changeBanner: '更换背景图片',
+    following: '已关注',
+    followers: '粉丝',
+    favorites: '收藏',
+    share: '分享',
+    tabPortfolio: '我的作品集',
+    tabSaved: '我的收藏',
+    savedLocked: '暂未开放',
+    featuredWorks: '代表作',
+    featuredEmpty: '向全世界展示你最得意的创作。',
+    addFeatured: '添加代表作',
+    tabWorks: '作品',
+    tabSeries: '系列',
+    filterAll: '全部',
+    worksEmpty: '暂无作品，去画布创作吧',
+  },
+  account: {
+    personalProfile: '个人简介',
+    username: '用户名',
+    bio: '个人简介',
+    social: '社交媒体',
+    socialPlaceholder: '在此粘贴社交主页链接',
+    country: '国家 / 地区',
+    city: '城市',
+    countryPlaceholder: '国家',
+    cityPlaceholder: '城市',
+    profession: '身份 / 职业',
+    professionPlaceholder: '写点什么，让大家更了解你',
+    showJoinDate: '显示入驻时间',
+    email: '邮箱',
+    comingSoon: '功能即将上线',
+    sections: {
+      subscription: '订阅和充值',
+      benefits: '权益和账单',
+      general: '通用设置',
+      support: '帮助与支持',
+    },
+    nav: {
+      subscription: '订阅套餐',
+      modelMarket: '模型超市',
+      recharge: '充值积分',
+      teamBenefits: '团队权益',
+      rewards: '奖励中心',
+      billing: '账单记录',
+      usage: '用量看板',
+      personal: '个人设置',
+      team: '团队设置',
+      tutorials: '使用教程',
+      agentTutorials: 'Agent 教程',
+      logout: '登出账号',
+    },
+    version: 'v2.10.19',
+  },
+  helpMenu: {
+    contact: '联系我们',
+    tutorials: '使用教程',
+    shortcuts: '快捷键',
+    feedback: '反馈问题',
+  },
+  accountViews: {
+    subscription: {
+      title: '选择你的套餐',
+      subtitle: '不止额度，更是灵感落地的速度。积分永不过期。',
+      currency: '展示币种: CNY',
+      subscribe: '订阅',
+      viewBenefits: '查看计划权益',
+      cycles: { monthly: '连续包月 45% OFF', yearly: '连续包年 50% OFF', enterprise: '企业版' },
+      plans: [
+        { id: 'basic', name: 'BASIC', price: '≈¥53/月', original: '¥105', note: '按年支付，年付总价约¥630\n每月 1500 Tapies\n额外充值 ¥7=100 Tapies' },
+        { id: 'pro', name: 'PRO', price: '≈¥210/月', original: '¥420', note: '按年支付\n每月 6000 Tapies\n额外充值 ¥7=110 Tapies', badge: '最受欢迎', highlight: true },
+        { id: 'ultimate', name: 'ULTIMATE', price: '≈¥1,260/月', original: '¥2,520', note: '每月 36000 Tapies\n额外充值 ¥7=120 Tapies' },
+        { id: 'max', name: 'MAX', price: '≈¥2,520/月', original: '¥5,040', note: '每月 72000 Tapies\n额外充值 ¥7=130 Tapies', badge: '最佳性价比' },
+      ],
+    },
+    modelMarket: {
+      title: 'Tapnow 模型超市',
+      subtitle: '永远比官方便宜的模型超市，比官方价格便宜可达 25%。',
+      buyNow: '立即购买 100/100',
+      cards: [
+        { id: 'seed-silver', model: 'Seedance 2.0', tier: '银卡', price: '$1000', tapies: '140000 Seedance 2.0 Tapies', bg: 'linear-gradient(135deg,#1a3a2a 0%,#2d5a4a 100%)' },
+        { id: 'seed-gold', model: 'Seedance 2.0', tier: '金卡', price: '$3000', tapies: '420000 Seedance 2.0 Tapies', bg: 'linear-gradient(135deg,#3a1a4a 0%,#5a2d6a 100%)' },
+        { id: 'seed-platinum', model: 'Seedance 2.0', tier: '铂金卡', price: '$6000', tapies: '840000 Seedance 2.0 Tapies', bg: 'linear-gradient(135deg,#1a2a4a 0%,#2d4a6a 100%)' },
+      ],
+    },
+    recharge: {
+      title: '充值积分（随用随充）',
+      freeBadge: '免费版',
+      balanceLabel: '当前余额',
+      getTapies: '获得 Tapies',
+      rate: '$1 = 100 Tapies',
+      payAmount: '需支付金额',
+      submit: '立即充值',
+    },
+    teamBenefits: {
+      balanceTitle: 'Tapies 余额：{n}',
+      balanceHint: '当前汇率 $1=100 Tapies。升级套餐解锁超值充值汇率。',
+      recharge: '充值',
+      freePlan: '免费版',
+      upgradeHint: '升级订阅套餐，解锁完整功能，加速专业创作。',
+      upgrade: '升级',
+      yourTeam: '你的团队：{name}',
+      teamId: '团队 ID：{id}',
+      copyTeamId: '复制团队 ID',
+      quotaTitle: '配额信息',
+      quotaEmpty: '暂无配额信息',
+    },
+    rewards: {
+      title: '奖励中心',
+      inputLabel: '输入兑换码',
+      inputPlaceholder: '请输入兑换码，例如 TAP-XXXX-XXXX-XXX',
+      redeem: '兑换',
+      historyTitle: '兑换记录',
+      columns: ['兑换码', '活动名称', '兑换时间', '积分'],
+    },
+    billing: {
+      tabBills: '账单',
+      tabTransactions: '交易记录',
+      feedback: '反馈问题',
+      billsTitle: '账单详情',
+      issueInvoice: '开商业发票',
+      billColumns: ['账单 ID', '交易时间', '消费内容', '金额', '状态'],
+      billsEmpty: '暂无账单数据',
+      billsEmptySub: '您还没有任何交易记录',
+      txColumns: ['交易 ID', '交易时间', '交易类型', '描述', '操作者', '金额', '状态'],
+      completed: '已完成',
+    },
+    usage: {
+      title: 'Tapies 用量',
+      subtitle: '{team} · 最近 365 天',
+      totalUsage: '总用量',
+      agentUsage: 'Agent 用量',
+      statTotal: '总消耗 Tapies',
+      statPeak: '单日峰值',
+      statWeekly: '周均消耗 Tapies',
+      statActive: '活跃天数',
+      statStreak: '最长连续活跃天数',
+      activityTitle: 'Tapies 活动',
+      periods: { daily: '每日', weekly: '每周', cumulative: '累计' },
+    },
+    teamSettings: {
+      title: '团队设置',
+      teamIdLabel: '团队 ID：{id}',
+      copyTeamId: '复制',
+      copiedTeamId: '已复制团队 ID',
+      searchPlaceholder: '查找成员',
+      inviteMember: '邀请成员',
+      colMember: '成员信息',
+      colUsage: '当前使用量 / 总额',
+      colRole: '角色',
+      unlimitedQuota: '无额度限制',
+      you: '（你）',
+      owner: '所有者',
+    },
+    agentTutorials: {
+      modelsTitle: '不同模型适合的任务',
+      modelsDesc: '优先按任务复杂度选择模型，把更复杂的创作规划交给更强模型。',
+      modelName: '模型名字',
+      modelTask: '当前适合的任务',
+      models: [
+        { name: 'Opus 4.8', task: '高复杂度视频创作规划（长脚本拆解、多镜头拆分、角色/风格一致性、复杂图像/视频 prompt 设计）' },
+        { name: 'Opus 4.7', task: '深度创意推理（镜头优化、prompt 迭代、脚本润色、中高强度视频规划）' },
+        { name: 'Opus 4.6', task: '稳定长链路创作规划（长脚本生成、创意方向、场景规划、成本可控的复杂任务）' },
+        { name: 'Sonnet 4.6', task: '日常默认模型（头脑风暴、图像/视频创意对比、prompt 起草、短脚本润色、下一步规划）' },
+        { name: 'Kimi 2.7', task: '快速创意发散（多版本 prompt 草稿、短视频脚本草稿、标题/文案方案、图像/视频生成描述整理）' },
+        { name: 'Kimi 2.6', task: '低成本轻量选择（简单追问、基础头脑风暴、prompt 改写、格式整理、快速图像/视频草稿）' },
+      ],
+      consumptionTitle: '不同任务的 Tapies 消耗预估',
+      consumptionDesc: '根据 TapNow 中常见创作任务预估消耗，实际用量会随模型、素材数量和输出规模变化。',
+      taskType: '任务类型',
+      taskSuitable: '适合做什么',
+      estimatedTapies: '预计 Tapies 消耗',
+      tasks: [
+        { type: '创意讨论 / 规划', suitable: '一起梳理想法、对比方向、生成方案、快速确定下一步', tapies: '5–40 Tapies' },
+        { type: '脚本 / 分镜生成', suitable: '生成短视频脚本、分镜描述、镜头列表与节奏规划', tapies: '20–120 Tapies' },
+        { type: '图像生成', suitable: '单张或多张概念图、风格探索、素材迭代', tapies: '10–80 Tapies' },
+        { type: '视频生成', suitable: '短视频片段生成、镜头拼接前的单段预览', tapies: '50–300 Tapies' },
+        { type: 'Agent 复杂工作流', suitable: '多步骤创作、跨素材编排、长链路自动执行', tapies: '100–500+ Tapies' },
+      ],
+    },
   },
 }
 
@@ -469,6 +837,201 @@ const en: Messages = {
     partners: 'Partners',
     help: 'Help center',
     logout: 'Log out',
+    teamSuffix: "'s team",
+    freeBadge: 'FREE',
+    unlimitedQuota: 'Unlimited quota',
+  },
+  createTeamModal: {
+    title: 'Create team',
+    subtitle: 'New teams get an independent workspace',
+    noticeTitle: 'Important',
+    noticeBody: 'New teams have separate billing. Initial Tapies is 0. Existing benefits cannot be transferred.',
+    teamName: 'Team name',
+    teamNamePlaceholder: 'Enter team name',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    success: 'Team created',
+  },
+  profile: {
+    changeBanner: 'Change background',
+    following: 'Following',
+    followers: 'Followers',
+    favorites: 'Favorites',
+    share: 'Share',
+    tabPortfolio: 'My portfolio',
+    tabSaved: 'My favorites',
+    savedLocked: 'Coming soon',
+    featuredWorks: 'Featured works',
+    featuredEmpty: 'Show the world your best creations.',
+    addFeatured: 'Add featured work',
+    tabWorks: 'Works',
+    tabSeries: 'Series',
+    filterAll: 'All',
+    worksEmpty: 'No works yet — start creating on canvas',
+  },
+  account: {
+    personalProfile: 'Personal profile',
+    username: 'Username',
+    bio: 'Bio',
+    social: 'Social media',
+    socialPlaceholder: 'Paste your social profile link',
+    country: 'Country / Region',
+    city: 'City',
+    countryPlaceholder: 'Country',
+    cityPlaceholder: 'City',
+    profession: 'Identity / Profession',
+    professionPlaceholder: 'Tell others a bit about yourself',
+    showJoinDate: 'Show join date',
+    email: 'Email',
+    comingSoon: 'Coming soon',
+    sections: {
+      subscription: 'Subscription & recharge',
+      benefits: 'Benefits & billing',
+      general: 'General settings',
+      support: 'Help & support',
+    },
+    nav: {
+      subscription: 'Subscription plan',
+      modelMarket: 'Model marketplace',
+      recharge: 'Recharge credits',
+      teamBenefits: 'Team benefits',
+      rewards: 'Reward center',
+      billing: 'Billing history',
+      usage: 'Usage dashboard',
+      personal: 'Personal settings',
+      team: 'Team settings',
+      tutorials: 'Tutorials',
+      agentTutorials: 'Agent tutorials',
+      logout: 'Log out',
+    },
+    version: 'v2.10.19',
+  },
+  helpMenu: {
+    contact: 'Contact us',
+    tutorials: 'Tutorials',
+    shortcuts: 'Shortcuts',
+    feedback: 'Feedback',
+  },
+  accountViews: {
+    subscription: {
+      title: 'Choose your plan',
+      subtitle: 'More than quota — speed to bring ideas to life. Credits never expire.',
+      currency: 'Currency: CNY',
+      subscribe: 'Subscribe',
+      viewBenefits: 'View plan benefits',
+      cycles: { monthly: 'Monthly 45% OFF', yearly: 'Yearly 50% OFF', enterprise: 'Enterprise' },
+      plans: [
+        { id: 'basic', name: 'BASIC', price: '≈¥53/mo', original: '¥105', note: 'Billed yearly ~¥630/yr\n1500 Tapies/mo\nTop-up ¥7=100 Tapies' },
+        { id: 'pro', name: 'PRO', price: '≈¥210/mo', original: '¥420', note: '6000 Tapies/mo\nTop-up ¥7=110 Tapies', badge: 'Most popular', highlight: true },
+        { id: 'ultimate', name: 'ULTIMATE', price: '≈¥1,260/mo', original: '¥2,520', note: '36000 Tapies/mo\nTop-up ¥7=120 Tapies' },
+        { id: 'max', name: 'MAX', price: '≈¥2,520/mo', original: '¥5,040', note: '72000 Tapies/mo\nTop-up ¥7=130 Tapies', badge: 'Best value' },
+      ],
+    },
+    modelMarket: {
+      title: 'Tapnow Model Market',
+      subtitle: 'Always cheaper than official — up to 25% off.',
+      buyNow: 'Buy now 100/100',
+      cards: [
+        { id: 'seed-silver', model: 'Seedance 2.0', tier: 'Silver', price: '$1000', tapies: '140000 Seedance 2.0 Tapies', bg: 'linear-gradient(135deg,#1a3a2a 0%,#2d5a4a 100%)' },
+        { id: 'seed-gold', model: 'Seedance 2.0', tier: 'Gold', price: '$3000', tapies: '420000 Seedance 2.0 Tapies', bg: 'linear-gradient(135deg,#3a1a4a 0%,#5a2d6a 100%)' },
+        { id: 'seed-platinum', model: 'Seedance 2.0', tier: 'Platinum', price: '$6000', tapies: '840000 Seedance 2.0 Tapies', bg: 'linear-gradient(135deg,#1a2a4a 0%,#2d4a6a 100%)' },
+      ],
+    },
+    recharge: {
+      title: 'Recharge credits (pay as you go)',
+      freeBadge: 'Free',
+      balanceLabel: 'Balance',
+      getTapies: 'You get',
+      rate: '$1 = 100 Tapies',
+      payAmount: 'Amount to pay',
+      submit: 'Recharge now',
+    },
+    teamBenefits: {
+      balanceTitle: 'Tapies balance: {n}',
+      balanceHint: 'Rate $1=100 Tapies. Upgrade for better top-up rates.',
+      recharge: 'Recharge',
+      freePlan: 'Free plan',
+      upgradeHint: 'Upgrade to unlock full features and faster creation.',
+      upgrade: 'Upgrade',
+      yourTeam: 'Your team: {name}',
+      teamId: 'Team ID: {id}',
+      copyTeamId: 'Copy team ID',
+      quotaTitle: 'Quota',
+      quotaEmpty: 'No quota information yet',
+    },
+    rewards: {
+      title: 'Reward center',
+      inputLabel: 'Enter redemption code',
+      inputPlaceholder: 'e.g. TAP-XXXX-XXXX-XXX',
+      redeem: 'Redeem',
+      historyTitle: 'Redemption history',
+      columns: ['Code', 'Activity', 'Time', 'Points'],
+    },
+    billing: {
+      tabBills: 'Bills',
+      tabTransactions: 'Transactions',
+      feedback: 'Feedback',
+      billsTitle: 'Bill details',
+      issueInvoice: 'Issue invoice',
+      billColumns: ['Bill ID', 'Time', 'Content', 'Amount', 'Status'],
+      billsEmpty: 'No billing data',
+      billsEmptySub: 'You have no transactions yet',
+      txColumns: ['Transaction ID', 'Time', 'Type', 'Description', 'Operator', 'Amount', 'Status'],
+      completed: 'Completed',
+    },
+    usage: {
+      title: 'Tapies usage',
+      subtitle: '{team} · Last 365 days',
+      totalUsage: 'Total',
+      agentUsage: 'Agent',
+      statTotal: 'Total consumed',
+      statPeak: 'Daily peak',
+      statWeekly: 'Weekly avg',
+      statActive: 'Active days',
+      statStreak: 'Longest streak',
+      activityTitle: 'Tapies activity',
+      periods: { daily: 'Daily', weekly: 'Weekly', cumulative: 'Cumulative' },
+    },
+    teamSettings: {
+      title: 'Team settings',
+      teamIdLabel: 'Team ID: {id}',
+      copyTeamId: 'Copy',
+      copiedTeamId: 'Team ID copied',
+      searchPlaceholder: 'Find members',
+      inviteMember: 'Invite member',
+      colMember: 'Member',
+      colUsage: 'Usage / quota',
+      colRole: 'Role',
+      unlimitedQuota: 'Unlimited',
+      you: '(you)',
+      owner: 'Owner',
+    },
+    agentTutorials: {
+      modelsTitle: 'Tasks suited to each model',
+      modelsDesc: 'Pick models by task complexity — use stronger models for heavier creative planning.',
+      modelName: 'Model',
+      modelTask: 'Best for',
+      models: [
+        { name: 'Opus 4.8', task: 'High-complexity video planning (long script breakdown, multi-shot splits, character/style consistency, complex image/video prompts)' },
+        { name: 'Opus 4.7', task: 'Deep creative reasoning (shot optimization, prompt iteration, script polish, medium-high video planning)' },
+        { name: 'Opus 4.6', task: 'Stable long-form planning (long scripts, creative direction, scene planning, cost-controlled complex tasks)' },
+        { name: 'Sonnet 4.6', task: 'Daily default (brainstorming, image/video comparisons, prompt drafts, short script polish, next-step planning)' },
+        { name: 'Kimi 2.7', task: 'Fast creative divergence (multi-version prompts, short video scripts, titles/copy, generation briefs)' },
+        { name: 'Kimi 2.6', task: 'Low-cost lightweight (simple follow-ups, basic brainstorming, prompt rewrites, formatting, quick drafts)' },
+      ],
+      consumptionTitle: 'Estimated Tapies by task',
+      consumptionDesc: 'Estimates for common TapNow workflows; actual usage varies by model, assets, and output scale.',
+      taskType: 'Task type',
+      taskSuitable: 'What it is for',
+      estimatedTapies: 'Estimated Tapies',
+      tasks: [
+        { type: 'Creative discussion / planning', suitable: 'Sort ideas, compare directions, generate options, decide next steps', tapies: '5–40 Tapies' },
+        { type: 'Script / storyboard', suitable: 'Short video scripts, shot descriptions, shot lists and pacing', tapies: '20–120 Tapies' },
+        { type: 'Image generation', suitable: 'Concept frames, style exploration, asset iteration', tapies: '10–80 Tapies' },
+        { type: 'Video generation', suitable: 'Short clip generation, single-segment previews before stitching', tapies: '50–300 Tapies' },
+        { type: 'Agent workflows', suitable: 'Multi-step creation, cross-asset orchestration, long automated runs', tapies: '100–500+ Tapies' },
+      ],
+    },
   },
 }
 

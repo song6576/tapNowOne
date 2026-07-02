@@ -50,15 +50,6 @@ export const HomeTopNav = memo(function HomeTopNav() {
         <NavLink to="/home">
           <TapNowLogo size="sm" />
         </NavLink>
-        <button
-          type="button"
-          className="ui-clickable flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white/70"
-          title={t.nav.downloadClient}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
       </div>
 
       <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
