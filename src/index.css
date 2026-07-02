@@ -1627,7 +1627,8 @@ html, body, #root {
   color: #fff;
 }
 .user-menu-trigger-wrap {
-  padding: 4px 0;
+  padding: 6px 8px;
+  margin: -6px -8px;
 }
 .user-menu-trigger {
   min-height: 40px;

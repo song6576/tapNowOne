@@ -45,16 +45,28 @@ export function HoverDropdown({
     }
   }
 
+  const scheduleClose = useCallback(() => {
+    if (mode !== 'hover') return
+    clearCloseTimer()
+    closeTimer.current = window.setTimeout(() => {
+      const el = ref.current
+      // 延迟关闭前再确认指针是否仍在容器内，避免边缘抖动误关
+      if (el?.matches(':hover')) return
+      setOpen(false)
+    }, closeDelay)
+  }, [mode, closeDelay, setOpen])
+
   const handleEnter = () => {
     if (mode !== 'hover') return
     clearCloseTimer()
     setOpen(true)
   }
 
-  const handleLeave = () => {
+  const handleLeave = (e: React.PointerEvent<HTMLElement>) => {
     if (mode !== 'hover') return
-    clearCloseTimer()
-    closeTimer.current = window.setTimeout(() => setOpen(false), closeDelay)
+    const related = e.relatedTarget
+    if (related instanceof Node && ref.current?.contains(related)) return
+    scheduleClose()
   }
 
   const handleTriggerClick = () => {
@@ -84,25 +96,24 @@ export function HoverDropdown({
     <div
       ref={ref}
       className={`relative inline-flex ${className}`}
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
+      onPointerEnter={handleEnter}
+      onPointerLeave={handleLeave}
     >
       <div onClick={handleTriggerClick} className={mode === 'click' ? 'contents' : undefined}>
         {trigger}
       </div>
-      {open && (
-        <div
-          className={`absolute top-full z-50 ${align === 'right' ? 'right-0' : 'left-0'}`}
-          onMouseEnter={handleEnter}
-          onMouseLeave={handleLeave}
-        >
-          {/* 透明桥接区：消除 trigger 与面板之间的 hover 断档 */}
-          <div className="h-2" aria-hidden />
-          <div className={`dropdown-panel ${panelClassName}`}>
-            {children}
-          </div>
-        </div>
-      )}
+      <div
+        className={`absolute top-full z-50 transition-opacity duration-100 ${align === 'right' ? 'right-0' : 'left-0'} ${
+          open ? 'visible opacity-100' : 'invisible opacity-0 pointer-events-none'
+        }`}
+        aria-hidden={!open}
+        onPointerEnter={handleEnter}
+        onPointerLeave={handleLeave}
+      >
+        {/* 透明桥接区：与 trigger 重叠，消除移动过程中的 hover 断档 */}
+        <div className="-mt-1 h-3" aria-hidden />
+        <div className={`dropdown-panel ${panelClassName}`}>{children}</div>
+      </div>
     </div>
   )
 }
