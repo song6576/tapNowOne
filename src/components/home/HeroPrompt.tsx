@@ -16,7 +16,13 @@ export const HeroPrompt = memo(function HeroPrompt() {
   const submit = () => {
     const text = prompt.trim()
     const proj = createProject(null)
-    navigate(`/canvas/${proj.id}`, { state: { initialPrompt: text || undefined, modelId } })
+    navigate(`/canvas/${proj.id}`, {
+      state: {
+        initialPrompt: text || undefined,
+        modelId,
+        openAgentPanel: true,
+      },
+    })
   }
 
   return (

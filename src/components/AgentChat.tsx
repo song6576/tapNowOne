@@ -2,12 +2,18 @@
 import { useCanvasStore } from '../store/canvasStore'
 import { agentChat, agentStoryboard } from '../services/api'
 import { buildCanvasContext } from '../utils/workflow'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useI18n } from '../store/langStore'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
-export function AgentChat({ variant = 'default' }: { variant?: 'default' | 'canvas' }) {
+export function AgentChat({
+  variant = 'default',
+  initialPrompt,
+}: {
+  variant?: 'default' | 'canvas'
+  initialPrompt?: string
+}) {
   const { t } = useI18n()
   const a = t.canvas.agentPanel
   const isCanvas = variant === 'canvas'
@@ -22,6 +28,7 @@ export function AgentChat({ variant = 'default' }: { variant?: 'default' | 'canv
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const seededRef = useRef(false)
 
   const nodes = useCanvasStore((s) => s.nodes)
   const edges = useCanvasStore((s) => s.edges)
@@ -33,27 +40,24 @@ export function AgentChat({ variant = 'default' }: { variant?: 'default' | 'canv
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const send = async () => {
-    const text = input.trim()
-    if (!text || loading) return
-    setInput('')
-    setMessages((m) => [...m, { role: 'user', content: text }])
+  const sendText = useCallback(async (text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed || loading) return
+    setMessages((m) => [...m, { role: 'user', content: trimmed }])
     setLoading(true)
 
     try {
-      // 特殊指令：生成分镜 → 调用 agentStoryboard 并在画布创建节点
-      if (text.startsWith('生成分镜：') || text.startsWith('生成分镜:')) {
-        const script = text.replace(/^生成分镜[：:]/, '').trim()
+      if (trimmed.startsWith('生成分镜：') || trimmed.startsWith('生成分镜:')) {
+        const script = trimmed.replace(/^生成分镜[：:]/, '').trim()
         const scenes = await agentStoryboard(script)
         const count = applyStoryboard(scenes, script)
         setMessages((m) => [
           ...m,
-          { role: 'assistant', content: `Created ${count} storyboard nodes. Click Generate on each, or Run Workflow.` },
+          { role: 'assistant', content: `已创建 ${count} 个分镜节点，可在画布中继续编辑或生成。` },
         ])
       } else {
-        // 普通对话：附带画布摘要作为 Agent 上下文
         const context = buildCanvasContext(nodes, edges)
-        const reply = await agentChat(text, context)
+        const reply = await agentChat(trimmed, context)
         setMessages((m) => [...m, { role: 'assistant', content: reply }])
       }
     } catch (err) {
@@ -64,7 +68,20 @@ export function AgentChat({ variant = 'default' }: { variant?: 'default' | 'canv
     } finally {
       setLoading(false)
     }
+  }, [loading, nodes, edges, applyStoryboard])
+
+  const send = () => {
+    const text = input.trim()
+    if (!text) return
+    setInput('')
+    void sendText(text)
   }
+
+  useEffect(() => {
+    if (!isCanvas || !initialPrompt?.trim() || seededRef.current) return
+    seededRef.current = true
+    void sendText(initialPrompt.trim())
+  }, [isCanvas, initialPrompt, sendText])
 
   const handleRunWorkflow = async () => {
     setLoading(true)
@@ -100,27 +117,39 @@ export function AgentChat({ variant = 'default' }: { variant?: 'default' | 'canv
         </div>
       )}
 
-      <div className={`flex-1 space-y-3 overflow-y-auto ${isCanvas ? 'px-5 py-4' : 'p-3'}`}>
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`text-sm leading-relaxed ${
-              isCanvas
-                ? 'text-white/55'
-                : `rounded-lg px-3 py-2 text-xs ${
-                    msg.role === 'user'
-                      ? 'ml-6 bg-[var(--tn-bg-hover)] text-[var(--tn-text-secondary)]'
-                      : 'mr-6 bg-[var(--tn-bg-panel)] text-[var(--tn-text-muted)]'
-                  }`
-            }`}
-          >
-            {msg.content.split('\n').map((line, j) => (
-              <p key={j} className={j > 0 ? 'mt-2' : ''}>{line}</p>
-            ))}
-          </div>
-        ))}
+      <div className={`flex-1 space-y-4 overflow-y-auto ${isCanvas ? 'px-5 py-4' : 'space-y-3 p-3'}`}>
+        {messages.map((msg, i) => {
+          const content = msg.content.split('\n').map((line, j) => (
+            <p key={j} className={j > 0 ? 'mt-2' : ''}>{line}</p>
+          ))
+
+          if (isCanvas && msg.role === 'user') {
+            return (
+              <div key={i} className="canvas-agent-msg-row">
+                <div className="canvas-agent-msg canvas-agent-msg--user">{content}</div>
+              </div>
+            )
+          }
+
+          return (
+            <div
+              key={i}
+              className={
+                isCanvas
+                  ? 'canvas-agent-msg canvas-agent-msg--assistant'
+                  : `rounded-lg px-3 py-2 text-xs leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'ml-6 bg-[var(--tn-bg-hover)] text-[var(--tn-text-secondary)]'
+                        : 'mr-6 bg-[var(--tn-bg-panel)] text-[var(--tn-text-muted)]'
+                    }`
+              }
+            >
+              {content}
+            </div>
+          )
+        })}
         {loading && (
-          <div className={`text-sm text-white/35 ${isCanvas ? '' : 'mr-6 rounded-lg bg-[var(--tn-bg-panel)] px-3 py-2 text-xs'}`}>
+          <div className={`text-sm text-white/35 ${isCanvas ? 'canvas-agent-msg--assistant' : 'mr-6 rounded-lg bg-[var(--tn-bg-panel)] px-3 py-2 text-xs'}`}>
             {a.thinking}
           </div>
         )}
@@ -129,30 +158,49 @@ export function AgentChat({ variant = 'default' }: { variant?: 'default' | 'canv
 
       <div className={`border-t border-white/[0.06] ${isCanvas ? 'p-4' : 'p-3'}`}>
         {isCanvas ? (
-          <div className="canvas-agent-input-wrap">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
-              placeholder={a.inputPlaceholder}
-              rows={3}
-              className="canvas-agent-input"
-            />
-            <div className="canvas-agent-input-actions">
-              <button type="button" className="canvas-agent-auto-btn ui-clickable">{a.autoGenerate}</button>
-              <button
-                type="button"
-                onClick={send}
-                disabled={loading}
-                className="canvas-agent-send-btn ui-clickable"
-                aria-label={a.send}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+          <>
+            <div className="canvas-agent-suggestions">
+              {a.suggestions.map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setInput(label)}
+                  className="canvas-agent-suggestion ui-clickable"
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          </div>
+            <div className="canvas-agent-input-wrap">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
+                placeholder={a.inputPlaceholder}
+                rows={3}
+                className="canvas-agent-input"
+              />
+              <div className="canvas-agent-input-actions">
+                <button type="button" className="canvas-agent-tool-btn ui-clickable" aria-label={a.autoGenerate}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <button type="button" className="canvas-agent-auto-btn ui-clickable">{a.autoGenerate}</button>
+                <button
+                  type="button"
+                  onClick={send}
+                  disabled={loading}
+                  className="canvas-agent-send-btn ui-clickable"
+                  aria-label={a.send}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="flex gap-2">
             <input

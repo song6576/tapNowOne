@@ -1,24 +1,43 @@
-/** 首页 AI 进入画布时的右侧 Agent 面板（图4） */
+/** 首页 AI 进入画布时的右侧 Agent 面板（可拖拽调宽） */
 import { AgentChat } from '../AgentChat'
 import { useI18n } from '../../store/langStore'
+import { usePanelResize } from '../../hooks/usePanelResize'
 
 interface CanvasAgentPanelProps {
+  initialPrompt?: string
   onClose?: () => void
 }
 
-export function CanvasAgentPanel({ onClose }: CanvasAgentPanelProps) {
+export function CanvasAgentPanel({ initialPrompt, onClose }: CanvasAgentPanelProps) {
   const { t } = useI18n()
   const a = t.canvas.agentPanel
+  const { width, dragging, onPointerDown } = usePanelResize({ defaultWidth: 440 })
 
   return (
-    <aside className="canvas-agent-panel flex shrink-0 flex-col">
-      <header className="canvas-agent-panel-header flex h-11 shrink-0 items-center justify-between border-b border-white/[0.06] px-4">
-        <span className="text-sm font-medium text-white/90">{a.title}</span>
-        <div className="flex items-center gap-1">
-          <button type="button" className="canvas-agent-panel-icon ui-clickable" aria-label={a.settings}>
+    <aside
+      className={`canvas-agent-panel flex shrink-0 flex-col ${dragging ? 'canvas-agent-panel--dragging' : ''}`}
+      style={{ width }}
+    >
+      <div
+        className="canvas-agent-panel-resize"
+        onPointerDown={onPointerDown}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={a.resize}
+      />
+
+      <header className="canvas-agent-panel-header flex h-11 shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4">
+        <span className="truncate text-sm font-medium text-white/90">{a.title}</span>
+        <div className="flex shrink-0 items-center gap-1">
+          <button type="button" className="canvas-agent-panel-pill ui-clickable">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+            {a.newFeature}
+          </button>
+          <button type="button" className="canvas-agent-panel-icon ui-clickable" aria-label={a.minimize}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeLinecap="round" />
+              <path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" strokeLinecap="round" />
             </svg>
           </button>
           {onClose && (
@@ -30,8 +49,9 @@ export function CanvasAgentPanel({ onClose }: CanvasAgentPanelProps) {
           )}
         </div>
       </header>
+
       <div className="flex min-h-0 flex-1 flex-col">
-        <AgentChat variant="canvas" />
+        <AgentChat variant="canvas" initialPrompt={initialPrompt} />
       </div>
     </aside>
   )

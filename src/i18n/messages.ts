@@ -209,6 +209,10 @@ export type Messages = {
       inputPlaceholder: string
       autoGenerate: string
       send: string
+      resize: string
+      newFeature: string
+      minimize: string
+      suggestions: string[]
     }
   }
   userMenu: {
@@ -606,6 +610,10 @@ const zh: Messages = {
       inputPlaceholder: '描述创意需求/使用技能, @ 添加画布内容, / 引用参考',
       autoGenerate: '自动生成',
       send: '发送',
+      resize: '调整面板宽度',
+      newFeature: '新功能',
+      minimize: '收起',
+      suggestions: ['体验 Brainstorming 头脑风暴', '体验 Midjourney 文生图', '体验 Seedance 文生视频'],
     },
   },
   userMenu: {
@@ -1025,6 +1033,10 @@ const en: Messages = {
       inputPlaceholder: 'Describe your idea, @ canvas content, / reference',
       autoGenerate: 'Auto-generate',
       send: 'Send',
+      resize: 'Resize panel',
+      newFeature: 'New',
+      minimize: 'Minimize',
+      suggestions: ['Try Brainstorming', 'Try Midjourney', 'Try Seedance video'],
     },
   },
   userMenu: {

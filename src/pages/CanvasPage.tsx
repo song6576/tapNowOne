@@ -44,6 +44,7 @@ export function CanvasPage() {
     flowPosition?: { x: number; y: number }
   } | null>(null)
   const [showAgentPanel, setShowAgentPanel] = useState(false)
+  const [agentInitialPrompt, setAgentInitialPrompt] = useState<string | undefined>()
   const [promoDismissed, setPromoDismissed] = useState(false)
   const [showMinimap, setShowMinimap] = useState(true)
 
@@ -56,9 +57,12 @@ export function CanvasPage() {
       project?: CanvasProject
       forkFrom?: string
       initialPrompt?: string
+      openAgentPanel?: boolean
       folderId?: string | null
       isNew?: boolean
     } | null
+
+    const fromHomeAgent = !!(state?.openAgentPanel || state?.initialPrompt?.trim())
 
     if (state?.newProject && state.project) {
       // 从 Header 导入 JSON 等场景传入完整 project
@@ -102,7 +106,6 @@ export function CanvasPage() {
     }
 
     if (projectId) {
-      // 工作空间项目：从 workspaceStore 取元数据，画布内容暂为空（后续可接云端 load）
       const wp = getProject(projectId)
       if (wp) {
         resetCanvas()
@@ -115,20 +118,21 @@ export function CanvasPage() {
           edges: [],
           viewport: { x: 0, y: 0, zoom: 1 },
         })
+        if (fromHomeAgent) {
+          setShowAgentPanel(true)
+          setAgentInitialPrompt(state?.initialPrompt?.trim() || undefined)
+        }
       } else {
         navigate('/home/projects')
       }
+      window.history.replaceState({}, '')
       return
     }
 
-    if (state?.initialPrompt?.trim()) {
-      // 首页 Hero 提交：显示 Agent 面板并生成分镜
+    if (state?.initialPrompt?.trim() || state?.openAgentPanel) {
       setShowAgentPanel(true)
+      setAgentInitialPrompt(state?.initialPrompt?.trim() || undefined)
       resetCanvas()
-      applyStoryboard(
-        [{ label: 'Prompt', prompt: state.initialPrompt.trim() }],
-        state.initialPrompt.trim(),
-      )
       window.history.replaceState({}, '')
       return
     }
@@ -243,7 +247,12 @@ export function CanvasPage() {
               onToggleMinimap={() => setShowMinimap((v) => !v)}
             />
           </div>
-          {showAgentPanel && <CanvasAgentPanel onClose={() => setShowAgentPanel(false)} />}
+          {showAgentPanel && (
+            <CanvasAgentPanel
+              initialPrompt={agentInitialPrompt}
+              onClose={() => setShowAgentPanel(false)}
+            />
+          )}
         </div>
 
         {!promoDismissed && isEmpty && (
