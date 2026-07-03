@@ -239,6 +239,56 @@ html, body, #root {
   background-size: 22px 22px;
 }
 
+.home-topnav-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.125rem;
+  border-radius: 9999px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  overflow: visible;
+  transition: background 0.15s ease;
+}
+.home-topnav-tab:not(.home-topnav-tab--active):hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.home-topnav-tab--active {
+  background: rgba(255, 255, 255, 0.1);
+}
+.home-topnav-tab--active:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.home-topnav-tab--active::before,
+.home-topnav-tab--active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.18) 30%,
+    rgba(255, 255, 255, 0.42) 50%,
+    rgba(255, 255, 255, 0.18) 70%,
+    transparent 100%
+  );
+  filter: blur(2.5px);
+  opacity: 0.9;
+  pointer-events: none;
+}
+.home-topnav-tab--active::before { top: -1px; }
+.home-topnav-tab--active::after { bottom: -1px; }
+.home-topnav-tab--disabled {
+  color: rgba(255, 255, 255, 0.25);
+  cursor: default;
+}
+
 /* 输入框 + 最近项目：同宽对齐 */
 .home-hero-stack {
   width: 100%;

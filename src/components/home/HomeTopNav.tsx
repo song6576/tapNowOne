@@ -7,7 +7,7 @@ import { useI18n } from '../../store/langStore'
 import { UserMenuDropdown } from './UserMenuDropdown'
 
 function NavIcon({ type }: { type: string }) {
-  const cls = 'h-[18px] w-[18px]'
+  const cls = 'h-5 w-5 shrink-0'
   switch (type) {
     case 'home':
       return (
@@ -57,7 +57,7 @@ export const HomeTopNav = memo(function HomeTopNav() {
           item.disabled ? (
             <span
               key={item.path}
-              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white/25"
+              className="home-topnav-tab home-topnav-tab--disabled"
               title={t.nav.arenaSoon}
             >
               <NavIcon type={item.icon} />
@@ -69,11 +69,7 @@ export const HomeTopNav = memo(function HomeTopNav() {
               to={item.path}
               end={item.path === '/home'}
               className={({ isActive }) =>
-                `ui-clickable flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
-                  isActive
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/55 hover:bg-white/5 hover:text-white/85'
-                }`
+                `home-topnav-tab ui-clickable ${isActive ? 'home-topnav-tab--active' : ''}`
               }
             >
               <NavIcon type={item.icon} />
