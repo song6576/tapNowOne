@@ -1,6 +1,7 @@
 /** 用户菜单内团队切换 flyout */
 import { useEffect, useRef, useState } from 'react'
 import { useTeamStore } from '../../store/teamStore'
+import { userMenuSubmenuFlyoutClass, type UserMenuSubmenuSide } from '../../utils/userMenuSubmenu'
 
 function ChevronRight() {
   return (
@@ -10,7 +11,7 @@ function ChevronRight() {
   )
 }
 
-export function UserMenuTeamItem() {
+export function UserMenuTeamItem({ submenuSide = 'left' }: { submenuSide?: UserMenuSubmenuSide }) {
   const teams = useTeamStore((s) => s.teams)
   const activeTeamId = useTeamStore((s) => s.activeTeamId)
   const switchTeam = useTeamStore((s) => s.switchTeam)
@@ -53,7 +54,7 @@ export function UserMenuTeamItem() {
 
       {subOpen && (
         <div
-          className="user-menu-lang-submenu absolute right-full top-0 z-10 pr-1"
+          className={userMenuSubmenuFlyoutClass(submenuSide)}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >

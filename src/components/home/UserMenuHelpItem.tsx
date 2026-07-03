@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../../store/langStore'
 import { useToastStore } from '../../store/toastStore'
+import { userMenuSubmenuFlyoutClass, type UserMenuSubmenuSide } from '../../utils/userMenuSubmenu'
 
 function ChevronRight() {
   return (
@@ -20,7 +21,7 @@ function HelpIcon() {
   )
 }
 
-export function UserMenuHelpItem() {
+export function UserMenuHelpItem({ submenuSide = 'left' }: { submenuSide?: UserMenuSubmenuSide }) {
   const { t } = useI18n()
   const h = t.helpMenu
   const showToast = useToastStore((s) => s.showToast)
@@ -73,7 +74,7 @@ export function UserMenuHelpItem() {
 
       {subOpen && (
         <div
-          className="user-menu-lang-submenu absolute right-full top-0 z-10 pr-1"
+          className={userMenuSubmenuFlyoutClass(submenuSide)}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >

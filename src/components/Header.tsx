@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCanvasStore } from '../store/canvasStore'
 import { useAuthStore } from '../store/authStore'
+import { useI18n } from '../store/langStore'
+import { ConfirmDialog } from './ui/ConfirmDialog'
 import { exportProject, importProject } from '../utils/storage'
 import { checkHealth, type HealthStatus } from '../api/client'
 
@@ -37,6 +39,15 @@ export function Header() {
   const exporting = useCanvasStore((s) => s.exporting)
   const fileRef = useRef<HTMLInputElement>(null)
   const [cloudSaving, setCloudSaving] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const { t } = useI18n()
+  const logoutConfirm = t.account.logoutConfirm
+
+  const handleLogout = () => {
+    setLogoutConfirmOpen(false)
+    logout()
+    navigate('/login')
+  }
 
   const handleExportJson = () => exportProject({ ...project, nodes, edges })
 
@@ -76,6 +87,7 @@ export function Header() {
   }
 
   return (
+    <>
     <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[#1e1e2e] bg-[#12121a] px-4">
       <Link to={user ? '/' : '/canvas'} className="flex items-center gap-2 hover:opacity-80">
         <span className="text-lg font-bold text-indigo-400">◉</span>
@@ -143,7 +155,7 @@ export function Header() {
         {user ? (
           <button
             type="button"
-            onClick={() => { logout(); navigate('/login') }}
+            onClick={() => setLogoutConfirmOpen(true)}
             className="rounded-md px-2 py-1 text-xs text-slate-500 hover:text-red-400"
           >
             退出
@@ -155,5 +167,16 @@ export function Header() {
         )}
       </div>
     </header>
+    <ConfirmDialog
+      open={logoutConfirmOpen}
+      title={logoutConfirm.title}
+      message={logoutConfirm.message}
+      confirmLabel={logoutConfirm.confirm}
+      cancelLabel={logoutConfirm.cancel}
+      danger
+      onCancel={() => setLogoutConfirmOpen(false)}
+      onConfirm={handleLogout}
+    />
+  </>
   )
 }

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLangStore } from '../../store/langStore'
 import { getLangLabel, LANG_OPTIONS } from '../../utils/lang'
+import { userMenuSubmenuFlyoutClass, type UserMenuSubmenuSide } from '../../utils/userMenuSubmenu'
 
 function LangMenuIcon() {
   return (
@@ -21,7 +22,7 @@ function ChevronRight() {
   )
 }
 
-export function UserMenuLanguageItem() {
+export function UserMenuLanguageItem({ submenuSide = 'left' }: { submenuSide?: UserMenuSubmenuSide }) {
   const lang = useLangStore((s) => s.lang)
   const setLang = useLangStore((s) => s.setLang)
   const [subOpen, setSubOpen] = useState(false)
@@ -72,7 +73,7 @@ export function UserMenuLanguageItem() {
 
       {subOpen && (
         <div
-          className="user-menu-lang-submenu absolute right-full top-0 z-10 pr-1"
+          className={userMenuSubmenuFlyoutClass(submenuSide)}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >

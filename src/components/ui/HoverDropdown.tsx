@@ -16,6 +16,8 @@ interface HoverDropdownProps {
   onOpenChange?: (open: boolean) => void
   /** hover 模式下关闭延迟（ms），默认 200 */
   closeDelay?: number
+  /** 是否允许贴边时自动翻转方向，默认 true */
+  allowFlip?: boolean
 }
 
 export function HoverDropdown({
@@ -29,6 +31,7 @@ export function HoverDropdown({
   open: openProp,
   onOpenChange,
   closeDelay = 200,
+  allowFlip = true,
 }: HoverDropdownProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const isControlled = openProp !== undefined
@@ -102,6 +105,10 @@ export function HoverDropdown({
       setFlipped(false)
       return
     }
+    if (!allowFlip) {
+      setFlipped(false)
+      return
+    }
     const id = window.requestAnimationFrame(() => {
       const panel = panelWrapRef.current?.querySelector('.dropdown-panel') as HTMLElement | null
       if (!panel) return
@@ -114,7 +121,7 @@ export function HoverDropdown({
       }
     })
     return () => window.cancelAnimationFrame(id)
-  }, [open, side, children])
+  }, [open, side, children, allowFlip])
 
   const panelPositionClass =
     side === 'right'
@@ -137,18 +144,18 @@ export function HoverDropdown({
       </div>
       <div
         ref={panelWrapRef}
-        className={`absolute z-50 transition-opacity duration-100 ${panelPositionClass} ${
-          open ? 'visible opacity-100' : 'invisible opacity-0 pointer-events-none'
+        className={`absolute z-50 transition-opacity duration-100 pointer-events-none ${panelPositionClass} ${
+          open ? 'visible opacity-100' : 'invisible opacity-0'
         }`}
         aria-hidden={!open}
         onPointerEnter={handleEnter}
         onPointerLeave={handleLeave}
       >
-        {side === 'bottom' && !flipped && <div className="-mt-1 h-3" aria-hidden />}
-        {side === 'bottom' && flipped && <div className="h-3" aria-hidden />}
-        {side === 'right' && !flipped && <div className="w-2 shrink-0 self-stretch" aria-hidden />}
-        {side === 'right' && flipped && <div className="w-2 shrink-0 self-stretch" aria-hidden />}
-        <div className={`dropdown-panel ${panelClassName}`}>{children}</div>
+        {side === 'bottom' && !flipped && <div className="-mt-1 h-3 pointer-events-auto" aria-hidden />}
+        {side === 'bottom' && flipped && <div className="h-3 pointer-events-auto" aria-hidden />}
+        {side === 'right' && !flipped && <div className="w-2 shrink-0 self-stretch pointer-events-auto" aria-hidden />}
+        {side === 'right' && flipped && <div className="w-2 shrink-0 self-stretch pointer-events-auto" aria-hidden />}
+        <div className={`dropdown-panel pointer-events-auto ${panelClassName}`}>{children}</div>
       </div>
     </div>
   )

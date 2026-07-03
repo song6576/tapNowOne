@@ -7,6 +7,7 @@ import { UserMenuHelpItem } from './UserMenuHelpItem'
 import { UserMenuTeamItem } from './UserMenuTeamItem'
 import { AccountSettingsModal } from '../account/AccountSettingsModal'
 import { CreateTeamModal } from '../team/CreateTeamModal'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { useAuthStore } from '../../store/authStore'
 import { useProfileStore } from '../../store/profileStore'
 import { useTeamStore } from '../../store/teamStore'
@@ -50,18 +51,27 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
   const openCreateTeamModal = useTeamStore((s) => s.openCreateTeamModal)
   const { t } = useI18n()
   const m = t.userMenu
+  const logoutConfirm = t.account.logoutConfirm
   const showToast = useToastStore((s) => s.showToast)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
   useEffect(() => { initProfile() }, [initProfile])
   useEffect(() => {
     if (user?.name) initTeam(user.name)
   }, [user?.name, initTeam])
-  useEffect(() => { setMenuOpen(false) }, [location.pathname])
+  useEffect(() => {
+    setMenuOpen(false)
+    setLogoutConfirmOpen(false)
+  }, [location.pathname])
 
   if (!user) return null
 
+  const isAvatar = variant === 'avatar'
+  const submenuSide = isAvatar ? 'right' : 'left'
+
   const handleLogout = () => {
+    setLogoutConfirmOpen(false)
     setMenuOpen(false)
     logout()
     navigate('/login')
@@ -105,7 +115,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
           </div>
         </div>
 
-        <UserMenuTeamItem />
+        <UserMenuTeamItem submenuSide={submenuSide} />
 
         <div className="user-menu-tapies mt-3 rounded-lg bg-white/[0.03] p-3">
           <div className="flex items-center justify-between">
@@ -146,7 +156,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
             goProfile,
           )}
         </li>
-        <UserMenuLanguageItem />
+        <UserMenuLanguageItem submenuSide={submenuSide} />
         <li>
           {menuRow(
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -178,10 +188,10 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
           m.partners,
           () => showToast({ type: 'info', message: m.partners }),
         )}
-        <UserMenuHelpItem />
+        <UserMenuHelpItem submenuSide={submenuSide} />
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={() => setLogoutConfirmOpen(true)}
           className="ui-clickable flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/[0.04] hover:text-white"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="text-white/45">
@@ -193,8 +203,6 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
     </div>
   )
 
-  const isAvatar = variant === 'avatar'
-
   return (
     <>
       <HoverDropdown
@@ -204,8 +212,9 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
         open={menuOpen}
         onOpenChange={setMenuOpen}
         closeDelay={420}
+        allowFlip={!isAvatar}
         className={isAvatar ? 'user-menu-trigger-wrap user-menu-trigger-wrap--canvas' : 'user-menu-trigger-wrap'}
-        panelClassName="overflow-visible !bg-transparent !border-0 !shadow-none !backdrop-blur-none"
+        panelClassName={`overflow-visible !bg-transparent !border-0 !shadow-none !backdrop-blur-none${isAvatar ? ' user-menu-panel-wrap--canvas' : ''}`}
         trigger={
           isAvatar ? (
             <button type="button" className="canvas-float-avatar ui-clickable overflow-hidden p-0" aria-label={m.profile}>
@@ -231,6 +240,16 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
       </HoverDropdown>
       <AccountSettingsModal />
       <CreateTeamModal />
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        title={logoutConfirm.title}
+        message={logoutConfirm.message}
+        confirmLabel={logoutConfirm.confirm}
+        cancelLabel={logoutConfirm.cancel}
+        danger
+        onCancel={() => setLogoutConfirmOpen(false)}
+        onConfirm={handleLogout}
+      />
     </>
   )
 })

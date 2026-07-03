@@ -27,14 +27,14 @@ export const HeroPrompt = memo(function HeroPrompt() {
 
   return (
     <section className="w-full">
-      <div className="mb-5 flex items-center justify-center gap-3">
+      <div className="mb-5 flex items-center justify-start gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white/60">
             <circle cx="12" cy="12" r="10" />
             <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
           </svg>
         </span>
-        <h1 className="text-[26px] font-semibold tracking-tight text-white md:text-[28px]">
+        <h1 className="text-[30px] font-semibold tracking-tight text-white md:text-[30px]">
           {t.home.heroTitle}
         </h1>
       </div>

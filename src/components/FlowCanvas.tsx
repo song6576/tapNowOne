@@ -136,7 +136,7 @@ export function FlowCanvas({
             onPaneContextMenu={onPaneContextMenu}
           />
         )}
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#27272a" />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#ffffff4d" />
         {!hideChrome && <Controls showInteractive={false} position="bottom-left" />}
         {showMinimap && (
           <MiniMap

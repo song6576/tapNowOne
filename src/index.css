@@ -39,10 +39,10 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
-.react-flow__background { background-color: var(--tn-bg) !important; }
+.react-flow__background { background-color: #141416 !important; }
 .react-flow__minimap {
-  background: rgba(18, 18, 18, 0.92) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(36, 36, 40, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   border-radius: 12px !important;
   backdrop-filter: blur(12px);
 }
@@ -1641,6 +1641,12 @@ html, body, #root {
   background: rgba(18, 18, 18, 0.92);
   backdrop-filter: blur(12px);
   transform: translateY(-50%);
+  overflow: visible;
+}
+.canvas-float-sidebar .ui-tooltip-wrap {
+  display: flex;
+  width: 36px;
+  justify-content: center;
 }
 .canvas-float-add {
   display: flex;
@@ -2377,6 +2383,11 @@ html, body, #root {
 .user-menu-trigger-wrap--canvas {
   padding: 0;
   margin: 0;
+  align-self: center;
+  width: fit-content;
+}
+.user-menu-panel-wrap--canvas {
+  margin-left: 8px;
 }
 .user-menu-trigger {
   min-height: 40px;
