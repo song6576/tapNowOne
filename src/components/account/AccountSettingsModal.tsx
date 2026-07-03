@@ -1,7 +1,8 @@
 /** 账户管理弹窗：左侧导航 + 各子页面视图 */
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Portal } from '../ui/Portal'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import {
   AccountPlaceholderView,
   AgentTutorialsView,
@@ -83,11 +84,16 @@ export function AccountSettingsModal() {
   const navigate = useNavigate()
   const { t } = useI18n()
   const a = t.account
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
   useEffect(() => { initProfile() }, [initProfile])
   useEffect(() => {
     if (user?.name) initTeam(user.name)
   }, [user?.name, initTeam])
+
+  useEffect(() => {
+    if (!open) setLogoutConfirmOpen(false)
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -138,6 +144,7 @@ export function AccountSettingsModal() {
   }
 
   return (
+    <>
     <Portal>
       <div className="account-modal-root fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
         <button type="button" className="account-modal-backdrop absolute inset-0" onClick={closeAccountModal} aria-label="Close" />
@@ -174,7 +181,7 @@ export function AccountSettingsModal() {
             ))}
             <div className="border-t border-white/[0.06] pt-3">
               <p className="px-3 py-2 text-xs text-white/25">{a.version}</p>
-              <button type="button" onClick={handleLogout} className="account-nav-item account-nav-item--danger ui-clickable w-full">
+              <button type="button" onClick={() => setLogoutConfirmOpen(true)} className="account-nav-item account-nav-item--danger ui-clickable w-full">
                 {a.nav.logout}
               </button>
             </div>
@@ -186,5 +193,16 @@ export function AccountSettingsModal() {
         </div>
       </div>
     </Portal>
+    <ConfirmDialog
+      open={logoutConfirmOpen}
+      title={a.logoutConfirm.title}
+      message={a.logoutConfirm.message}
+      confirmLabel={a.logoutConfirm.confirm}
+      cancelLabel={a.logoutConfirm.cancel}
+      danger
+      onCancel={() => setLogoutConfirmOpen(false)}
+      onConfirm={handleLogout}
+    />
+    </>
   )
 }

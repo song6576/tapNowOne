@@ -12,6 +12,8 @@ import {
   type TapTVItem,
   type GenerationTask,
 } from './data'
+import type { CanvasProject } from '../types'
+import { getTapTVWorkflow } from './taptvWorkflows'
 
 const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms))
 
@@ -38,6 +40,13 @@ export async function mockGetFeatured(): Promise<FeaturedItem[]> {
 export async function mockGetTapTVItem(id: string): Promise<TapTVItem | undefined> {
   await delay()
   return MOCK_TAPTV.find((t) => t.id === id)
+}
+
+export async function mockGetTapTVWorkflow(id: string): Promise<CanvasProject | undefined> {
+  await delay()
+  const item = MOCK_TAPTV.find((t) => t.id === id)
+  if (!item) return undefined
+  return getTapTVWorkflow(item.id, item.title, item.nodeCount)
 }
 
 export async function mockGetTasks(): Promise<GenerationTask[]> {

@@ -61,7 +61,7 @@ export const ProjectRow = memo(function ProjectRow({ projects }: ProjectRowProps
 
   return (
     <section className="w-full">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="home-project-grid">
         <button
           type="button"
           onClick={handleNewProject}

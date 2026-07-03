@@ -1,17 +1,19 @@
 /** 画布左侧浮动工具栏：添加各类型节点 */
 import type { NodeType } from '../../types'
+import { Tooltip } from '../ui/Tooltip'
+import { useI18n } from '../../store/langStore'
 
 interface CanvasToolbarProps {
   onAddNode: (type: NodeType | 'group') => void
 }
 
 const TOOLS = [
-  { icon: 'search', title: 'Search' },
-  { icon: 'folder', title: 'Projects' },
-  { icon: 'star', title: 'Favorites' },
-  { icon: 'chat', title: 'Messages' },
-  { icon: 'users', title: 'Collaborators' },
-  { icon: 'clock', title: 'History' },
+  { icon: 'search', tipKey: 'search' as const },
+  { icon: 'folder', tipKey: 'projects' as const },
+  { icon: 'star', tipKey: 'favorites' as const },
+  { icon: 'chat', tipKey: 'messages' as const },
+  { icon: 'users', tipKey: 'collaborators' as const },
+  { icon: 'clock', tipKey: 'history' as const },
 ] as const
 
 function ToolIcon({ type }: { type: typeof TOOLS[number]['icon'] }) {
@@ -57,19 +59,28 @@ function ToolIcon({ type }: { type: typeof TOOLS[number]['icon'] }) {
 }
 
 export function CanvasToolbar({ onAddNode }: CanvasToolbarProps) {
+  const { t } = useI18n()
+  const tips = t.canvas.tooltips
+
   return (
     <aside className="canvas-float-sidebar pointer-events-auto">
-      <button type="button" title="Add" onClick={() => onAddNode('text')} className="canvas-float-add ui-clickable">
-        +
-      </button>
-      {TOOLS.map((tool) => (
-        <button key={tool.icon} type="button" title={tool.title} className="canvas-float-btn ui-clickable">
-          <ToolIcon type={tool.icon} />
+      <Tooltip label={tips.addNode} side="right">
+        <button type="button" onClick={() => onAddNode('text')} className="canvas-float-add ui-clickable">
+          +
         </button>
+      </Tooltip>
+      {TOOLS.map((tool) => (
+        <Tooltip key={tool.icon} label={tips[tool.tipKey]} side="right">
+          <button type="button" className="canvas-float-btn ui-clickable">
+            <ToolIcon type={tool.icon} />
+          </button>
+        </Tooltip>
       ))}
-      <button type="button" className="canvas-float-avatar ui-clickable" title="Profile">
-        <span className="text-[10px] font-bold text-white">TN</span>
-      </button>
+      <Tooltip label={tips.profile} side="right">
+        <button type="button" className="canvas-float-avatar ui-clickable">
+          <span className="text-[10px] font-bold text-white">TN</span>
+        </button>
+      </Tooltip>
     </aside>
   )
 }

@@ -23,7 +23,7 @@ export const TapTVExploreSection = memo(function TapTVExploreSection({ items }: 
           {t.home.viewAll}
         </Link>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="taptv-explore-grid">
         {items.slice(0, 8).map((item) => (
           <TapTVCard key={item.id} item={item} onClick={() => navigate(`/taptv/${item.id}`)} />
         ))}

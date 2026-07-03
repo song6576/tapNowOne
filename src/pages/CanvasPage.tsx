@@ -14,6 +14,7 @@ import { useCanvasStore } from '../store/canvasStore'
 import { useWorkspaceStore } from '../store/workspaceStore'
 import { MOCK_TASKS } from '../mock/data'
 import type { CanvasProject } from '../types'
+import { mockGetTapTVWorkflow } from '../mock/api'
 import type { NodeType } from '../types'
 import type { GenerationTask } from '../mock/data'
 import { useI18n } from '../store/langStore'
@@ -43,6 +44,7 @@ export function CanvasPage() {
   const [tasks] = useState<GenerationTask[]>(MOCK_TASKS)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [promoDismissed, setPromoDismissed] = useState(false)
+  const [showMinimap, setShowMinimap] = useState(false)
 
   useEffect(() => { wsInit() }, [wsInit])
 
@@ -65,17 +67,35 @@ export function CanvasPage() {
       return
     }
 
-    if (state?.forkFrom) {
-      // TapTV Fork：预填 demo 分镜节点
+    if (state?.project) {
+      // TapTV 克隆项目：加载完整 workflow 快照
       resetCanvas()
-      applyStoryboard(
-        [
-          { label: '分镜 1', prompt: 'Forked scene A' },
-          { label: '分镜 2', prompt: 'Forked scene B' },
-          { label: '分镜 3', prompt: 'Forked scene C' },
-        ],
-        'Forked from TapTV',
-      )
+      loadProject(state.project)
+      window.history.replaceState({}, '')
+      return
+    }
+
+    if (state?.forkFrom) {
+      resetCanvas()
+      mockGetTapTVWorkflow(state.forkFrom).then((wf) => {
+        if (wf) {
+          loadProject({
+            ...wf,
+            id: `fork-${Date.now()}`,
+            name: wf.name,
+            updatedAt: new Date().toISOString(),
+          })
+        } else {
+          applyStoryboard(
+            [
+              { label: '分镜 1', prompt: 'Forked scene A' },
+              { label: '分镜 2', prompt: 'Forked scene B' },
+              { label: '分镜 3', prompt: 'Forked scene C' },
+            ],
+            'Forked from TapTV',
+          )
+        }
+      })
       window.history.replaceState({}, '')
       return
     }
@@ -160,6 +180,10 @@ export function CanvasPage() {
 
   const isEmpty = nodes.length === 0
 
+  useEffect(() => {
+    setShowMinimap(!isEmpty)
+  }, [isEmpty])
+
   return (
     <ReactFlowProvider>
       <div className="canvas-page relative flex h-full flex-col bg-[#050505]">
@@ -173,7 +197,7 @@ export function CanvasPage() {
         />
         <div className="relative flex flex-1 overflow-hidden" onContextMenu={handleContextMenu}>
           <div className="relative flex flex-1">
-            <FlowCanvas hideChrome={isEmpty} />
+            <FlowCanvas hideChrome={isEmpty} showMinimap={showMinimap} hasRightPanel={!isEmpty} />
             <CanvasToolbar onAddNode={handleAddNode} />
             {isEmpty && (
               <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
@@ -186,12 +210,12 @@ export function CanvasPage() {
                 />
               </div>
             )}
-            {isEmpty && (
-              <CanvasBottomBar
-                zoom={project.viewport.zoom}
-                onZoomChange={(zoom) => setViewport({ ...project.viewport, zoom })}
-              />
-            )}
+            <CanvasBottomBar
+              zoom={project.viewport.zoom}
+              onZoomChange={(zoom) => setViewport({ ...project.viewport, zoom })}
+              showMinimap={showMinimap}
+              onToggleMinimap={() => setShowMinimap((v) => !v)}
+            />
           </div>
           {!isEmpty && <RightPanel />}
         </div>

@@ -64,9 +64,10 @@ export function TapTVPage() {
   }, [items, sort, category, search])
 
   return (
-    <main className="home-page flex-1 overflow-y-auto px-5 py-6 md:px-8">
-      <div className="mx-auto max-w-[1200px]">
-        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <main className="home-page flex-1 overflow-y-auto">
+      <div className="home-section-pad py-6 md:py-8">
+        <div className="home-wide-stack">
+          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <TabBar<TapTVSort> tabs={sortTabs} active={sort} onChange={setSort} />
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput value={search} onChange={setSearch} placeholder={t.workspace.search} className="w-full sm:w-[200px]" />
@@ -78,10 +79,11 @@ export function TapTVPage() {
 
         <FilterPills<TapTVCategory> options={categoryOptions} active={category} onChange={setCategory} className="mb-6" />
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="taptv-explore-grid">
           {filtered.map((item) => (
             <TapTVCard key={item.id} item={item} onClick={() => navigate(`/taptv/${item.id}`)} />
           ))}
+        </div>
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import { HomePage } from './pages/HomePage'
 import { ProfilePage } from './pages/ProfilePage'
 import { TapTVPage } from './pages/TapTVPage'
 import { TapTVDetailPage } from './pages/TapTVDetailPage'
+import { TapTVWorkflowPage } from './pages/TapTVWorkflowPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CanvasPage } from './pages/CanvasPage'
 import { LoginPage } from './pages/LoginPage'
@@ -25,6 +26,7 @@ export default function App() {
           {/* Canvas 编辑器 — 全屏独立布局 */}
           <Route path="/canvas" element={<CanvasPage />} />
           <Route path="/canvas/:projectId" element={<CanvasPage />} />
+          <Route path="/taptv/:id/workflow" element={<TapTVWorkflowPage />} />
 
           {/* 主应用页面 — 顶部导航 */}
           <Route element={<AppLayout />}>

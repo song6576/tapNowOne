@@ -35,7 +35,7 @@ export function HomePage() {
   return (
     <main className="home-page flex flex-1 flex-col overflow-y-auto">
       <div className="home-page-grid flex flex-col">
-        <section className="home-hero-section home-section-pad pb-6 pt-8 md:pt-10">
+        <section className="home-hero-pad pb-6 pt-8 md:pt-10">
           <div className="home-hero-stack">
             <HeroPrompt />
             <div className="mt-8">
@@ -44,13 +44,13 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="home-featured-section home-section-pad border-t border-white/[0.04] py-10 md:py-12">
+        <section className="home-featured-section home-section-pad border-t border-white/[0.04]">
           <div className="home-wide-stack">
             {loading ? <FeaturedCarouselSkeleton /> : <FeaturedCarousel items={featured} />}
           </div>
         </section>
 
-        <section className="home-section-pad border-t border-white/[0.04] py-10 md:py-12">
+        <section className="home-taptv-section home-section-pad border-t border-white/[0.04] py-10 md:py-12">
           <div className="home-wide-stack">
             {!loading && <TapTVExploreSection items={taptv} />}
           </div>

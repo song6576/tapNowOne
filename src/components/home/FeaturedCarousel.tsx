@@ -6,18 +6,16 @@ import { useI18n } from '../../store/langStore'
 
 const FeaturedCard = memo(function FeaturedCard({
   item,
-  isCenter,
   onClick,
 }: {
   item: FeaturedItem
-  isCenter?: boolean
   onClick?: () => void
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`home-featured-card snap-center ui-clickable text-left ${isCenter ? 'home-featured-card--center' : ''}`}
+      className="home-featured-card snap-start ui-clickable text-left"
     >
       <div className="home-featured-cover" style={{ background: item.cover }}>
         <div className="home-featured-overlay">
@@ -77,7 +75,7 @@ export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: Featur
     const cards = el.querySelectorAll<HTMLElement>('.home-featured-card')
     const target = cards[index]
     if (!target) return
-    const left = target.offsetLeft - (el.clientWidth - target.offsetWidth) / 2
+    const left = Math.max(0, target.offsetLeft - 8)
     el.scrollTo({ left, behavior: 'smooth' })
   }, [])
 
@@ -106,11 +104,10 @@ export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: Featur
         </button>
 
         <div ref={scrollRef} className="home-carousel-track">
-          {items.map((item, i) => (
+          {items.map((item) => (
             <FeaturedCard
               key={item.id}
               item={item}
-              isCenter={i === activeIndex}
               onClick={() => item.link && navigate(item.link)}
             />
           ))}

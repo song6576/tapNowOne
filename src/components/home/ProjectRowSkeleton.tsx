@@ -5,7 +5,7 @@ import { Skeleton } from '../ui/Skeleton'
 export const ProjectRowSkeleton = memo(function ProjectRowSkeleton() {
   return (
     <section className="w-full">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="home-project-grid">
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}

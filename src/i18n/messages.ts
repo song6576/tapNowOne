@@ -109,6 +109,17 @@ export type Messages = {
       tutorial: string
       other: string
     }
+    detail: {
+      loading: string
+      follow: string
+      viewWorkflow: string
+      browseAll: string
+      back: string
+    }
+    workflow: {
+      readonlyHint: string
+      cloneProject: string
+    }
   }
   publish: {
     title: string
@@ -148,6 +159,22 @@ export type Messages = {
     rename: string
     newProject: string
     delete: string
+    tooltips: {
+      layers: string
+      grid: string
+      fitView: string
+      zoom: string
+      minimapShow: string
+      minimapHide: string
+      addNode: string
+      search: string
+      projects: string
+      favorites: string
+      messages: string
+      collaborators: string
+      history: string
+      profile: string
+    }
   }
   userMenu: {
     createTeam: string
@@ -225,6 +252,12 @@ export type Messages = {
       logout: string
     }
     version: string
+    logoutConfirm: {
+      title: string
+      message: string
+      confirm: string
+      cancel: string
+    }
   }
   helpMenu: {
     contact: string
@@ -438,6 +471,17 @@ const zh: Messages = {
       tutorial: '教程',
       other: '其他',
     },
+    detail: {
+      loading: '加载中...',
+      follow: '关注',
+      viewWorkflow: '查看创作过程',
+      browseAll: '浏览全部',
+      back: '返回',
+    },
+    workflow: {
+      readonlyHint: '只读模式，如需创建请点击',
+      cloneProject: '克隆项目',
+    },
   },
   publish: {
     title: '发布作品到 TapTV',
@@ -477,6 +521,22 @@ const zh: Messages = {
     rename: '重命名',
     newProject: '新建项目',
     delete: '删除',
+    tooltips: {
+      layers: '图层',
+      grid: '对齐网格',
+      fitView: '适应画布',
+      zoom: '缩放',
+      minimapShow: '显示小地图',
+      minimapHide: '隐藏小地图',
+      addNode: '添加节点',
+      search: '搜索',
+      projects: '项目',
+      favorites: '收藏',
+      messages: '消息',
+      collaborators: '协作者',
+      history: '历史记录',
+      profile: '个人主页',
+    },
   },
   userMenu: {
     createTeam: '创建团队',
@@ -554,6 +614,12 @@ const zh: Messages = {
       logout: '登出账号',
     },
     version: 'v2.10.19',
+    logoutConfirm: {
+      title: '确认登出',
+      message: '确定要登出当前账号吗？登出后需要重新登录才能继续使用。',
+      confirm: '登出',
+      cancel: '取消',
+    },
   },
   helpMenu: {
     contact: '联系我们',
@@ -789,6 +855,17 @@ const en: Messages = {
       tutorial: 'Tutorials',
       other: 'Other',
     },
+    detail: {
+      loading: 'Loading...',
+      follow: 'Follow',
+      viewWorkflow: 'View creation process',
+      browseAll: 'Browse all',
+      back: 'Back',
+    },
+    workflow: {
+      readonlyHint: 'Read-only. Click to create your own.',
+      cloneProject: 'Clone project',
+    },
   },
   publish: {
     title: 'Publish to TapTV',
@@ -828,6 +905,22 @@ const en: Messages = {
     rename: 'Rename',
     newProject: 'New project',
     delete: 'Delete',
+    tooltips: {
+      layers: 'Layers',
+      grid: 'Snap to grid',
+      fitView: 'Fit to view',
+      zoom: 'Zoom',
+      minimapShow: 'Show minimap',
+      minimapHide: 'Hide minimap',
+      addNode: 'Add node',
+      search: 'Search',
+      projects: 'Projects',
+      favorites: 'Favorites',
+      messages: 'Messages',
+      collaborators: 'Collaborators',
+      history: 'History',
+      profile: 'Profile',
+    },
   },
   userMenu: {
     createTeam: 'Create team',
@@ -905,6 +998,12 @@ const en: Messages = {
       logout: 'Log out',
     },
     version: 'v2.10.19',
+    logoutConfirm: {
+      title: 'Confirm log out',
+      message: 'Are you sure you want to log out? You will need to sign in again to continue.',
+      confirm: 'Log out',
+      cancel: 'Cancel',
+    },
   },
   helpMenu: {
     contact: 'Contact us',

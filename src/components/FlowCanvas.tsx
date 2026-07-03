@@ -12,7 +12,15 @@ import {
 import { useCanvasStore } from '../store/canvasStore'
 import { nodeTypes } from './nodes'
 
-export function FlowCanvas({ hideChrome = false }: { hideChrome?: boolean }) {
+export function FlowCanvas({
+  hideChrome = false,
+  showMinimap = false,
+  hasRightPanel = false,
+}: {
+  hideChrome?: boolean
+  showMinimap?: boolean
+  hasRightPanel?: boolean
+}) {
   const nodes = useCanvasStore((s) => s.nodes)
   const edges = useCanvasStore((s) => s.edges)
   const project = useCanvasStore((s) => s.project)
@@ -68,20 +76,18 @@ export function FlowCanvas({ hideChrome = false }: { hideChrome?: boolean }) {
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#27272a" />
-        {!hideChrome && (
-          <>
-            <Controls showInteractive={false} position="bottom-left" />
-            <MiniMap
-              nodeColor={(n) => {
-                const colors: Record<string, string> = {
-                  text: '#60a5fa', image: '#a78bfa', video: '#fbbf24', audio: '#34d399',
-                }
-                return colors[n.type ?? 'text'] ?? '#71717a'
-              }}
-              maskColor="rgba(9,9,11,0.85)"
-              className="!bottom-3 !right-[calc(var(--tn-panel-w)+12px)]"
-            />
-          </>
+        {!hideChrome && <Controls showInteractive={false} position="bottom-left" />}
+        {showMinimap && (
+          <MiniMap
+            nodeColor={(n) => {
+              const colors: Record<string, string> = {
+                text: '#60a5fa', image: '#a78bfa', video: '#fbbf24', audio: '#34d399',
+              }
+              return colors[n.type ?? 'text'] ?? '#71717a'
+            }}
+            maskColor="rgba(9,9,11,0.85)"
+            className={hasRightPanel ? '!bottom-3 !right-[calc(var(--tn-panel-w)+12px)]' : '!bottom-3 !right-3'}
+          />
         )}
       </ReactFlow>
     </div>
