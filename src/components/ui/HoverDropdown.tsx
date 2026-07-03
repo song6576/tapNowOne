@@ -5,6 +5,8 @@ interface HoverDropdownProps {
   trigger: React.ReactNode
   children: React.ReactNode
   align?: 'left' | 'right'
+  /** 面板相对触发器的位置 */
+  side?: 'bottom' | 'right'
   className?: string
   panelClassName?: string
   /** hover：悬浮打开；click：点击打开（适合表单内选择） */
@@ -20,6 +22,7 @@ export function HoverDropdown({
   trigger,
   children,
   align = 'right',
+  side = 'bottom',
   className = '',
   panelClassName = '',
   mode = 'hover',
@@ -36,7 +39,9 @@ export function HoverDropdown({
     onOpenChange?.(next)
   }, [isControlled, onOpenChange])
   const ref = useRef<HTMLDivElement>(null)
+  const panelWrapRef = useRef<HTMLDivElement>(null)
   const closeTimer = useRef<number | null>(null)
+  const [flipped, setFlipped] = useState(false)
 
   const clearCloseTimer = () => {
     if (closeTimer.current !== null) {
@@ -92,6 +97,34 @@ export function HoverDropdown({
     return () => document.removeEventListener('mousedown', onDoc)
   }, [mode, open, setOpen])
 
+  useEffect(() => {
+    if (!open) {
+      setFlipped(false)
+      return
+    }
+    const id = window.requestAnimationFrame(() => {
+      const panel = panelWrapRef.current?.querySelector('.dropdown-panel') as HTMLElement | null
+      if (!panel) return
+      const panelRect = panel.getBoundingClientRect()
+      const pad = 12
+      if (side === 'right') {
+        setFlipped(panelRect.right > window.innerWidth - pad)
+      } else if (side === 'bottom') {
+        setFlipped(panelRect.bottom > window.innerHeight - pad)
+      }
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [open, side, children])
+
+  const panelPositionClass =
+    side === 'right'
+      ? flipped
+        ? 'right-full bottom-0 flex flex-row-reverse items-end'
+        : 'left-full bottom-0 flex flex-row items-end'
+      : flipped
+        ? 'bottom-full flex flex-col-reverse'
+        : `top-full flex flex-col ${align === 'right' ? 'right-0' : 'left-0'}`
+
   return (
     <div
       ref={ref}
@@ -103,15 +136,18 @@ export function HoverDropdown({
         {trigger}
       </div>
       <div
-        className={`absolute top-full z-50 transition-opacity duration-100 ${align === 'right' ? 'right-0' : 'left-0'} ${
+        ref={panelWrapRef}
+        className={`absolute z-50 transition-opacity duration-100 ${panelPositionClass} ${
           open ? 'visible opacity-100' : 'invisible opacity-0 pointer-events-none'
         }`}
         aria-hidden={!open}
         onPointerEnter={handleEnter}
         onPointerLeave={handleLeave}
       >
-        {/* 透明桥接区：与 trigger 重叠，消除移动过程中的 hover 断档 */}
-        <div className="-mt-1 h-3" aria-hidden />
+        {side === 'bottom' && !flipped && <div className="-mt-1 h-3" aria-hidden />}
+        {side === 'bottom' && flipped && <div className="h-3" aria-hidden />}
+        {side === 'right' && !flipped && <div className="w-2 shrink-0 self-stretch" aria-hidden />}
+        {side === 'right' && flipped && <div className="w-2 shrink-0 self-stretch" aria-hidden />}
         <div className={`dropdown-panel ${panelClassName}`}>{children}</div>
       </div>
     </div>

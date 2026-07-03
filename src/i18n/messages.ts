@@ -174,6 +174,41 @@ export type Messages = {
       collaborators: string
       history: string
       profile: string
+      help: string
+    }
+    nodeMenu: {
+      addNode: string
+      auxiliary: string
+      resources: string
+      text: string
+      textDesc: string
+      image: string
+      video: string
+      audio: string
+      world3d: string
+      playlist: string
+      upload: string
+      beta: string
+      comingSoon: string
+    }
+    nodeEditor: {
+      placeholder: string
+      textPlaceholder: string
+      waitingImage: string
+      magic: string
+      add: string
+      swap: string
+      generate: string
+    }
+    agentPanel: {
+      title: string
+      settings: string
+      close: string
+      welcome: string
+      thinking: string
+      inputPlaceholder: string
+      autoGenerate: string
+      send: string
     }
   }
   userMenu: {
@@ -536,6 +571,41 @@ const zh: Messages = {
       collaborators: '协作者',
       history: '历史记录',
       profile: '个人主页',
+      help: '帮助',
+    },
+    nodeMenu: {
+      addNode: '添加节点',
+      auxiliary: '辅助工具',
+      resources: '添加资源',
+      text: '文本',
+      textDesc: '脚本、广告词、品牌文案',
+      image: '图片',
+      video: '视频',
+      audio: '音频',
+      world3d: '3D 世界',
+      playlist: '播放列表',
+      upload: '上传',
+      beta: 'Beta',
+      comingSoon: '即将推出',
+    },
+    nodeEditor: {
+      placeholder: '描述任何你想要生成的内容',
+      textPlaceholder: '双击开始编辑...',
+      waitingImage: '等待生成图片...',
+      magic: 'AI 增强',
+      add: '添加',
+      swap: '切换',
+      generate: '生成',
+    },
+    agentPanel: {
+      title: 'AI功能与服务介绍',
+      settings: '设置',
+      close: '关闭',
+      welcome: '你好，我是 TapNow.AI。\n\n我可以帮助你进行视觉创作、内容策划、画布节点组织，以及与 Notion、Slack、Lark 等工具集成。',
+      thinking: '思考中...',
+      inputPlaceholder: '描述创意需求/使用技能, @ 添加画布内容, / 引用参考',
+      autoGenerate: '自动生成',
+      send: '发送',
     },
   },
   userMenu: {
@@ -920,6 +990,41 @@ const en: Messages = {
       collaborators: 'Collaborators',
       history: 'History',
       profile: 'Profile',
+      help: 'Help',
+    },
+    nodeMenu: {
+      addNode: 'Add node',
+      auxiliary: 'Tools',
+      resources: 'Resources',
+      text: 'Text',
+      textDesc: 'Scripts, ads, brand copy',
+      image: 'Image',
+      video: 'Video',
+      audio: 'Audio',
+      world3d: '3D World',
+      playlist: 'Playlist',
+      upload: 'Upload',
+      beta: 'Beta',
+      comingSoon: 'Coming soon',
+    },
+    nodeEditor: {
+      placeholder: 'Describe what you want to generate',
+      textPlaceholder: 'Double-click to edit...',
+      waitingImage: 'Waiting for image...',
+      magic: 'Enhance',
+      add: 'Add',
+      swap: 'Swap',
+      generate: 'Generate',
+    },
+    agentPanel: {
+      title: 'AI features & services',
+      settings: 'Settings',
+      close: 'Close',
+      welcome: 'Hi, I\'m TapNow.AI.\n\nI can help with visual creation, content planning, canvas organization, and tool integrations.',
+      thinking: 'Thinking...',
+      inputPlaceholder: 'Describe your idea, @ canvas content, / reference',
+      autoGenerate: 'Auto-generate',
+      send: 'Send',
     },
   },
   userMenu: {

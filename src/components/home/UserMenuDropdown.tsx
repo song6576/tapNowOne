@@ -13,8 +13,8 @@ import { useTeamStore } from '../../store/teamStore'
 import { useI18n } from '../../store/langStore'
 import { useToastStore } from '../../store/toastStore'
 
-function UserAvatar({ name, avatarUrl, size = 'sm' }: { name: string; avatarUrl?: string | null; size?: 'sm' | 'lg' }) {
-  const dim = size === 'lg' ? 'h-12 w-12 text-lg' : 'h-8 w-8 text-sm'
+function UserAvatar({ name, avatarUrl, size = 'sm' }: { name: string; avatarUrl?: string | null; size?: 'sm' | 'md' | 'lg' }) {
+  const dim = size === 'lg' ? 'h-12 w-12 text-lg' : size === 'md' ? 'h-9 w-9 text-sm' : 'h-8 w-8 text-sm'
   if (avatarUrl) {
     return <img src={avatarUrl} alt={name} className={`${dim} shrink-0 rounded-full object-cover`} />
   }
@@ -34,7 +34,11 @@ function ChevronRight() {
   )
 }
 
-export const UserMenuDropdown = memo(function UserMenuDropdown() {
+export const UserMenuDropdown = memo(function UserMenuDropdown({
+  variant = 'header',
+}: {
+  variant?: 'header' | 'avatar'
+}) {
   const navigate = useNavigate()
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
@@ -189,28 +193,38 @@ export const UserMenuDropdown = memo(function UserMenuDropdown() {
     </div>
   )
 
+  const isAvatar = variant === 'avatar'
+
   return (
     <>
       <HoverDropdown
-        align="right"
+        align={isAvatar ? 'left' : 'right'}
+        side={isAvatar ? 'right' : 'bottom'}
+        mode={isAvatar ? 'click' : 'hover'}
         open={menuOpen}
         onOpenChange={setMenuOpen}
         closeDelay={420}
-        className="user-menu-trigger-wrap"
+        className={isAvatar ? 'user-menu-trigger-wrap user-menu-trigger-wrap--canvas' : 'user-menu-trigger-wrap'}
         panelClassName="overflow-visible !bg-transparent !border-0 !shadow-none !backdrop-blur-none"
         trigger={
-          <button
-            type="button"
-            className="user-menu-trigger ui-glass-trigger ui-glass-trigger--pill flex items-center gap-2 py-1.5 pl-1 pr-3"
-          >
-            <UserAvatar name={user.name} avatarUrl={user.avatar_url} />
-            <span className="hidden max-w-[96px] truncate text-sm text-white/70 md:inline">
-              {user.name.length > 10 ? `${user.name.slice(0, 10)}...` : user.name}
-            </span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`hidden text-white/40 transition md:block ${menuOpen ? 'rotate-180' : ''}`}>
-              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+          isAvatar ? (
+            <button type="button" className="canvas-float-avatar ui-clickable overflow-hidden p-0" aria-label={m.profile}>
+              <UserAvatar name={user.name} avatarUrl={user.avatar_url} size="md" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="user-menu-trigger ui-glass-trigger ui-glass-trigger--pill flex items-center gap-2 py-1.5 pl-1 pr-3"
+            >
+              <UserAvatar name={user.name} avatarUrl={user.avatar_url} />
+              <span className="hidden max-w-[96px] truncate text-sm text-white/70 md:inline">
+                {user.name.length > 10 ? `${user.name.slice(0, 10)}...` : user.name}
+              </span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`hidden text-white/40 transition md:block ${menuOpen ? 'rotate-180' : ''}`}>
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )
         }
       >
         {panel}

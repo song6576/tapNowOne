@@ -15,10 +15,16 @@ export function CanvasBottomBar({ zoom, onZoomChange, showMinimap, onToggleMinim
 
   return (
     <div className="canvas-bottom-bar pointer-events-auto">
-      <Tooltip label={tips.layers}>
-        <button type="button" className="canvas-bottom-icon ui-clickable">
+      <Tooltip label={showMinimap ? tips.minimapHide : tips.minimapShow}>
+        <button
+          type="button"
+          onClick={onToggleMinimap}
+          className={`canvas-bottom-icon ui-clickable ${showMinimap ? 'canvas-bottom-icon--active' : ''}`}
+          aria-pressed={showMinimap}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z" strokeLinejoin="round" />
+            <path d="M8 5v12M16 8v9" strokeLinecap="round" />
           </svg>
         </button>
       </Tooltip>
@@ -56,13 +62,8 @@ export function CanvasBottomBar({ zoom, onZoomChange, showMinimap, onToggleMinim
         </div>
       </Tooltip>
 
-      <Tooltip label={showMinimap ? tips.minimapHide : tips.minimapShow}>
-        <button
-          type="button"
-          onClick={onToggleMinimap}
-          className={`canvas-bottom-help ui-clickable ${showMinimap ? 'canvas-bottom-icon--active' : ''}`}
-          aria-pressed={showMinimap}
-        >
+      <Tooltip label={tips.help}>
+        <button type="button" className="canvas-bottom-help ui-clickable">
           ?
         </button>
       </Tooltip>

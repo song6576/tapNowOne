@@ -1,10 +1,12 @@
 /** 画布左侧浮动工具栏：添加各类型节点 */
+import { UserMenuDropdown } from '../home/UserMenuDropdown'
 import type { NodeType } from '../../types'
 import { Tooltip } from '../ui/Tooltip'
 import { useI18n } from '../../store/langStore'
 
 interface CanvasToolbarProps {
   onAddNode: (type: NodeType | 'group') => void
+  onOpenAddMenu?: () => void
 }
 
 const TOOLS = [
@@ -58,14 +60,14 @@ function ToolIcon({ type }: { type: typeof TOOLS[number]['icon'] }) {
   }
 }
 
-export function CanvasToolbar({ onAddNode }: CanvasToolbarProps) {
+export function CanvasToolbar({ onAddNode, onOpenAddMenu }: CanvasToolbarProps) {
   const { t } = useI18n()
   const tips = t.canvas.tooltips
 
   return (
     <aside className="canvas-float-sidebar pointer-events-auto">
       <Tooltip label={tips.addNode} side="right">
-        <button type="button" onClick={() => onAddNode('text')} className="canvas-float-add ui-clickable">
+        <button type="button" onClick={onOpenAddMenu ?? (() => onAddNode('text'))} className="canvas-float-add ui-clickable">
           +
         </button>
       </Tooltip>
@@ -76,11 +78,7 @@ export function CanvasToolbar({ onAddNode }: CanvasToolbarProps) {
           </button>
         </Tooltip>
       ))}
-      <Tooltip label={tips.profile} side="right">
-        <button type="button" className="canvas-float-avatar ui-clickable">
-          <span className="text-[10px] font-bold text-white">TN</span>
-        </button>
-      </Tooltip>
+      <UserMenuDropdown variant="avatar" />
     </aside>
   )
 }

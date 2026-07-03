@@ -1,37 +1,160 @@
-/** 画布右键菜单：在点击位置添加节点 */
-import { NODE_MENU_ITEMS } from '../../mock/data'
+/** 画布添加节点菜单：双击/右键唤起，分区展示节点与资源 */
+import { useEffect, useRef, useState } from 'react'
 import type { NodeType } from '../../types'
+import { useI18n } from '../../store/langStore'
+import { useToastStore } from '../../store/toastStore'
+
+export type CanvasAddAction = NodeType | 'group' | 'playlist' | 'world3d' | 'upload'
 
 interface CanvasContextMenuProps {
   x: number
   y: number
-  onAdd: (type: NodeType | 'group') => void
+  onAdd: (type: CanvasAddAction) => void
   onClose: () => void
 }
 
+function MenuIcon({ type }: { type: string }) {
+  const cls = 'h-[18px] w-[18px] shrink-0'
+  switch (type) {
+    case 'text':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <path d="M4 6h16M4 12h10M4 18h14" strokeLinecap="round" />
+        </svg>
+      )
+    case 'image':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <circle cx="9" cy="11" r="2" />
+          <path d="M21 15l-5-5L8 18" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+    case 'video':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <rect x="3" y="6" width="18" height="12" rx="2" />
+          <path d="M10 9.5l5 3-5 3v-6z" fill="currentColor" stroke="none" />
+        </svg>
+      )
+    case 'audio':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <path d="M7 8v8M11 6v12M15 9v6M19 7v10" strokeLinecap="round" />
+        </svg>
+      )
+    case 'world3d':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <ellipse cx="12" cy="12" rx="8" ry="3" />
+          <path d="M12 4v16" strokeLinecap="round" />
+        </svg>
+      )
+    case 'playlist':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
+        </svg>
+      )
+    default:
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <path d="M12 16V4M8 8l4-4 4 4M4 20h16" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+  }
+}
+
+interface MenuRowProps {
+  icon: string
+  label: string
+  desc?: string
+  beta?: string
+  dot?: boolean
+  active?: boolean
+  onClick: () => void
+}
+
+function MenuRow({ icon, label, desc, beta, dot, active, onClick }: MenuRowProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`canvas-add-menu-item ui-clickable ${active ? 'canvas-add-menu-item--active' : ''}`}
+    >
+      <span className="canvas-add-menu-icon-wrap">
+        {dot && <span className="canvas-add-menu-dot" aria-hidden />}
+        <MenuIcon type={icon} />
+      </span>
+      <span className="min-w-0 flex-1 text-left">
+        <span className="flex items-center gap-2">
+          <span className="text-sm text-white/90">{label}</span>
+          {beta && <span className="canvas-add-menu-beta">{beta}</span>}
+        </span>
+        {desc && <span className="mt-0.5 block text-[11px] leading-snug text-white/35">{desc}</span>}
+      </span>
+    </button>
+  )
+}
+
 export function CanvasContextMenu({ x, y, onAdd, onClose }: CanvasContextMenuProps) {
+  const { t } = useI18n()
+  const m = t.canvas.nodeMenu
+  const showToast = useToastStore((s) => s.showToast)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ left: x, top: y })
+
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    const rect = panel.getBoundingClientRect()
+    const pad = 12
+    let left = x
+    let top = y
+    if (left + rect.width > window.innerWidth - pad) left = window.innerWidth - rect.width - pad
+    if (top + rect.height > window.innerHeight - pad) top = window.innerHeight - rect.height - pad
+    left = Math.max(pad, left)
+    top = Math.max(pad, top)
+    setPos({ left, top })
+  }, [x, y])
+
+  const soon = () => {
+    showToast({ type: 'info', message: m.comingSoon })
+    onClose()
+  }
+
+  const add = (type: CanvasAddAction) => {
+    onAdd(type)
+    onClose()
+  }
+
   return (
     <>
       <div className="fixed inset-0 z-50" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose() }} />
       <div
-        className="fixed z-50 min-w-[180px] rounded-lg border border-[var(--tn-border)] bg-[var(--tn-bg-panel)] py-1 shadow-2xl"
-        style={{ left: x, top: y }}
+        ref={panelRef}
+        className="canvas-add-menu fixed z-50"
+        style={{ left: pos.left, top: pos.top }}
       >
-        <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--tn-text-muted)]">Add Node</p>
-        {NODE_MENU_ITEMS.map((item) => (
-          <button
-            key={item.type}
-            type="button"
-            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-[var(--tn-text-secondary)] hover:bg-[var(--tn-bg-hover)] hover:text-white"
-            onClick={() => { onAdd(item.type as NodeType | 'group'); onClose() }}
-          >
-            <span className="w-5 text-center">{item.icon}</span>
-            <div>
-              <p>{item.label}</p>
-              <p className="text-[10px] text-[var(--tn-text-muted)]">{item.desc}</p>
-            </div>
-          </button>
-        ))}
+        <p className="canvas-add-menu-section">{m.addNode}</p>
+        <MenuRow
+          icon="text"
+          label={m.text}
+          desc={m.textDesc}
+          active
+          onClick={() => add('text')}
+        />
+        <MenuRow icon="image" label={m.image} onClick={() => add('image')} />
+        <MenuRow icon="video" label={m.video} onClick={() => add('video')} />
+        <MenuRow icon="audio" label={m.audio} dot onClick={() => add('audio')} />
+        <MenuRow icon="world3d" label={m.world3d} beta={m.beta} onClick={soon} />
+
+        <p className="canvas-add-menu-section">{m.auxiliary}</p>
+        <MenuRow icon="playlist" label={m.playlist} beta={m.beta} onClick={soon} />
+
+        <p className="canvas-add-menu-section">{m.resources}</p>
+        <MenuRow icon="upload" label={m.upload} onClick={soon} />
       </div>
     </>
   )

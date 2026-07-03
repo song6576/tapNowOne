@@ -1,10 +1,11 @@
 /** TapNow Logo 组件 */
 interface TapNowLogoProps {
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   showText?: boolean
 }
 
 const sizes = {
+  xs: { icon: 22, text: 'text-sm' },
   sm: { icon: 28, text: 'text-base' },
   md: { icon: 38, text: 'text-xl' },
   lg: { icon: 52, text: 'text-3xl' },

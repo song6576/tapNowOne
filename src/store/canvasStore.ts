@@ -15,6 +15,7 @@ import { buildEffectivePrompt, getUpstreamInputs } from '../utils/upstream'
 import { getWorkflowOrder } from '../utils/workflow'
 import { generateNode as apiGenerate, composeVideo } from '../services/api'
 import { collectComposeClips } from '../utils/compose'
+import { nextToolbarNodePosition } from '../utils/canvasLayout'
 import type { StoryboardScene } from '../api/client'
 
 interface CanvasStore {
@@ -52,14 +53,8 @@ interface CanvasStore {
   getProjectPayload: () => CanvasProject
 }
 
-let nodeCounter = 0
 /** 防抖写入 localStorage，避免拖拽节点时频繁 IO */
 let persistTimer: ReturnType<typeof setTimeout> | null = null
-
-function nextNodePosition(index = 0): { x: number; y: number } {
-  nodeCounter += 1
-  return { x: 200 + index * 280, y: 180 + (index % 2) * 120 }
-}
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
   project: createEmptyProject(),
@@ -79,7 +74,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         nodes: saved.nodes,
         edges: saved.edges,
       })
-      nodeCounter = saved.nodes.length
     }
   },
 
@@ -91,11 +85,11 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       selectedNodeId: null,
       cloudId: null,
     })
-    nodeCounter = 0
   },
 
   setProjectName: (name) => {
-    set((s) => ({ project: { ...s.project, name } }))
+    const now = new Date().toISOString()
+    set((s) => ({ project: { ...s.project, name, updatedAt: now } }))
     get().schedulePersist()
   },
 
@@ -130,7 +124,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   addNode: (type, position) => {
-    const pos = position ?? nextNodePosition()
+    const { nodes } = get()
+    const pos = position ?? nextToolbarNodePosition(nodes.length)
     const id = crypto.randomUUID()
     const newNode: CanvasNode =
       type === 'group'
@@ -141,14 +136,19 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             style: { width: 320, height: 240 },
             data: createDefaultNodeData(type),
             zIndex: -1,
+            selected: true,
           }
         : {
             id,
             type,
             position: pos,
             data: createDefaultNodeData(type),
+            selected: true,
           }
-    set((s) => ({ nodes: [...s.nodes, newNode], selectedNodeId: id }))
+    set((s) => ({
+      nodes: [...s.nodes.map((n) => ({ ...n, selected: false })), newNode],
+      selectedNodeId: id,
+    }))
     get().schedulePersist()
   },
 
@@ -161,7 +161,12 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     get().schedulePersist()
   },
 
-  selectNode: (id) => set({ selectedNodeId: id }),
+  selectNode: (id) => {
+    set((s) => ({
+      selectedNodeId: id,
+      nodes: s.nodes.map((n) => ({ ...n, selected: id !== null && n.id === id })),
+    }))
+  },
 
   deleteSelected: () => {
     const { selectedNodeId, nodes, edges } = get()
@@ -187,7 +192,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       selectedNodeId: null,
       cloudId: project.id,
     })
-    nodeCounter = project.nodes.length
     get().persist()
   },
 
@@ -198,7 +202,10 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   persist: () => {
     const { project, nodes, edges } = get()
-    saveProject({ ...project, nodes, edges })
+    const now = new Date().toISOString()
+    const payload = { ...project, nodes, edges, updatedAt: now }
+    saveProject(payload)
+    set({ project: { ...project, updatedAt: now } })
   },
 
   getSelectedNode: () => {
@@ -279,7 +286,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const imageNodes: CanvasNode[] = scenes.map((scene, i) => ({
       id: crypto.randomUUID(),
       type: 'image' as const,
-      position: nextNodePosition(i),
+      position: nextToolbarNodePosition(i + 1),
       data: {
         ...createDefaultNodeData('image'),
         label: scene.label,

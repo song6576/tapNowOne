@@ -4,19 +4,17 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ReactFlowProvider } from '@xyflow/react'
 import { CanvasTopBar } from '../components/shell/CanvasTopBar'
 import { CanvasToolbar } from '../components/shell/CanvasToolbar'
-import { TaskBar } from '../components/shell/TaskBar'
-import { CanvasContextMenu } from '../components/shell/CanvasContextMenu'
+import { CanvasContextMenu, type CanvasAddAction } from '../components/shell/CanvasContextMenu'
 import { FlowCanvas } from '../components/FlowCanvas'
-import { RightPanel } from '../components/RightPanel'
+import { CanvasAgentPanel } from '../components/canvas/CanvasAgentPanel'
 import { CanvasQuickActions } from '../components/canvas/CanvasQuickActions'
 import { CanvasBottomBar } from '../components/canvas/CanvasBottomBar'
 import { useCanvasStore } from '../store/canvasStore'
 import { useWorkspaceStore } from '../store/workspaceStore'
-import { MOCK_TASKS } from '../mock/data'
 import type { CanvasProject } from '../types'
-import { mockGetTapTVWorkflow } from '../mock/api'
 import type { NodeType } from '../types'
-import type { GenerationTask } from '../mock/data'
+import { mockGetTapTVWorkflow } from '../mock/api'
+import { nodePositionAtCursor } from '../utils/canvasLayout'
 import { useI18n } from '../store/langStore'
 
 export function CanvasPage() {
@@ -34,17 +32,20 @@ export function CanvasPage() {
   const loadProject = useCanvasStore((s) => s.loadProject)
   const addNode = useCanvasStore((s) => s.addNode)
   const applyStoryboard = useCanvasStore((s) => s.applyStoryboard)
-  const selectNode = useCanvasStore((s) => s.selectNode)
 
   const wsInit = useWorkspaceStore((s) => s.init)
   const getProject = useWorkspaceStore((s) => s.getProject)
   const updateProject = useWorkspaceStore((s) => s.updateProject)
   const createProject = useWorkspaceStore((s) => s.createProject)
 
-  const [tasks] = useState<GenerationTask[]>(MOCK_TASKS)
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [addMenu, setAddMenu] = useState<{
+    x: number
+    y: number
+    flowPosition?: { x: number; y: number }
+  } | null>(null)
+  const [showAgentPanel, setShowAgentPanel] = useState(false)
   const [promoDismissed, setPromoDismissed] = useState(false)
-  const [showMinimap, setShowMinimap] = useState(false)
+  const [showMinimap, setShowMinimap] = useState(true)
 
   useEffect(() => { wsInit() }, [wsInit])
 
@@ -121,7 +122,8 @@ export function CanvasPage() {
     }
 
     if (state?.initialPrompt?.trim()) {
-      // 首页 Hero 提交：用 prompt 生成分镜 text 节点
+      // 首页 Hero 提交：显示 Agent 面板并生成分镜
+      setShowAgentPanel(true)
       resetCanvas()
       applyStoryboard(
         [{ label: 'Prompt', prompt: state.initialPrompt.trim() }],
@@ -136,7 +138,7 @@ export function CanvasPage() {
 
   const handleNameChange = useCallback((name: string) => {
     setProjectName(name)
-    if (projectId) updateProject(projectId, { name })
+    if (projectId) updateProject(projectId, { name, updatedAt: new Date().toISOString() })
   }, [setProjectName, updateProject, projectId])
 
   const handleNewProject = useCallback(() => {
@@ -146,9 +148,41 @@ export function CanvasPage() {
     navigate(`/canvas/${proj.id}`, { state: { folderId, isNew: true } })
   }, [projectId, getProject, createProject, navigate, location.state])
 
-  const handleAddNode = useCallback((type: NodeType | 'group') => {
-    addNode(type)
+  const handleAddNode = useCallback((type: NodeType | 'group', position?: { x: number; y: number }) => {
+    addNode(type, position)
   }, [addNode])
+
+  const openAddMenu = useCallback((x: number, y: number, flowPosition?: { x: number; y: number }) => {
+    setAddMenu({ x, y, flowPosition })
+  }, [])
+
+  const handleAddFromMenu = useCallback((type: CanvasAddAction) => {
+    if (type === 'playlist' || type === 'world3d' || type === 'upload') return
+    if (addMenu?.flowPosition) {
+      handleAddNode(type, nodePositionAtCursor(addMenu.flowPosition))
+    } else {
+      handleAddNode(type)
+    }
+    setAddMenu(null)
+  }, [addMenu, handleAddNode])
+
+  const handlePaneDoubleClick = useCallback((e: MouseEvent, flowPosition: { x: number; y: number }) => {
+    openAddMenu(e.clientX, e.clientY, flowPosition)
+  }, [openAddMenu])
+
+  const handlePaneContextMenu = useCallback((e: MouseEvent, flowPosition: { x: number; y: number }) => {
+    openAddMenu(e.clientX, e.clientY, flowPosition)
+  }, [openAddMenu])
+
+  const handleOpenAddMenuFromToolbar = useCallback(() => {
+    const btn = document.querySelector('.canvas-float-add')
+    if (btn) {
+      const rect = btn.getBoundingClientRect()
+      openAddMenu(rect.right + 10, rect.top)
+    } else {
+      openAddMenu(window.innerWidth / 2, window.innerHeight / 2)
+    }
+  }, [openAddMenu])
 
   const handleLoadDemo = useCallback(() => {
     applyStoryboard(
@@ -169,20 +203,7 @@ export function CanvasPage() {
   }, [addNode])
   const handleLyrics = useCallback(() => addNode('text'), [addNode])
 
-  const handleTaskClick = useCallback((task: GenerationTask) => {
-    if (task.nodeId) selectNode(task.nodeId)
-  }, [selectNode])
-
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY })
-  }, [])
-
   const isEmpty = nodes.length === 0
-
-  useEffect(() => {
-    setShowMinimap(!isEmpty)
-  }, [isEmpty])
 
   return (
     <ReactFlowProvider>
@@ -195,10 +216,15 @@ export function CanvasPage() {
           onNewProject={handleNewProject}
           onDelete={() => navigate('/home/projects')}
         />
-        <div className="relative flex flex-1 overflow-hidden" onContextMenu={handleContextMenu}>
+        <div className="relative flex flex-1 overflow-hidden">
           <div className="relative flex flex-1">
-            <FlowCanvas hideChrome={isEmpty} showMinimap={showMinimap} hasRightPanel={!isEmpty} />
-            <CanvasToolbar onAddNode={handleAddNode} />
+            <FlowCanvas
+              hideChrome={isEmpty}
+              showMinimap={showMinimap}
+              onPaneDoubleClick={handlePaneDoubleClick}
+              onPaneContextMenu={handlePaneContextMenu}
+            />
+            <CanvasToolbar onAddNode={handleAddNode} onOpenAddMenu={handleOpenAddMenuFromToolbar} />
             {isEmpty && (
               <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                 <CanvasQuickActions
@@ -217,9 +243,8 @@ export function CanvasPage() {
               onToggleMinimap={() => setShowMinimap((v) => !v)}
             />
           </div>
-          {!isEmpty && <RightPanel />}
+          {showAgentPanel && <CanvasAgentPanel onClose={() => setShowAgentPanel(false)} />}
         </div>
-        {!isEmpty && <TaskBar tasks={tasks} onTaskClick={handleTaskClick} />}
 
         {!promoDismissed && isEmpty && (
           <div className="canvas-promo-banner">
@@ -230,12 +255,12 @@ export function CanvasPage() {
           </div>
         )}
 
-        {contextMenu && (
+        {addMenu && (
           <CanvasContextMenu
-            x={contextMenu.x}
-            y={contextMenu.y}
-            onAdd={handleAddNode}
-            onClose={() => setContextMenu(null)}
+            x={addMenu.x}
+            y={addMenu.y}
+            onAdd={handleAddFromMenu}
+            onClose={() => setAddMenu(null)}
           />
         )}
       </div>
