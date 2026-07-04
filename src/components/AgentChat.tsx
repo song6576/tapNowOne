@@ -27,21 +27,26 @@ export function AgentChat({
   const { t } = useI18n()
   const a = t.canvas.agentPanel
   const isCanvas = variant === 'canvas'
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: isCanvas
-        ? a.welcome
-        : 'Hi, I\'m TapNow Agent.\n\n• Chat to add — describe what you want\n• 「生成分镜：脚本」— auto-create storyboard nodes\n• Run Workflow — batch generate all nodes',
-    },
-  ])
+  const welcomeContent = isCanvas
+    ? a.welcome
+    : 'Hi, I\'m TapNow Agent.\n\n• Chat to add — describe what you want\n• 「生成分镜：脚本」— auto-create storyboard nodes\n• Run Workflow — batch generate all nodes'
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const prompt = initialPrompt?.trim()
+    if (isCanvas && prompt) {
+      return [{ role: 'user', content: prompt }]
+    }
+    return [{ role: 'assistant', content: welcomeContent }]
+  })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | undefined>()
   const [selectedModelId, setSelectedModelId] = useState(modelId)
   const [selectedAuto, setSelectedAuto] = useState(autoModel)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesRef = useRef<HTMLDivElement>(null)
   const seededRef = useRef(false)
+  const sendingRef = useRef(false)
 
   useEffect(() => {
     setSelectedModelId(modelId)
@@ -58,13 +63,19 @@ export function AgentChat({
   const workflowRunning = useCanvasStore((s) => s.workflowRunning)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    const el = messagesRef.current
+    if (!el) return
+    el.scrollTop = el.scrollHeight
+  }, [messages, loading])
 
-  const sendText = useCallback(async (text: string) => {
+  const sendText = useCallback(async (text: string, options?: { appendUser?: boolean }) => {
     const trimmed = text.trim()
-    if (!trimmed || loading) return
-    setMessages((m) => [...m, { role: 'user', content: trimmed }])
+    if (!trimmed || sendingRef.current) return
+    sendingRef.current = true
+    const appendUser = options?.appendUser ?? true
+    if (appendUser) {
+      setMessages((m) => [...m, { role: 'user', content: trimmed }])
+    }
     setLoading(true)
 
     try {
@@ -95,8 +106,9 @@ export function AgentChat({
       ])
     } finally {
       setLoading(false)
+      sendingRef.current = false
     }
-  }, [loading, nodes, edges, applyStoryboard, conversationId, selectedModelId, selectedAuto])
+  }, [nodes, edges, applyStoryboard, conversationId, selectedModelId, selectedAuto])
 
   const send = () => {
     const text = input.trim()
@@ -106,9 +118,18 @@ export function AgentChat({
   }
 
   useEffect(() => {
-    if (!isCanvas || !initialPrompt?.trim() || seededRef.current) return
+    const prompt = initialPrompt?.trim()
+    if (!isCanvas || !prompt) return
+
+    setMessages((prev) => {
+      const hasUser = prev.some((m) => m.role === 'user' && m.content === prompt)
+      if (hasUser) return prev
+      return [{ role: 'user', content: prompt }]
+    })
+
+    if (seededRef.current) return
     seededRef.current = true
-    void sendText(initialPrompt.trim())
+    void sendText(prompt, { appendUser: false })
   }, [isCanvas, initialPrompt, sendText])
 
   const handleRunWorkflow = async () => {
@@ -130,7 +151,7 @@ export function AgentChat({
   }
 
   return (
-    <div className={`flex h-full flex-col ${isCanvas ? 'canvas-agent-chat' : ''}`}>
+    <div className={`flex h-full min-h-0 flex-col ${isCanvas ? 'canvas-agent-chat' : ''}`}>
       {!isCanvas && (
         <div className="flex items-center justify-between gap-2 border-b border-[var(--tn-border-subtle)] px-3 py-2">
           <ModelDropdown
@@ -156,7 +177,10 @@ export function AgentChat({
         </div>
       )}
 
-      <div className={`flex-1 space-y-4 overflow-y-auto ${isCanvas ? 'px-5 py-4' : 'space-y-3 p-3'}`}>
+      <div
+        ref={messagesRef}
+        className={`canvas-agent-messages min-h-0 flex-1 space-y-4 overflow-y-auto ${isCanvas ? 'px-5 py-4' : 'space-y-3 p-3'}`}
+      >
         {messages.map((msg, i) => {
           const content = msg.content.split('\n').map((line, j) => (
             <p key={j} className={j > 0 ? 'mt-2' : ''}>{line}</p>
@@ -195,23 +219,9 @@ export function AgentChat({
         <div ref={bottomRef} />
       </div>
 
-      <div className={`border-t border-white/[0.06] ${isCanvas ? 'p-4' : 'p-3'}`}>
+      <div className={`shrink-0 border-t border-white/[0.06] ${isCanvas ? 'p-4' : 'p-3'}`}>
         {isCanvas ? (
           <>
-            <div className="mb-3">
-              <ModelDropdown
-                value={selectedModelId}
-                onChange={(id) => {
-                  setSelectedModelId(id)
-                  onModelChange?.(id)
-                }}
-                auto={selectedAuto}
-                onAutoChange={(next) => {
-                  setSelectedAuto(next)
-                  onAutoModelChange?.(next)
-                }}
-              />
-            </div>
             <div className="canvas-agent-suggestions">
               {a.suggestions.map((label) => (
                 <button
@@ -234,23 +244,38 @@ export function AgentChat({
                 className="canvas-agent-input"
               />
               <div className="canvas-agent-input-actions">
-                <button type="button" className="canvas-agent-tool-btn ui-clickable" aria-label={a.autoGenerate}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                  </svg>
-                </button>
-                <button type="button" className="canvas-agent-auto-btn ui-clickable">{a.autoGenerate}</button>
-                <button
-                  type="button"
-                  onClick={send}
-                  disabled={loading}
-                  className="canvas-agent-send-btn ui-clickable"
-                  aria-label={a.send}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
+                <ModelDropdown
+                  compact
+                  value={selectedModelId}
+                  onChange={(id) => {
+                    setSelectedModelId(id)
+                    onModelChange?.(id)
+                  }}
+                  auto={selectedAuto}
+                  onAutoChange={(next) => {
+                    setSelectedAuto(next)
+                    onAutoModelChange?.(next)
+                  }}
+                />
+                <div className="canvas-agent-input-actions-right">
+                  <button type="button" className="canvas-agent-tool-btn ui-clickable" aria-label={a.autoGenerate}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                  <button type="button" className="canvas-agent-auto-btn ui-clickable">{a.autoGenerate}</button>
+                  <button
+                    type="button"
+                    onClick={send}
+                    disabled={loading}
+                    className="canvas-agent-send-btn ui-clickable"
+                    aria-label={a.send}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </>

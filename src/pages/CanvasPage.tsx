@@ -1,5 +1,5 @@
 /** 画布页：按路由/location.state 加载或新建项目，空画布快捷操作 */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ReactFlowProvider } from '@xyflow/react'
 import { CanvasTopBar } from '../components/shell/CanvasTopBar'
@@ -17,6 +17,27 @@ import { mockGetTapTVWorkflow } from '../mock/api'
 import { nodePositionAtCursor } from '../utils/canvasLayout'
 import { AI_MODEL_OPTIONS } from '../config/agentModels'
 import { useI18n } from '../store/langStore'
+
+type CanvasNavState = {
+  newProject?: boolean
+  project?: CanvasProject
+  forkFrom?: string
+  initialPrompt?: string
+  openAgentPanel?: boolean
+  modelId?: string
+  autoModel?: boolean
+  folderId?: string | null
+  isNew?: boolean
+} | null
+
+function readAgentNav(state: CanvasNavState) {
+  return {
+    open: !!(state?.openAgentPanel || state?.initialPrompt?.trim()),
+    prompt: state?.initialPrompt?.trim() || undefined,
+    modelId: state?.modelId ?? AI_MODEL_OPTIONS[0].id,
+    autoModel: state?.autoModel ?? true,
+  }
+}
 
 export function CanvasPage() {
   const { projectId } = useParams()
@@ -44,33 +65,29 @@ export function CanvasPage() {
     y: number
     flowPosition?: { x: number; y: number }
   } | null>(null)
-  const [showAgentPanel, setShowAgentPanel] = useState(false)
-  const [agentInitialPrompt, setAgentInitialPrompt] = useState<string | undefined>()
-  const [agentModelId, setAgentModelId] = useState(AI_MODEL_OPTIONS[0].id)
-  const [agentAutoModel, setAgentAutoModel] = useState(true)
+
+  // 首页跳转参数必须在首屏同步读取，不能等 useEffect（replaceState 后会丢失）
+  const navStateRef = useRef(location.state as CanvasNavState)
+  const agentNavRef = useRef(readAgentNav(navStateRef.current))
+  const canvasBootstrappedRef = useRef(false)
+
+  const [showAgentPanel, setShowAgentPanel] = useState(agentNavRef.current.open)
+  const [agentInitialPrompt, setAgentInitialPrompt] = useState(agentNavRef.current.prompt)
+  const [agentModelId, setAgentModelId] = useState(agentNavRef.current.modelId)
+  const [agentAutoModel, setAgentAutoModel] = useState(agentNavRef.current.autoModel)
   const [promoDismissed, setPromoDismissed] = useState(false)
   const [showMinimap, setShowMinimap] = useState(true)
 
   useEffect(() => { wsInit() }, [wsInit])
 
-  /** 画布初始化：优先级 location.state > projectId > localStorage */
+  /** 画布初始化：仅执行一次，避免 replaceState 清空 state 后重复 resetCanvas */
   useEffect(() => {
-    const state = location.state as {
-      newProject?: boolean
-      project?: CanvasProject
-      forkFrom?: string
-      initialPrompt?: string
-      openAgentPanel?: boolean
-      modelId?: string
-      autoModel?: boolean
-      folderId?: string | null
-      isNew?: boolean
-    } | null
+    if (canvasBootstrappedRef.current) return
+    canvasBootstrappedRef.current = true
 
-    const fromHomeAgent = !!(state?.openAgentPanel || state?.initialPrompt?.trim())
+    const state = navStateRef.current
 
     if (state?.newProject && state.project) {
-      // 从 Header 导入 JSON 等场景传入完整 project
       resetCanvas()
       loadProject(state.project)
       window.history.replaceState({}, '')
@@ -78,7 +95,6 @@ export function CanvasPage() {
     }
 
     if (state?.project) {
-      // TapTV 克隆项目：加载完整 workflow 快照
       resetCanvas()
       loadProject(state.project)
       window.history.replaceState({}, '')
@@ -123,12 +139,6 @@ export function CanvasPage() {
           edges: [],
           viewport: { x: 0, y: 0, zoom: 1 },
         })
-        if (fromHomeAgent) {
-          setShowAgentPanel(true)
-          setAgentInitialPrompt(state?.initialPrompt?.trim() || undefined)
-          if (state?.modelId) setAgentModelId(state.modelId)
-          if (state?.autoModel !== undefined) setAgentAutoModel(state.autoModel)
-        }
       } else {
         navigate('/home/projects')
       }
@@ -137,17 +147,13 @@ export function CanvasPage() {
     }
 
     if (state?.initialPrompt?.trim() || state?.openAgentPanel) {
-      setShowAgentPanel(true)
-      setAgentInitialPrompt(state?.initialPrompt?.trim() || undefined)
-      if (state?.modelId) setAgentModelId(state.modelId)
-      if (state?.autoModel !== undefined) setAgentAutoModel(state.autoModel)
       resetCanvas()
       window.history.replaceState({}, '')
       return
     }
 
     init()
-  }, [projectId, init, resetCanvas, loadProject, applyStoryboard, navigate, location.state, getProject])
+  }, [projectId, init, resetCanvas, loadProject, applyStoryboard, navigate, getProject])
 
   const handleNameChange = useCallback((name: string) => {
     setProjectName(name)
@@ -229,8 +235,8 @@ export function CanvasPage() {
           onNewProject={handleNewProject}
           onDelete={() => navigate('/home/projects')}
         />
-        <div className="relative flex flex-1 overflow-hidden">
-          <div className="relative flex flex-1">
+        <div className="relative flex min-h-0 flex-1 overflow-hidden">
+          <div className="relative flex min-h-0 flex-1 overflow-hidden">
             <FlowCanvas
               hideChrome={isEmpty}
               showMinimap={showMinimap}
@@ -258,12 +264,16 @@ export function CanvasPage() {
           </div>
           {showAgentPanel && (
             <CanvasAgentPanel
+              key={projectId ?? 'canvas-agent'}
               initialPrompt={agentInitialPrompt}
               modelId={agentModelId}
               autoModel={agentAutoModel}
               onModelChange={setAgentModelId}
               onAutoModelChange={setAgentAutoModel}
-              onClose={() => setShowAgentPanel(false)}
+              onClose={() => {
+                setShowAgentPanel(false)
+                setAgentInitialPrompt(undefined)
+              }}
             />
           )}
         </div>

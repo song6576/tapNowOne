@@ -9,6 +9,8 @@ interface ModelDropdownProps {
   onChange: (modelId: string) => void
   auto?: boolean
   onAutoChange?: (auto: boolean) => void
+  /** 嵌入输入框底栏时使用更小 trigger */
+  compact?: boolean
 }
 
 function ChevronDown() {
@@ -55,7 +57,7 @@ function ModelRow({
   )
 }
 
-export function ModelDropdown({ value, onChange, auto = true, onAutoChange }: ModelDropdownProps) {
+export function ModelDropdown({ value, onChange, auto = true, onAutoChange, compact = false }: ModelDropdownProps) {
   const { t } = useI18n()
   const m = t.home.model
   const [autoEnabled, setAutoEnabled] = useState(auto)
@@ -84,9 +86,11 @@ export function ModelDropdown({ value, onChange, auto = true, onAutoChange }: Mo
       align="left"
       panelClassName="model-dropdown-panel ui-glass-panel max-h-[min(420px,60vh)] overflow-y-auto py-1"
       trigger={
-        <button type="button" className="model-dropdown-trigger ui-clickable">
+        <button type="button" className={`model-dropdown-trigger ui-clickable ${compact ? 'model-dropdown-trigger--compact' : ''}`}>
           <ModelIcon model={current} />
-          <span className="text-sm text-white/85">{autoEnabled ? m.auto : current.label}</span>
+          <span className={compact ? 'max-w-[120px] truncate text-xs text-white/85' : 'text-sm text-white/85'}>
+            {autoEnabled ? m.auto : current.label}
+          </span>
           <ChevronDown />
         </button>
       }

@@ -27,7 +27,7 @@ export function CanvasAgentPanel({
 
   return (
     <aside
-      className={`canvas-agent-panel flex shrink-0 flex-col ${dragging ? 'canvas-agent-panel--dragging' : ''}`}
+      className={`canvas-agent-panel flex h-full min-h-0 shrink-0 flex-col overflow-hidden ${dragging ? 'canvas-agent-panel--dragging' : ''}`}
       style={{ width }}
     >
       <div
@@ -62,7 +62,7 @@ export function CanvasAgentPanel({
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <AgentChat
           variant="canvas"
           initialPrompt={initialPrompt}
