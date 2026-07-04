@@ -11,6 +11,7 @@ import {
 import type { CanvasNode, CanvasEdge, CanvasProject, NodeType, NodeData } from '../types'
 import { createDefaultNodeData } from '../types'
 import { loadProject, saveProject, createEmptyProject } from '../utils/storage'
+import { generateUUID } from '../utils/uuid'
 import { buildEffectivePrompt, getUpstreamInputs } from '../utils/upstream'
 import { getWorkflowOrder } from '../utils/workflow'
 import { generateNode as apiGenerate, composeVideo } from '../services/api'
@@ -126,7 +127,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   addNode: (type, position) => {
     const { nodes } = get()
     const pos = position ?? nextToolbarNodePosition(nodes.length)
-    const id = crypto.randomUUID()
+    const id = generateUUID()
     const newNode: CanvasNode =
       type === 'group'
         ? {
@@ -270,7 +271,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   /** Agent 分镜：创建 1 个 text 节点 + N 个 image 节点，text → image 连线 */
   applyStoryboard: (scenes, script) => {
-    const textId = crypto.randomUUID()
+    const textId = generateUUID()
     const textNode: CanvasNode = {
       id: textId,
       type: 'text',
@@ -284,7 +285,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }
 
     const imageNodes: CanvasNode[] = scenes.map((scene, i) => ({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       type: 'image' as const,
       position: nextToolbarNodePosition(i + 1),
       data: {

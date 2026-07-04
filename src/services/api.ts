@@ -10,16 +10,28 @@ export const listProjects = USE_MOCK ? mock.mockListProjects : real.listProjects
 export const getTapTV = USE_MOCK ? mock.mockGetTapTV : (() => Promise.reject(new Error('TapTV API 待接入')))
 export const getTapTVItem = USE_MOCK ? mock.mockGetTapTVItem : (() => Promise.reject(new Error('TapTV API 待接入')))
 
-/** Agent 对话：Mock 返回占位文案，真实模式走 Qwen */
-export async function agentChat(message: string, context?: string): Promise<string> {
+/** Agent 对话：Mock 返回占位文案，真实模式走百炼 Qwen */
+export async function agentChat(
+  message: string,
+  context?: string,
+  conversationId?: string,
+  model?: string,
+  auto = true,
+): Promise<{ reply: string; conversationId?: string }> {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 600))
-    return `（Mock Agent）收到你的消息。当前画布上下文：\n${context?.slice(0, 200) ?? '空画布'}\n\n配置 VITE_USE_MOCK=false 并启动后端后可使用真实 Qwen。`
+    return {
+      reply: `（Mock Agent）收到你的消息。当前画布上下文：\n${context?.slice(0, 200) ?? '空画布'}\n\n配置 VITE_USE_MOCK=false 并启动后端后可使用真实百炼对话。`,
+    }
   }
-  return real.agentChat(message, context)
+  return real.agentChat(message, context, conversationId, model, auto)
 }
 
-export async function agentStoryboard(script: string) {
+export async function agentStoryboard(
+  script: string,
+  model?: string,
+  auto = true,
+) {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 800))
     const parts = script.split(/[。！？\n]+/).filter(Boolean).slice(0, 5)
@@ -28,7 +40,7 @@ export async function agentStoryboard(script: string) {
       prompt: p.slice(0, 80),
     }))
   }
-  return real.agentStoryboard(script)
+  return real.agentStoryboard(script, model, auto)
 }
 
 /** 单节点生成：Mock 即时返回 SVG；真实模式 submit + poll */

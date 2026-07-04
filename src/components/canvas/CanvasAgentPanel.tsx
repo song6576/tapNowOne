@@ -1,14 +1,26 @@
 /** 首页 AI 进入画布时的右侧 Agent 面板（可拖拽调宽） */
 import { AgentChat } from '../AgentChat'
+import { AI_MODEL_OPTIONS } from '../../config/agentModels'
 import { useI18n } from '../../store/langStore'
 import { usePanelResize } from '../../hooks/usePanelResize'
 
 interface CanvasAgentPanelProps {
   initialPrompt?: string
+  modelId?: string
+  autoModel?: boolean
+  onModelChange?: (modelId: string) => void
+  onAutoModelChange?: (auto: boolean) => void
   onClose?: () => void
 }
 
-export function CanvasAgentPanel({ initialPrompt, onClose }: CanvasAgentPanelProps) {
+export function CanvasAgentPanel({
+  initialPrompt,
+  modelId = AI_MODEL_OPTIONS[0].id,
+  autoModel = true,
+  onModelChange,
+  onAutoModelChange,
+  onClose,
+}: CanvasAgentPanelProps) {
   const { t } = useI18n()
   const a = t.canvas.agentPanel
   const { width, dragging, onPointerDown } = usePanelResize({ defaultWidth: 440 })
@@ -51,7 +63,14 @@ export function CanvasAgentPanel({ initialPrompt, onClose }: CanvasAgentPanelPro
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <AgentChat variant="canvas" initialPrompt={initialPrompt} />
+        <AgentChat
+          variant="canvas"
+          initialPrompt={initialPrompt}
+          modelId={modelId}
+          autoModel={autoModel}
+          onModelChange={onModelChange}
+          onAutoModelChange={onAutoModelChange}
+        />
       </div>
     </aside>
   )

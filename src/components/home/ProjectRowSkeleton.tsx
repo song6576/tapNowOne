@@ -10,13 +10,16 @@ export const ProjectRowSkeleton = memo(function ProjectRowSkeleton() {
           <div
             key={i}
             className="home-project-card overflow-hidden"
-            style={{ minHeight: i === 0 ? 180 : undefined }}
           >
             {i === 0 ? (
-              <div className="flex h-full min-h-[180px] flex-col items-center justify-center gap-3 py-10">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <Skeleton className="h-4 w-16" />
-              </div>
+              <>
+                <div className="home-project-thumb home-project-new-thumb">
+                  <Skeleton className="h-[52px] w-[52px] rounded-full" />
+                </div>
+                <div className="p-3">
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </>
             ) : (
               <>
                 <Skeleton className="aspect-[16/10] w-full rounded-none" />

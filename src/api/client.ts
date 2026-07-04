@@ -46,6 +46,11 @@ export type StoryboardScene = {
   prompt: string
 }
 
+export type AgentChatResult = {
+  reply: string
+  conversationId?: string
+}
+
 const API_BASE = '/api'
 
 /** 统一解析 FastAPI 风格错误响应 */
@@ -186,22 +191,31 @@ export async function pollTask(taskId: string, intervalMs = 1500, maxAttempts = 
 
 // ── Agent ──
 
-export async function agentChat(message: string, context?: string): Promise<string> {
+export async function agentChat(
+  message: string,
+  context?: string,
+  conversationId?: string,
+  model?: string,
+  auto = true,
+): Promise<AgentChatResult> {
   const res = await fetch(`${API_BASE}/agent/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, context }),
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ message, context, conversationId, model, auto }),
   })
   if (!res.ok) throw new Error(await parseError(res))
-  const data = await res.json()
-  return data.reply
+  return res.json()
 }
 
-export async function agentStoryboard(script: string): Promise<StoryboardScene[]> {
+export async function agentStoryboard(
+  script: string,
+  model?: string,
+  auto = true,
+): Promise<StoryboardScene[]> {
   const res = await fetch(`${API_BASE}/agent/storyboard`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ script }),
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ script, model, auto }),
   })
   if (!res.ok) throw new Error(await parseError(res))
   const data = await res.json()

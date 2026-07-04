@@ -1,8 +1,8 @@
-/** AI 模型选择：Auto 开关、订阅/标准/即将上线分组 */
-import { useMemo, useState } from 'react'
-import { HoverDropdown } from './HoverDropdown'
-import { AI_MODEL_OPTIONS, type AiModelOption } from '../../mock/data'
+/** AI 模型选择：Auto（默认 qwen-plus）+ 百炼模型列表 */
+import { useEffect, useState } from 'react'
+import { AI_MODEL_OPTIONS, type AiModelOption } from '../../config/agentModels'
 import { useI18n } from '../../store/langStore'
+import { HoverDropdown } from './HoverDropdown'
 
 interface ModelDropdownProps {
   value: string
@@ -28,55 +28,43 @@ function CheckIcon() {
 }
 
 function ModelIcon({ model }: { model: AiModelOption }) {
-  return (
-    <span className={`model-dropdown-icon ${model.tier === 'premium' ? 'model-dropdown-icon--premium' : ''}`}>
-      {model.icon}
-    </span>
-  )
+  return <span className="model-dropdown-icon">{model.icon}</span>
 }
 
 function ModelRow({
   model,
   selected,
-  badge,
-  disabled,
   onSelect,
 }: {
   model: AiModelOption
   selected?: boolean
-  badge?: string
-  disabled?: boolean
   onSelect?: () => void
 }) {
   return (
     <button
       type="button"
-      disabled={disabled}
       onClick={onSelect}
-      className={`model-dropdown-item ui-clickable ${selected ? 'model-dropdown-item--active' : ''} ${disabled ? 'model-dropdown-item--disabled' : ''}`}
+      className={`model-dropdown-item ui-clickable ${selected ? 'model-dropdown-item--active' : ''}`}
     >
       <span className="flex min-w-0 flex-1 items-center gap-2.5">
         <ModelIcon model={model} />
         <span className="truncate text-sm text-white/90">{model.label}</span>
       </span>
-      {badge && <span className="shrink-0 text-xs text-white/35">{badge}</span>}
-      {selected && !badge && <CheckIcon />}
+      {selected && <CheckIcon />}
     </button>
   )
 }
 
-export function ModelDropdown({ value, onChange, auto = false, onAutoChange }: ModelDropdownProps) {
+export function ModelDropdown({ value, onChange, auto = true, onAutoChange }: ModelDropdownProps) {
   const { t } = useI18n()
   const m = t.home.model
   const [autoEnabled, setAutoEnabled] = useState(auto)
 
-  const current = AI_MODEL_OPTIONS.find((o) => o.id === value) ?? AI_MODEL_OPTIONS[1]
+  useEffect(() => {
+    setAutoEnabled(auto)
+  }, [auto])
 
-  const groups = useMemo(() => ({
-    premium: AI_MODEL_OPTIONS.filter((o) => o.tier === 'premium'),
-    standard: AI_MODEL_OPTIONS.filter((o) => o.tier === 'standard'),
-    upcoming: AI_MODEL_OPTIONS.filter((o) => o.tier === 'upcoming'),
-  }), [])
+  const current = AI_MODEL_OPTIONS.find((o) => o.id === value) ?? AI_MODEL_OPTIONS[0]
 
   const toggleAuto = () => {
     const next = !autoEnabled
@@ -84,9 +72,9 @@ export function ModelDropdown({ value, onChange, auto = false, onAutoChange }: M
     onAutoChange?.(next)
   }
 
-  /** 订阅/标准模型可选；premium/upcoming 仅展示不可选 */
-  const selectModel = (id: string, tier: AiModelOption['tier']) => {
-    if (tier === 'premium' || tier === 'upcoming') return
+  const selectModel = (id: string) => {
+    setAutoEnabled(false)
+    onAutoChange?.(false)
     onChange(id)
   }
 
@@ -94,7 +82,7 @@ export function ModelDropdown({ value, onChange, auto = false, onAutoChange }: M
     <HoverDropdown
       mode="click"
       align="left"
-      panelClassName="model-dropdown-panel ui-glass-panel overflow-hidden py-1"
+      panelClassName="model-dropdown-panel ui-glass-panel max-h-[min(420px,60vh)] overflow-y-auto py-1"
       trigger={
         <button type="button" className="model-dropdown-trigger ui-clickable">
           <ModelIcon model={current} />
@@ -116,21 +104,13 @@ export function ModelDropdown({ value, onChange, auto = false, onAutoChange }: M
         </button>
       </div>
 
-      {groups.premium.map((model) => (
-        <ModelRow key={model.id} model={model} badge={m.subscribe} disabled />
-      ))}
-
-      {groups.standard.map((model) => (
+      {AI_MODEL_OPTIONS.map((model) => (
         <ModelRow
           key={model.id}
           model={model}
           selected={!autoEnabled && value === model.id}
-          onSelect={() => selectModel(model.id, model.tier)}
+          onSelect={() => selectModel(model.id)}
         />
-      ))}
-
-      {groups.upcoming.map((model) => (
-        <ModelRow key={model.id} model={model} badge={m.comingSoon} disabled />
       ))}
 
       <div className="model-dropdown-footer">

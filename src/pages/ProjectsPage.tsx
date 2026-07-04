@@ -5,38 +5,16 @@ import { TabBar } from '../components/ui/TabBar'
 import { SearchInput } from '../components/ui/SearchInput'
 import { WorkspaceFilterDropdown, type WorkspaceFilterState } from '../components/workspace/WorkspaceFilterDropdown'
 import { WorkspaceListView, type WorkspaceRow } from '../components/workspace/WorkspaceListView'
+import { ProjectGridCard } from '../components/project/ProjectGridCard'
+import { NewProjectCard } from '../components/project/NewProjectCard'
 import { useI18n } from '../store/langStore'
 import {
   useWorkspaceStore,
   type WorkspaceFolder,
-  type WorkspaceProject,
   type WorkspaceViewMode,
 } from '../store/workspaceStore'
-import { formatRelativeTime } from '../utils/time'
 
 type WorkspaceTab = 'personal' | 'team'
-
-function ProjectGridCard({
-  project,
-  editedAtLabel,
-  onClick,
-}: {
-  project: WorkspaceProject
-  editedAtLabel: string
-  onClick: () => void
-}) {
-  return (
-    <button type="button" onClick={onClick} className="home-project-card overflow-hidden text-left">
-      <div className="aspect-video w-full" style={{ background: project.thumbnail ?? 'var(--tn-bg-hover)' }} />
-      <div className="p-3">
-        <h3 className="truncate text-sm font-medium text-white/90">{project.name}</h3>
-        <p className="mt-1 text-xs text-white/35">
-          {editedAtLabel} {formatRelativeTime(project.updatedAt)}
-        </p>
-      </div>
-    </button>
-  )
-}
 
 function FolderGridCard({
   folder,
@@ -81,7 +59,7 @@ export function ProjectsPage() {
 
   const [tab, setTab] = useState<WorkspaceTab>('personal')
   const [search, setSearch] = useState('')
-  const [viewMode, setViewMode] = useState<WorkspaceViewMode>('list')
+  const [viewMode, setViewMode] = useState<WorkspaceViewMode>('grid')
   const [filter, setFilter] = useState<WorkspaceFilterState>({
     typeFilter: 'all',
     sortBy: 'updatedAt',
@@ -154,64 +132,69 @@ export function ProjectsPage() {
   return (
     <main className="home-page flex-1 overflow-y-auto px-5 py-6 md:px-8">
       <div className="mx-auto max-w-[1200px]">
-        {currentFolder ? (
-          <div className="mb-4 flex items-center gap-2 text-sm">
-            <button type="button" onClick={goRoot} className="ui-clickable text-white/45 hover:text-white/75">
-              {ws.personal}
-            </button>
-            <span className="text-white/25">›</span>
-            <span className="text-white/85">
-              {currentFolder.name} ({itemCount})
-            </span>
-          </div>
-        ) : (
-          <div className="workspace-toolbar mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <TabBar<WorkspaceTab>
-              tabs={[
-                { id: 'personal', label: ws.personal },
-                { id: 'team', label: ws.team },
-              ]}
-              active={tab}
-              onChange={setTab}
-            />
-          </div>
-        )}
+        <div className="workspace-page-toolbar mb-6">
+          <div className="workspace-page-toolbar__row">
+            <div className="workspace-page-toolbar__start">
+              {currentFolder ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <button type="button" onClick={goRoot} className="ui-clickable text-white/45 hover:text-white/75">
+                    {ws.personal}
+                  </button>
+                  <span className="text-white/25">›</span>
+                  <span className="text-white/85">
+                    {currentFolder.name} ({itemCount})
+                  </span>
+                </div>
+              ) : (
+                <TabBar<WorkspaceTab>
+                  tabs={[
+                    { id: 'personal', label: ws.personal },
+                    { id: 'team', label: ws.team },
+                  ]}
+                  active={tab}
+                  onChange={setTab}
+                  className="workspace-page-tab-bar"
+                />
+              )}
+            </div>
 
-        <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
-          <SearchInput value={search} onChange={setSearch} placeholder={ws.search} className="w-full sm:w-[200px]" />
-          <WorkspaceFilterDropdown value={filter} onChange={setFilter} />
-          <button
-            type="button"
-            className={`workspace-icon-btn ui-clickable ${viewMode === 'grid' ? 'workspace-icon-btn--active' : ''}`}
-            title="Grid view"
-            onClick={() => setViewMode('grid')}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className={`workspace-icon-btn ui-clickable ${viewMode === 'list' ? 'workspace-icon-btn--active' : ''}`}
-            title="List view"
-            onClick={() => setViewMode('list')}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
-            </svg>
-          </button>
-          <button type="button" className="workspace-icon-btn ui-clickable" title={ws.newFolder} onClick={handleNewFolder}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              <path d="M12 11v6M9 14h6" strokeLinecap="round" />
-            </svg>
-          </button>
-          <button type="button" className="workspace-new-btn ui-clickable" onClick={handleNewProject}>
-            + {ws.newProject}
-          </button>
+            <div className="workspace-page-toolbar__actions">
+              <SearchInput value={search} onChange={setSearch} placeholder={ws.search} className="w-full sm:w-[200px]" />
+              <WorkspaceFilterDropdown value={filter} onChange={setFilter} />
+              <button
+                type="button"
+                className={`workspace-icon-btn ui-clickable ${viewMode === 'grid' ? 'workspace-icon-btn--active' : ''}`}
+                title="Grid view"
+                onClick={() => setViewMode('grid')}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`workspace-icon-btn ui-clickable ${viewMode === 'list' ? 'workspace-icon-btn--active' : ''}`}
+                title="List view"
+                onClick={() => setViewMode('list')}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
+                </svg>
+              </button>
+              <button type="button" className="workspace-icon-btn ui-clickable" title={ws.newFolder} onClick={handleNewFolder}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                  <path d="M12 11v6M9 14h6" strokeLinecap="round" />
+                </svg>
+              </button>
+              <button type="button" className="workspace-new-btn ui-clickable" onClick={handleNewProject}>
+                + {ws.newProject}
+              </button>
+            </div>
+          </div>
         </div>
 
         {tab === 'team' && !currentFolder ? (
@@ -232,6 +215,7 @@ export function ProjectsPage() {
           )
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <NewProjectCard label={ws.newProject} onClick={handleNewProject} />
             {rows.map((row) =>
               row.kind === 'folder' ? (
                 <FolderGridCard
@@ -245,7 +229,7 @@ export function ProjectsPage() {
                   key={row.item.id}
                   project={row.item}
                   editedAtLabel={t.home.editedAt}
-                  onClick={() => navigate(`/canvas/${row.item.id}`)}
+                  onOpen={() => navigate(`/canvas/${row.item.id}`)}
                 />
               ),
             )}

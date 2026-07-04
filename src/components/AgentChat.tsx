@@ -1,7 +1,9 @@
 /** Agent 对话面板：普通聊天、分镜指令、Run Workflow */
 import { useCanvasStore } from '../store/canvasStore'
 import { agentChat, agentStoryboard } from '../services/api'
+import { AI_MODEL_OPTIONS } from '../config/agentModels'
 import { buildCanvasContext } from '../utils/workflow'
+import { ModelDropdown } from './ui/ModelDropdown'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useI18n } from '../store/langStore'
 
@@ -10,9 +12,17 @@ type Message = { role: 'user' | 'assistant'; content: string }
 export function AgentChat({
   variant = 'default',
   initialPrompt,
+  modelId = AI_MODEL_OPTIONS[0].id,
+  autoModel = true,
+  onModelChange,
+  onAutoModelChange,
 }: {
   variant?: 'default' | 'canvas'
   initialPrompt?: string
+  modelId?: string
+  autoModel?: boolean
+  onModelChange?: (modelId: string) => void
+  onAutoModelChange?: (auto: boolean) => void
 }) {
   const { t } = useI18n()
   const a = t.canvas.agentPanel
@@ -27,8 +37,19 @@ export function AgentChat({
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [conversationId, setConversationId] = useState<string | undefined>()
+  const [selectedModelId, setSelectedModelId] = useState(modelId)
+  const [selectedAuto, setSelectedAuto] = useState(autoModel)
   const bottomRef = useRef<HTMLDivElement>(null)
   const seededRef = useRef(false)
+
+  useEffect(() => {
+    setSelectedModelId(modelId)
+  }, [modelId])
+
+  useEffect(() => {
+    setSelectedAuto(autoModel)
+  }, [autoModel])
 
   const nodes = useCanvasStore((s) => s.nodes)
   const edges = useCanvasStore((s) => s.edges)
@@ -49,7 +70,7 @@ export function AgentChat({
     try {
       if (trimmed.startsWith('生成分镜：') || trimmed.startsWith('生成分镜:')) {
         const script = trimmed.replace(/^生成分镜[：:]/, '').trim()
-        const scenes = await agentStoryboard(script)
+        const scenes = await agentStoryboard(script, selectedModelId, selectedAuto)
         const count = applyStoryboard(scenes, script)
         setMessages((m) => [
           ...m,
@@ -57,7 +78,14 @@ export function AgentChat({
         ])
       } else {
         const context = buildCanvasContext(nodes, edges)
-        const reply = await agentChat(trimmed, context)
+        const { reply, conversationId: nextConversationId } = await agentChat(
+          trimmed,
+          context,
+          conversationId,
+          selectedModelId,
+          selectedAuto,
+        )
+        if (nextConversationId) setConversationId(nextConversationId)
         setMessages((m) => [...m, { role: 'assistant', content: reply }])
       }
     } catch (err) {
@@ -68,7 +96,7 @@ export function AgentChat({
     } finally {
       setLoading(false)
     }
-  }, [loading, nodes, edges, applyStoryboard])
+  }, [loading, nodes, edges, applyStoryboard, conversationId, selectedModelId, selectedAuto])
 
   const send = () => {
     const text = input.trim()
@@ -104,8 +132,19 @@ export function AgentChat({
   return (
     <div className={`flex h-full flex-col ${isCanvas ? 'canvas-agent-chat' : ''}`}>
       {!isCanvas && (
-        <div className="flex items-center justify-between border-b border-[var(--tn-border-subtle)] px-3 py-2">
-          <span className="text-xs font-medium text-[var(--tn-text-muted)]">TapNow Agent</span>
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--tn-border-subtle)] px-3 py-2">
+          <ModelDropdown
+            value={selectedModelId}
+            onChange={(id) => {
+              setSelectedModelId(id)
+              onModelChange?.(id)
+            }}
+            auto={selectedAuto}
+            onAutoChange={(next) => {
+              setSelectedAuto(next)
+              onAutoModelChange?.(next)
+            }}
+          />
           <button
             type="button"
             disabled={workflowRunning || loading}
@@ -159,6 +198,20 @@ export function AgentChat({
       <div className={`border-t border-white/[0.06] ${isCanvas ? 'p-4' : 'p-3'}`}>
         {isCanvas ? (
           <>
+            <div className="mb-3">
+              <ModelDropdown
+                value={selectedModelId}
+                onChange={(id) => {
+                  setSelectedModelId(id)
+                  onModelChange?.(id)
+                }}
+                auto={selectedAuto}
+                onAutoChange={(next) => {
+                  setSelectedAuto(next)
+                  onAutoModelChange?.(next)
+                }}
+              />
+            </div>
             <div className="canvas-agent-suggestions">
               {a.suggestions.map((label) => (
                 <button

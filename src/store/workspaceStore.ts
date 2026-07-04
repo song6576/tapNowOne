@@ -1,6 +1,7 @@
 /** 工作空间：文件夹/项目 CRUD，localStorage 持久化（tapflow_workspace） */
 import { create } from 'zustand'
 import { MOCK_PROJECTS } from '../mock/data'
+import { generateUUID } from '../utils/uuid'
 
 export type WorkspaceFolder = {
   id: string
@@ -90,7 +91,8 @@ interface WorkspaceStore extends PersistedWorkspace {
   renameFolder: (id: string, name: string) => void
   createProject: (folderId: string | null) => WorkspaceProject
   getProject: (id: string) => WorkspaceProject | undefined
-  updateProject: (id: string, patch: Partial<Pick<WorkspaceProject, 'name' | 'updatedAt' | 'thumbnail'>>) => void
+  updateProject: (id: string, patch: Partial<Pick<WorkspaceProject, 'name' | 'updatedAt' | 'thumbnail' | 'folderId'>>) => void
+  deleteProject: (id: string) => void
   countProjectsInFolder: (folderId: string) => number
   getFolder: (id: string) => WorkspaceFolder | undefined
 }
@@ -109,7 +111,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   /** 在当前 parentId 下新建文件夹，名称默认「未命名文件夹」 */
   createFolder: (parentId) => {
     const folder: WorkspaceFolder = {
-      id: `f-${crypto.randomUUID().slice(0, 8)}`,
+      id: `f-${generateUUID().slice(0, 8)}`,
       name: '未命名文件夹',
       parentId,
       createdAt: nowIso(),
@@ -135,7 +137,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
 
   createProject: (folderId) => {
     const project: WorkspaceProject = {
-      id: `p-${crypto.randomUUID().slice(0, 8)}`,
+      id: `p-${generateUUID().slice(0, 8)}`,
       name: 'Untitled',
       folderId,
       createdAt: nowIso(),
@@ -156,6 +158,14 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       const projects = s.projects.map((p) =>
         p.id === id ? { ...p, ...patch, updatedAt: patch.updatedAt ?? nowIso() } : p,
       )
+      writeStorage({ folders: s.folders, projects })
+      return { projects }
+    })
+  },
+
+  deleteProject: (id) => {
+    set((s) => {
+      const projects = s.projects.filter((p) => p.id !== id)
       writeStorage({ folders: s.folders, projects })
       return { projects }
     })

@@ -15,6 +15,7 @@ import type { CanvasProject } from '../types'
 import type { NodeType } from '../types'
 import { mockGetTapTVWorkflow } from '../mock/api'
 import { nodePositionAtCursor } from '../utils/canvasLayout'
+import { AI_MODEL_OPTIONS } from '../config/agentModels'
 import { useI18n } from '../store/langStore'
 
 export function CanvasPage() {
@@ -45,6 +46,8 @@ export function CanvasPage() {
   } | null>(null)
   const [showAgentPanel, setShowAgentPanel] = useState(false)
   const [agentInitialPrompt, setAgentInitialPrompt] = useState<string | undefined>()
+  const [agentModelId, setAgentModelId] = useState(AI_MODEL_OPTIONS[0].id)
+  const [agentAutoModel, setAgentAutoModel] = useState(true)
   const [promoDismissed, setPromoDismissed] = useState(false)
   const [showMinimap, setShowMinimap] = useState(true)
 
@@ -58,6 +61,8 @@ export function CanvasPage() {
       forkFrom?: string
       initialPrompt?: string
       openAgentPanel?: boolean
+      modelId?: string
+      autoModel?: boolean
       folderId?: string | null
       isNew?: boolean
     } | null
@@ -121,6 +126,8 @@ export function CanvasPage() {
         if (fromHomeAgent) {
           setShowAgentPanel(true)
           setAgentInitialPrompt(state?.initialPrompt?.trim() || undefined)
+          if (state?.modelId) setAgentModelId(state.modelId)
+          if (state?.autoModel !== undefined) setAgentAutoModel(state.autoModel)
         }
       } else {
         navigate('/home/projects')
@@ -132,6 +139,8 @@ export function CanvasPage() {
     if (state?.initialPrompt?.trim() || state?.openAgentPanel) {
       setShowAgentPanel(true)
       setAgentInitialPrompt(state?.initialPrompt?.trim() || undefined)
+      if (state?.modelId) setAgentModelId(state.modelId)
+      if (state?.autoModel !== undefined) setAgentAutoModel(state.autoModel)
       resetCanvas()
       window.history.replaceState({}, '')
       return
@@ -250,6 +259,10 @@ export function CanvasPage() {
           {showAgentPanel && (
             <CanvasAgentPanel
               initialPrompt={agentInitialPrompt}
+              modelId={agentModelId}
+              autoModel={agentAutoModel}
+              onModelChange={setAgentModelId}
+              onAutoModelChange={setAgentAutoModel}
               onClose={() => setShowAgentPanel(false)}
             />
           )}

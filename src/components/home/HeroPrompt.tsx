@@ -1,13 +1,15 @@
 /** 首页 Hero：输入 prompt + 选模型，创建项目并带 initialPrompt 跳转画布 */
 import { memo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AI_MODEL_OPTIONS } from '../../config/agentModels'
 import { ModelDropdown } from '../ui/ModelDropdown'
 import { useI18n } from '../../store/langStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 
 export const HeroPrompt = memo(function HeroPrompt() {
   const [prompt, setPrompt] = useState('')
-  const [modelId, setModelId] = useState('kimi-2.6')
+  const [modelId, setModelId] = useState(AI_MODEL_OPTIONS[0].id)
+  const [autoModel, setAutoModel] = useState(true)
   const navigate = useNavigate()
   const { t } = useI18n()
   const createProject = useWorkspaceStore((s) => s.createProject)
@@ -20,6 +22,7 @@ export const HeroPrompt = memo(function HeroPrompt() {
       state: {
         initialPrompt: text || undefined,
         modelId,
+        autoModel,
         openAgentPanel: true,
       },
     })
@@ -54,7 +57,12 @@ export const HeroPrompt = memo(function HeroPrompt() {
           className="home-prompt-input"
         />
         <div className="home-prompt-toolbar">
-          <ModelDropdown value={modelId} onChange={setModelId} />
+          <ModelDropdown
+            value={modelId}
+            onChange={setModelId}
+            auto={autoModel}
+            onAutoChange={setAutoModel}
+          />
           <div className="home-prompt-actions">
             <button
               type="button"

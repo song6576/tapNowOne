@@ -1,4 +1,5 @@
 /** 工作空间列表视图：文件夹/项目行 */
+import { ProjectCardMenu } from '../project/ProjectCardMenu'
 import type { WorkspaceFolder, WorkspaceProject } from '../../store/workspaceStore'
 import { useI18n } from '../../store/langStore'
 import { formatDateTime, formatRelativeTime } from '../../utils/time'
@@ -38,6 +39,7 @@ export function WorkspaceListView({ rows, onOpenFolder, onOpenProject }: Workspa
             <th className="hidden px-4 py-3 font-normal md:table-cell">{ws.colContent}</th>
             <th className="hidden px-4 py-3 font-normal lg:table-cell">{ws.colCreated}</th>
             <th className="px-4 py-3 font-normal">{ws.colUpdated}</th>
+            <th className="w-12 px-2 py-3" aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
@@ -62,16 +64,17 @@ export function WorkspaceListView({ rows, onOpenFolder, onOpenProject }: Workspa
                   <td className="px-4 py-3 text-sm text-white/45">
                     {t.home.editedAt} {formatRelativeTime(item.updatedAt)}
                   </td>
+                  <td className="px-2 py-3" />
                 </tr>
               )
             }
             const { item } = row
             return (
-              <tr
-                key={`p-${item.id}`}
-                className="workspace-list-row ui-clickable"
-                onClick={() => onOpenProject(item.id)}
-              >
+                <tr
+                  key={`p-${item.id}`}
+                  className="workspace-list-row workspace-list-row--project group ui-clickable"
+                  onClick={() => onOpenProject(item.id)}
+                >
                 <td className="px-4 py-3">
                   <div
                     className="workspace-list-preview"
@@ -86,6 +89,13 @@ export function WorkspaceListView({ rows, onOpenFolder, onOpenProject }: Workspa
                 </td>
                 <td className="px-4 py-3 text-sm text-white/45">
                   {t.home.editedAt} {formatRelativeTime(item.updatedAt)}
+                </td>
+                <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
+                  <ProjectCardMenu
+                    project={item}
+                    variant="inline"
+                    onOpen={() => onOpenProject(item.id)}
+                  />
                 </td>
               </tr>
             )

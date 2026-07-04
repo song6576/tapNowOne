@@ -78,6 +78,24 @@ export type Messages = {
     typeFolder: string
     typeProject: string
     projectCountUnit: string
+    projectMenu: {
+      open: string
+      rename: string
+      select: string
+      moveTo: string
+      shareLink: string
+      moveToTeam: string
+      delete: string
+      comingSoon: string
+      shareCopied: string
+      renameSuccess: string
+      deleteSuccess: string
+      deleteTitle: string
+      deleteMessage: string
+      renamePlaceholder: string
+      confirm: string
+      cancel: string
+    }
     filter: {
       filterSection: string
       sortSection: string
@@ -429,7 +447,7 @@ const zh: Messages = {
     community: '社区准则',
     privacy: '隐私政策',
     phonePlaceholder: '手机号码',
-    comingSoon: 'Google 登录即将上线',
+    comingSoon: 'Google 登录暂未开放，正在开发中',
     googleFailed: 'Google 登录失败',
     agreeTerms: '请先同意服务条款',
     loginSuccess: '登录成功',
@@ -479,6 +497,24 @@ const zh: Messages = {
     typeFolder: '文件夹',
     typeProject: '项目',
     projectCountUnit: '个项目',
+    projectMenu: {
+      open: '打开',
+      rename: '重命名',
+      select: '选择',
+      moveTo: '移动至...',
+      shareLink: '分享链接',
+      moveToTeam: '移动至团队',
+      delete: '删除',
+      comingSoon: '功能开发中',
+      shareCopied: '项目链接已复制',
+      renameSuccess: '重命名成功',
+      deleteSuccess: '项目已删除',
+      deleteTitle: '删除项目',
+      deleteMessage: '确定删除「{name}」？此操作无法撤销。',
+      renamePlaceholder: '输入项目名称',
+      confirm: '确认',
+      cancel: '取消',
+    },
     filter: {
       filterSection: '筛选',
       sortSection: '排序方式',
@@ -852,7 +888,7 @@ const en: Messages = {
     community: 'Community Guidelines',
     privacy: 'Privacy Policy',
     phonePlaceholder: 'Phone number',
-    comingSoon: 'Google sign-in coming soon',
+    comingSoon: 'Google sign-in is not available yet — under development',
     googleFailed: 'Google sign-in failed',
     agreeTerms: 'Please agree to the terms first',
     loginSuccess: 'Signed in successfully',
@@ -902,6 +938,24 @@ const en: Messages = {
     typeFolder: 'Folder',
     typeProject: 'Project',
     projectCountUnit: 'projects',
+    projectMenu: {
+      open: 'Open',
+      rename: 'Rename',
+      select: 'Select',
+      moveTo: 'Move to...',
+      shareLink: 'Share link',
+      moveToTeam: 'Move to team',
+      delete: 'Delete',
+      comingSoon: 'Under development',
+      shareCopied: 'Project link copied',
+      renameSuccess: 'Renamed successfully',
+      deleteSuccess: 'Project deleted',
+      deleteTitle: 'Delete project',
+      deleteMessage: 'Delete "{name}"? This cannot be undone.',
+      renamePlaceholder: 'Project name',
+      confirm: 'Confirm',
+      cancel: 'Cancel',
+    },
     filter: {
       filterSection: 'Filter',
       sortSection: 'Sort by',

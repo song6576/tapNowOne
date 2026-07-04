@@ -2,6 +2,7 @@
  * 团队与 Tapies 余额：团队列表、切换、创建团队弹窗。
  */
 import { create } from 'zustand'
+import { generateUUID } from '../utils/uuid'
 
 export type Team = {
   id: string
@@ -77,7 +78,7 @@ export const useTeamStore = create<TeamStore>((set, get) => ({
   createTeam: (name) => {
     const trimmed = name.trim()
     const team: Team = {
-      id: `team-${crypto.randomUUID().slice(0, 8)}`,
+      id: `team-${generateUUID().slice(0, 8)}`,
       name: trimmed.endsWith('的团队') ? trimmed : `${trimmed}的团队`,
       initial: trimmed[0]?.toUpperCase() ?? 'T',
       teamId: `C${Date.now().toString(36)}`,

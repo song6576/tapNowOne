@@ -1,5 +1,6 @@
 /** 画布项目 localStorage：加载/保存/导入/导出 JSON */
 import type { CanvasProject } from '../types'
+import { generateUUID } from './uuid'
 
 const STORAGE_KEY = 'tapflow_project'
 
@@ -46,7 +47,7 @@ export function importProject(file: File): Promise<CanvasProject> {
 export function createEmptyProject(name = '未命名项目'): CanvasProject {
   const now = new Date().toISOString()
   return {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     name,
     createdAt: now,
     updatedAt: now,
