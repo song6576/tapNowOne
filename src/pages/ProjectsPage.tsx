@@ -75,13 +75,13 @@ export function ProjectsPage() {
     if (folderId && !getFolder(folderId)) setSearchParams({})
   }, [folderId, getFolder, setSearchParams])
 
-  const handleNewProject = () => {
-    const proj = createProject(folderId)
+  const handleNewProject = async () => {
+    const proj = await createProject(folderId)
     navigate(`/canvas/${proj.id}`, { state: { folderId, isNew: true } })
   }
 
-  const handleNewFolder = () => {
-    createFolder(folderId)
+  const handleNewFolder = async () => {
+    await createFolder(folderId)
   }
 
   const openFolder = (id: string) => {

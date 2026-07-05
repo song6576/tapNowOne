@@ -17,8 +17,8 @@ export const ProjectRow = memo(function ProjectRow() {
     [projects],
   )
 
-  const handleNewProject = () => {
-    const proj = createProject(null)
+  const handleNewProject = async () => {
+    const proj = await createProject(null)
     navigate(`/canvas/${proj.id}`)
   }
 

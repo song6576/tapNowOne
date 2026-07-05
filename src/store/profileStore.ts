@@ -1,7 +1,8 @@
 /**
- * 用户个人资料：简介、社交、地区等，localStorage 持久化。
- * 个人主页与账户管理弹窗共用此 store。
+ * 用户个人资料：简介、社交、地区等。
+ * 登录后以 API 为准；bannerStyle 仍本地缓存。
  */
+import type { User } from '../utils/auth'
 import { create } from 'zustand'
 
 export type AccountNavId =
@@ -30,7 +31,7 @@ export type UserProfile = {
 const STORAGE_KEY = 'tapflow_profile'
 
 const DEFAULT_PROFILE: UserProfile = {
-  bio: 'I am turning imagination into reality.',
+  bio: '',
   socialLink: '',
   country: '',
   city: '',
@@ -51,11 +52,23 @@ function writeProfile(profile: UserProfile) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
 }
 
+export function profileFieldsFromUser(user: User): Pick<UserProfile, 'bio' | 'socialLink' | 'country' | 'city' | 'profession' | 'showJoinDate'> {
+  return {
+    bio: user.bio ?? '',
+    socialLink: user.social_link ?? '',
+    country: user.country ?? '',
+    city: user.city ?? '',
+    profession: user.profession ?? '',
+    showJoinDate: user.show_join_date ?? true,
+  }
+}
+
 interface ProfileStore {
   profile: UserProfile
   accountModalOpen: boolean
   accountNav: AccountNavId
   init: () => void
+  syncFromUser: (user: User) => void
   updateProfile: (patch: Partial<UserProfile>) => void
   openAccountModal: (nav?: AccountNavId) => void
   closeAccountModal: () => void
@@ -69,6 +82,12 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
 
   init: () => {
     set({ profile: readProfile() })
+  },
+
+  syncFromUser: (user) => {
+    const profile = { ...get().profile, ...profileFieldsFromUser(user) }
+    writeProfile(profile)
+    set({ profile })
   },
 
   updateProfile: (patch) => {

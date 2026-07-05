@@ -1,13 +1,9 @@
 /** 节点属性面板：prompt/模型编辑、单节点生成 */
 import { useState } from 'react'
 import { useCanvasStore } from '../store/canvasStore'
+import { AI_MODEL_OPTIONS } from '../config/agentModels'
+import { ModelDropdown } from './ui/ModelDropdown'
 import { NODE_META, type NodeType } from '../types'
-
-const MODEL_OPTIONS: Record<string, string[]> = {
-  image: ['wanx2.1-t2i-turbo', 'Midjourney', 'Flux'],
-  video: ['wan2.1-i2v-turbo', 'Kling', 'Runway'],
-  audio: ['edge-tts', 'ElevenLabs'],
-}
 
 const inputCls =
   'w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-bg-panel)] px-3 py-2 text-xs text-[var(--tn-text-secondary)] outline-none focus:border-zinc-500'
@@ -43,8 +39,10 @@ export function PropertyPanel({ embedded }: PropertyPanelProps) {
   const type = selectedNode.type as NodeType
   const meta = NODE_META[type]
   const data = selectedNode.data
-  const models = MODEL_OPTIONS[type]
-  const canGenerate = type !== 'text'
+  const canGenerate = type !== 'text' && type !== 'group'
+  const showModelPicker = type !== 'group'
+  const modelId = data.model ?? AI_MODEL_OPTIONS[0].id
+  const autoModel = data.autoModel !== false
   const isGenerating = data.status === 'generating' || generating
   const upstreamCount = edges.filter((e) => e.target === selectedNode.id).length
 
@@ -90,12 +88,15 @@ export function PropertyPanel({ embedded }: PropertyPanelProps) {
           />
         </div>
 
-        {models && (
+        {showModelPicker && (
           <div>
             <label className="mb-1 block text-[10px] uppercase tracking-wider text-[var(--tn-text-muted)]">Model</label>
-            <select value={data.model ?? models[0]} onChange={(e) => updateNodeData(selectedNode.id, { model: e.target.value })} className={inputCls}>
-              {models.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <ModelDropdown
+              value={modelId}
+              onChange={(id) => updateNodeData(selectedNode.id, { model: id })}
+              auto={autoModel}
+              onAutoChange={(next) => updateNodeData(selectedNode.id, { autoModel: next })}
+            />
           </div>
         )}
 

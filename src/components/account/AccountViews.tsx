@@ -1,7 +1,9 @@
 /** 账户管理各子页面视图（订阅/充值/账单等） */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { uploadAvatar, updateUserProfile } from '../../api/client'
+import { useAuthStore } from '../../store/authStore'
 import type { User } from '../../utils/auth'
-import type { UserProfile } from '../../store/profileStore'
+import { profileFieldsFromUser, type UserProfile } from '../../store/profileStore'
 import type { Team } from '../../store/teamStore'
 import { useI18n } from '../../store/langStore'
 import { useToastStore } from '../../store/toastStore'
@@ -20,46 +22,122 @@ const MOCK_REWARDS = [
 export function PersonalSettingsView({
   user,
   profile,
-  onUpdate,
 }: {
   user: User
   profile: UserProfile
-  onUpdate: (patch: Partial<UserProfile>) => void
 }) {
   const { t } = useI18n()
   const a = t.account
+  const updateUser = useAuthStore((s) => s.updateUser)
+  const showToast = useToastStore((s) => s.showToast)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
   const initial = user.name.trim()[0]?.toUpperCase() ?? 'U'
+
+  const buildDraft = () => ({
+    name: user.name,
+    ...profileFieldsFromUser(user),
+    bio: user.bio ?? profile.bio,
+  })
+
+  const [draft, setDraft] = useState(buildDraft)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setDraft(buildDraft())
+  }, [user, profile.bio, profile.socialLink, profile.country, profile.city, profile.profession, profile.showJoinDate])
+
+  const patchDraft = (patch: Partial<typeof draft>) => {
+    setDraft((prev) => ({ ...prev, ...patch }))
+  }
+
+  const handleAvatarPick = () => avatarInputRef.current?.click()
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const { user: nextUser } = await uploadAvatar(file)
+      updateUser(nextUser)
+      showToast({ type: 'success', message: a.personalProfile })
+    } catch (err) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : '上传失败' })
+    }
+  }
+
+  const handleSave = async () => {
+    const name = draft.name.trim()
+    if (!name) {
+      showToast({ type: 'info', message: '用户名不能为空' })
+      return
+    }
+    setSaving(true)
+    try {
+      const saved = await updateUserProfile({
+        name,
+        bio: draft.bio,
+        socialLink: draft.socialLink,
+        country: draft.country,
+        city: draft.city,
+        profession: draft.profession,
+        showJoinDate: draft.showJoinDate,
+      })
+      updateUser(saved)
+      showToast({ type: 'success', message: a.saveSuccess })
+    } catch (err) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : '保存失败' })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <>
       <h2 className="text-lg font-semibold text-white">{a.personalProfile}</h2>
+      <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleAvatarUpload} />
       <div className="mt-6 flex justify-center md:justify-start">
-        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-rose-500 text-2xl font-medium text-white">{initial}</span>
+        <button type="button" onClick={handleAvatarPick} className="ui-clickable relative" title={t.profile.uploadAvatar}>
+          {user.avatar_url ? (
+            <img src={user.avatar_url} alt={user.name} className="h-20 w-20 rounded-full object-cover" />
+          ) : (
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-rose-500 text-2xl font-medium text-white">{initial}</span>
+          )}
+          <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </button>
       </div>
       <div className="account-form mt-8 space-y-5">
         <label className="account-field">
           <span className="account-label">{a.username}<span className="text-red-400">*</span></span>
-          <input type="text" value={user.name} readOnly className="account-input account-input--readonly" />
+          <input
+            type="text"
+            value={draft.name}
+            onChange={(e) => patchDraft({ name: e.target.value })}
+            className="account-input"
+          />
         </label>
         <label className="account-field">
           <span className="account-label">{a.bio}</span>
-          <textarea value={profile.bio} onChange={(e) => onUpdate({ bio: e.target.value })} rows={4} className="account-input account-textarea" />
+          <textarea value={draft.bio} onChange={(e) => patchDraft({ bio: e.target.value })} rows={4} className="account-input account-textarea" />
         </label>
         <label className="account-field">
           <span className="account-label">{a.social}</span>
-          <input type="url" value={profile.socialLink} onChange={(e) => onUpdate({ socialLink: e.target.value })} placeholder={a.socialPlaceholder} className="account-input" />
+          <input type="url" value={draft.socialLink} onChange={(e) => patchDraft({ socialLink: e.target.value })} placeholder={a.socialPlaceholder} className="account-input" />
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="account-field">
             <span className="account-label">{a.country}</span>
-            <select value={profile.country} onChange={(e) => onUpdate({ country: e.target.value })} className="account-input account-select">
+            <select value={draft.country} onChange={(e) => patchDraft({ country: e.target.value })} className="account-input account-select">
               <option value="">{a.countryPlaceholder}</option>
               <option value="CN">中国</option>
             </select>
           </label>
           <label className="account-field">
             <span className="account-label">{a.city}</span>
-            <select value={profile.city} onChange={(e) => onUpdate({ city: e.target.value })} className="account-input account-select">
+            <select value={draft.city} onChange={(e) => patchDraft({ city: e.target.value })} className="account-input account-select">
               <option value="">{a.cityPlaceholder}</option>
               <option value="beijing">北京</option>
             </select>
@@ -67,11 +145,11 @@ export function PersonalSettingsView({
         </div>
         <label className="account-field">
           <span className="account-label">{a.profession}</span>
-          <input type="text" value={profile.profession} onChange={(e) => onUpdate({ profession: e.target.value })} placeholder={a.professionPlaceholder} className="account-input" />
+          <input type="text" value={draft.profession} onChange={(e) => patchDraft({ profession: e.target.value })} placeholder={a.professionPlaceholder} className="account-input" />
         </label>
         <div className="account-toggle-row">
           <span className="account-label mb-0">{a.showJoinDate}</span>
-          <button type="button" role="switch" aria-checked={profile.showJoinDate} onClick={() => onUpdate({ showJoinDate: !profile.showJoinDate })} className={`model-toggle ${profile.showJoinDate ? 'model-toggle--on' : ''}`}>
+          <button type="button" role="switch" aria-checked={draft.showJoinDate} onClick={() => patchDraft({ showJoinDate: !draft.showJoinDate })} className={`model-toggle ${draft.showJoinDate ? 'model-toggle--on' : ''}`}>
             <span className="model-toggle-knob" />
           </button>
         </div>
@@ -79,6 +157,14 @@ export function PersonalSettingsView({
           <span className="account-label">{a.email}</span>
           <input type="email" value={user.email} readOnly className="account-input account-input--readonly" />
         </label>
+        <button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={saving}
+          className="account-plan-subscribe ui-clickable mt-2 w-full max-w-[200px] disabled:opacity-50"
+        >
+          {saving ? '...' : a.save}
+        </button>
       </div>
     </>
   )

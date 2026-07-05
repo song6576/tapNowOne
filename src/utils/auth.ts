@@ -7,6 +7,13 @@ export type User = {
   email: string
   name: string
   avatar_url?: string | null
+  banner_url?: string | null
+  bio?: string | null
+  social_link?: string | null
+  country?: string | null
+  city?: string | null
+  profession?: string | null
+  show_join_date?: boolean
   created_at: string
 }
 

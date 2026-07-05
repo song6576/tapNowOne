@@ -15,9 +15,9 @@ export const HeroPrompt = memo(function HeroPrompt() {
   const createProject = useWorkspaceStore((s) => s.createProject)
 
   /** 创建工作空间项目并跳转画布，携带 initialPrompt 供 CanvasPage 生成分镜 */
-  const submit = () => {
+  const submit = async () => {
     const text = prompt.trim()
-    const proj = createProject(null)
+    const proj = await createProject(null)
     navigate(`/canvas/${proj.id}`, {
       state: {
         initialPrompt: text || undefined,

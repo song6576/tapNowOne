@@ -78,9 +78,12 @@ export const ProjectCardMenu = memo(function ProjectCardMenu({
   }
 
   const handleRenameConfirm = (name: string) => {
-    updateProject(project.id, { name })
-    setRenameOpen(false)
-    showToast({ type: 'success', message: m.renameSuccess })
+    void updateProject(project.id, { name }).then(() => {
+      setRenameOpen(false)
+      showToast({ type: 'success', message: m.renameSuccess })
+    }).catch(() => {
+      showToast({ type: 'info', message: m.comingSoon })
+    })
   }
 
   const handleShare = async () => {
@@ -105,9 +108,12 @@ export const ProjectCardMenu = memo(function ProjectCardMenu({
   }
 
   const handleDeleteConfirm = () => {
-    deleteProject(project.id)
-    setDeleteOpen(false)
-    showToast({ type: 'success', message: m.deleteSuccess })
+    void deleteProject(project.id).then(() => {
+      setDeleteOpen(false)
+      showToast({ type: 'success', message: m.deleteSuccess })
+    }).catch(() => {
+      showToast({ type: 'info', message: m.comingSoon })
+    })
   }
 
   const panel = (

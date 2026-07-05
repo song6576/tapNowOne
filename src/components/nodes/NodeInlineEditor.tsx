@@ -1,15 +1,10 @@
-/** 节点下方小型生成对话框（图3） */
-import { useState } from 'react'
+/** 节点下方小型生成对话框：百炼 Agent 模型 + Auto，与首页一致 */
+import { useEffect, useState } from 'react'
+import { AI_MODEL_OPTIONS } from '../../config/agentModels'
 import { useCanvasStore } from '../../store/canvasStore'
 import { useI18n } from '../../store/langStore'
+import { ModelDropdown } from '../ui/ModelDropdown'
 import type { NodeData, NodeType } from '../../types'
-
-const MODEL_LABELS: Record<string, string> = {
-  image: 'Wanx 2.1',
-  video: 'Seedance 1.5 Pro',
-  audio: 'Edge TTS',
-  text: 'Text',
-}
 
 interface NodeInlineEditorProps {
   nodeId: string
@@ -25,9 +20,18 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
   const [generating, setGenerating] = useState(false)
   const [prompt, setPrompt] = useState(data.prompt || '')
 
+  const modelId = data.model ?? AI_MODEL_OPTIONS[0].id
+  const autoModel = data.autoModel !== false
+  const isGenerative = type === 'image' || type === 'video' || type === 'audio'
+  const showModelPicker = type !== 'group'
+
+  useEffect(() => {
+    setPrompt(data.prompt || '')
+  }, [data.prompt])
+
   const handleGenerate = async () => {
     if (prompt.trim()) updateNodeData(nodeId, { prompt: prompt.trim() })
-    if (type === 'text') return
+    if (!isGenerative) return
     setGenerating(true)
     try {
       await generateNode(nodeId)
@@ -36,11 +40,10 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
     }
   }
 
-  const modelLabel = MODEL_LABELS[type] ?? 'Model'
   const busy = generating || data.status === 'generating'
 
   return (
-    <div className="node-inline-editor" onClick={(e) => e.stopPropagation()}>
+    <div className="node-inline-editor nowheel nopan nodrag" onClick={(e) => e.stopPropagation()}>
       <div className="node-inline-editor-toolbar">
         <button type="button" className="node-inline-editor-icon ui-clickable" title={n.magic}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -62,6 +65,12 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
       <textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey && isGenerative) {
+            e.preventDefault()
+            void handleGenerate()
+          }
+        }}
         placeholder={n.placeholder}
         rows={2}
         className="node-inline-editor-input"
@@ -69,11 +78,20 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
 
       <div className="node-inline-editor-footer">
         <div className="node-inline-editor-meta">
-          <span className="node-inline-editor-model">{modelLabel}</span>
+          {showModelPicker ? (
+            <ModelDropdown
+              compact
+              value={modelId}
+              onChange={(id) => updateNodeData(nodeId, { model: id })}
+              auto={autoModel}
+              onAutoChange={(next) => updateNodeData(nodeId, { autoModel: next })}
+            />
+          ) : (
+            <span className="node-inline-editor-model">Group</span>
+          )}
           {type === 'video' && <span className="text-white/30">· 16:9 · 480p · 5s</span>}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="node-inline-editor-credits">◆ 23</span>
+        {isGenerative && (
           <button
             type="button"
             onClick={handleGenerate}
@@ -87,7 +105,7 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
               </svg>
             )}
           </button>
-        </div>
+        )}
       </div>
     </div>
   )

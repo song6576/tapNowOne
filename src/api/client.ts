@@ -10,6 +10,7 @@ export type GeneratePayload = {
   node_type: 'image' | 'video' | 'audio'
   prompt: string
   model?: string
+  auto?: boolean
   upstream_text?: string
   upstream_image_url?: string
   duration?: number
@@ -31,8 +32,39 @@ export type HealthStatus = {
 export type ProjectMeta = {
   id: string
   name: string
+  folder_id?: string | null
+  thumbnail?: string
   created_at: string
   updated_at: string
+}
+
+export type FolderMeta = {
+  id: string
+  name: string
+  parent_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type AgentConversationMeta = {
+  id: string
+  title: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type AgentConversationDetail = {
+  id: string
+  project_id: string | null
+  title: string | null
+  created_at: string
+  updated_at: string
+  messages: Array<{
+    id: string
+    role: string
+    content: string
+    created_at: string
+  }>
 }
 
 export type ComposeClip = {
@@ -49,6 +81,14 @@ export type StoryboardScene = {
 export type AgentChatResult = {
   reply: string
   conversationId?: string
+}
+
+export type UploadResult = {
+  url: string
+  filename: string
+  mime_type: string
+  size: number
+  category: 'project' | 'avatar' | 'banner'
 }
 
 const API_BASE = '/api'
@@ -118,6 +158,112 @@ export async function fetchMe(): Promise<User> {
   return res.json()
 }
 
+// ── Uploads ──
+
+/** 画布项目素材上传（图片 / 视频 / 音频） */
+export async function uploadProjectAsset(
+  file: File,
+  projectId?: string,
+): Promise<UploadResult> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('category', 'project')
+  if (projectId) form.append('projectId', projectId)
+  const res = await fetch(`${API_BASE}/uploads`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+    body: form,
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** 头像上传，并更新 user.avatar_url */
+export async function uploadAvatar(file: File): Promise<{ url: string; user: User }> {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch(`${API_BASE}/users/me/avatar`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+    body: form,
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** 个人主页背景图上传，并更新 user.banner_url */
+export async function uploadBanner(file: File): Promise<{ url: string; banner_url: string; user: User }> {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch(`${API_BASE}/users/me/banner`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+    body: form,
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export type UpdateUserProfilePayload = {
+  name?: string
+  bio?: string
+  socialLink?: string
+  country?: string
+  city?: string
+  profession?: string
+  showJoinDate?: boolean
+}
+
+/** 更新用户名与个人简介等资料 */
+export async function updateUserProfile(payload: UpdateUserProfilePayload): Promise<User> {
+  const res = await fetch(`${API_BASE}/users/me`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+// ── Folders ──
+
+export async function listFolders(): Promise<FolderMeta[]> {
+  const res = await fetch(`${API_BASE}/folders`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function createFolder(name?: string, parentId?: string | null): Promise<FolderMeta> {
+  const res = await fetch(`${API_BASE}/folders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ name, parentId: parentId ?? undefined }),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function updateFolder(
+  id: string,
+  patch: { name?: string; parentId?: string | null },
+): Promise<FolderMeta> {
+  const res = await fetch(`${API_BASE}/folders/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(patch),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function deleteFolder(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/folders/${id}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+}
+
 // ── Projects ──
 
 export async function listProjects(): Promise<ProjectMeta[]> {
@@ -126,8 +272,43 @@ export async function listProjects(): Promise<ProjectMeta[]> {
   return res.json()
 }
 
-export async function getProject(id: string): Promise<{ id: string; name: string; data: CanvasProject; created_at: string; updated_at: string }> {
+export async function getProject(id: string): Promise<{
+  id: string
+  name: string
+  folder_id?: string | null
+  thumbnail?: string
+  data: CanvasProject
+  created_at: string
+  updated_at: string
+}> {
   const res = await fetch(`${API_BASE}/projects/${id}`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function createProject(
+  name?: string,
+  folderId?: string | null,
+  data?: CanvasProject,
+): Promise<ProjectMeta> {
+  const res = await fetch(`${API_BASE}/projects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ name, folderId: folderId ?? undefined, data }),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function patchProject(
+  id: string,
+  patch: { name?: string; data?: CanvasProject; thumbnail?: string; folderId?: string | null },
+): Promise<ProjectMeta> {
+  const res = await fetch(`${API_BASE}/projects/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(patch),
+  })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
 }
@@ -195,13 +376,30 @@ export async function agentChat(
   message: string,
   context?: string,
   conversationId?: string,
+  projectId?: string,
   model?: string,
   auto = true,
 ): Promise<AgentChatResult> {
   const res = await fetch(`${API_BASE}/agent/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ message, context, conversationId, model, auto }),
+    body: JSON.stringify({ message, context, conversationId, projectId, model, auto }),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function listProjectConversations(projectId: string): Promise<AgentConversationMeta[]> {
+  const res = await fetch(`${API_BASE}/projects/${projectId}/conversations`, {
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function getConversation(id: string): Promise<AgentConversationDetail> {
+  const res = await fetch(`${API_BASE}/agent/conversations/${id}`, {
+    headers: { ...authHeaders() },
   })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()

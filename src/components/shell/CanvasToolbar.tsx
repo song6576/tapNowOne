@@ -7,6 +7,7 @@ import { useI18n } from '../../store/langStore'
 interface CanvasToolbarProps {
   onAddNode: (type: NodeType | 'group') => void
   onOpenAddMenu?: () => void
+  onOpenAgent?: () => void
 }
 
 const TOOLS = [
@@ -60,7 +61,7 @@ function ToolIcon({ type }: { type: typeof TOOLS[number]['icon'] }) {
   }
 }
 
-export function CanvasToolbar({ onAddNode, onOpenAddMenu }: CanvasToolbarProps) {
+export function CanvasToolbar({ onAddNode, onOpenAddMenu, onOpenAgent }: CanvasToolbarProps) {
   const { t } = useI18n()
   const tips = t.canvas.tooltips
 
@@ -73,7 +74,11 @@ export function CanvasToolbar({ onAddNode, onOpenAddMenu }: CanvasToolbarProps) 
       </Tooltip>
       {TOOLS.map((tool) => (
         <Tooltip key={tool.icon} label={tips[tool.tipKey]} side="right">
-          <button type="button" className="canvas-float-btn ui-clickable">
+          <button
+            type="button"
+            className="canvas-float-btn ui-clickable"
+            onClick={tool.icon === 'chat' ? onOpenAgent : undefined}
+          >
             <ToolIcon type={tool.icon} />
           </button>
         </Tooltip>

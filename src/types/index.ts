@@ -2,6 +2,7 @@
  * 画布领域类型：节点/边/项目结构，以及各节点类型的默认元数据。
  */
 import type { Node, Edge, Viewport } from '@xyflow/react'
+import { AI_MODEL_OPTIONS } from '../config/agentModels'
 
 /** 画布支持的节点种类 */
 export type NodeType = 'text' | 'image' | 'video' | 'audio' | 'group'
@@ -11,6 +12,7 @@ export interface NodeData {
   label: string
   prompt: string
   model?: string
+  autoModel?: boolean
   outputUrl?: string
   outputText?: string
   status: NodeStatus
@@ -47,6 +49,8 @@ export function createDefaultNodeData(type: NodeType): NodeData {
     label: meta.label,
     prompt: '',
     status: 'idle',
-    model: type === 'image' ? 'wanx2.1-t2i-turbo' : type === 'video' ? 'wan2.1-i2v-turbo' : type === 'audio' ? 'edge-tts' : undefined,
+    ...(type !== 'group'
+      ? { model: AI_MODEL_OPTIONS[0].id, autoModel: true }
+      : {}),
   }
 }

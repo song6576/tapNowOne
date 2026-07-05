@@ -1,6 +1,7 @@
 /** 认证状态：登录/注册/Google 登录、token 校验、登出 */
 import { create } from 'zustand'
 import { clearAuth, getStoredUser, setAuth, type User } from '../utils/auth'
+import { useProfileStore } from './profileStore'
 import * as api from '../api/client'
 
 interface AuthStore {
@@ -12,6 +13,7 @@ interface AuthStore {
   register: (email: string, password: string, name: string) => Promise<void>
   loginWithGoogle: (credential: string) => Promise<void>
   logout: () => void
+  updateUser: (user: User) => void
   isLoggedIn: () => boolean
 }
 
@@ -30,6 +32,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const user = await api.fetchMe()
       set({ user })
+      useProfileStore.getState().syncFromUser(user)
     } catch {
       clearAuth()
       set({ user: null })
@@ -44,6 +47,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const { access_token, user } = await api.login(email, password)
       setAuth(access_token, user)
       set({ user })
+      useProfileStore.getState().syncFromUser(user)
     } finally {
       set({ loading: false })
     }
@@ -55,6 +59,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const { access_token, user } = await api.register(email, password, name)
       setAuth(access_token, user)
       set({ user })
+      useProfileStore.getState().syncFromUser(user)
     } finally {
       set({ loading: false })
     }
@@ -66,6 +71,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const { access_token, user } = await api.loginWithGoogle(credential)
       setAuth(access_token, user)
       set({ user })
+      useProfileStore.getState().syncFromUser(user)
     } finally {
       set({ loading: false })
     }
@@ -74,6 +80,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   logout: () => {
     clearAuth()
     set({ user: null })
+  },
+
+  updateUser: (user) => {
+    const token = localStorage.getItem('tapflow_token')
+    if (token) setAuth(token, user)
+    set({ user })
+    useProfileStore.getState().syncFromUser(user)
   },
 
   isLoggedIn: () => !!get().user,

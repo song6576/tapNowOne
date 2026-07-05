@@ -5,6 +5,7 @@ import { useI18n } from '../../store/langStore'
 import { usePanelResize } from '../../hooks/usePanelResize'
 
 interface CanvasAgentPanelProps {
+  projectId?: string
   initialPrompt?: string
   modelId?: string
   autoModel?: boolean
@@ -14,6 +15,7 @@ interface CanvasAgentPanelProps {
 }
 
 export function CanvasAgentPanel({
+  projectId,
   initialPrompt,
   modelId = AI_MODEL_OPTIONS[0].id,
   autoModel = true,
@@ -65,6 +67,7 @@ export function CanvasAgentPanel({
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <AgentChat
           variant="canvas"
+          projectId={projectId}
           initialPrompt={initialPrompt}
           modelId={modelId}
           autoModel={autoModel}

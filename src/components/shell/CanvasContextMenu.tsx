@@ -154,7 +154,7 @@ export function CanvasContextMenu({ x, y, onAdd, onClose }: CanvasContextMenuPro
         <MenuRow icon="playlist" label={m.playlist} beta={m.beta} onClick={soon} />
 
         <p className="canvas-add-menu-section">{m.resources}</p>
-        <MenuRow icon="upload" label={m.upload} onClick={soon} />
+        <MenuRow icon="upload" label={m.upload} onClick={() => add('upload')} />
       </div>
     </>
   )

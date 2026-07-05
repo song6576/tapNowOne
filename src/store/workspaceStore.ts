@@ -1,6 +1,18 @@
-/** 工作空间：文件夹/项目 CRUD，localStorage 持久化（tapflow_workspace） */
+/** 工作空间：文件夹/项目 CRUD，已登录时走云端 API，未登录降级 localStorage */
 import { create } from 'zustand'
+import {
+  createFolder as apiCreateFolder,
+  createProject as apiCreateProject,
+  deleteProjectCloud,
+  listFolders,
+  listProjects,
+  patchProject,
+  updateFolder as apiUpdateFolder,
+  type FolderMeta,
+  type ProjectMeta,
+} from '../api/client'
 import { MOCK_PROJECTS } from '../mock/data'
+import { getToken } from '../utils/auth'
 import { generateUUID } from '../utils/uuid'
 
 export type WorkspaceFolder = {
@@ -36,8 +48,28 @@ function nowIso() {
   return new Date().toISOString()
 }
 
+function mapFolder(f: FolderMeta): WorkspaceFolder {
+  return {
+    id: f.id,
+    name: f.name,
+    parentId: f.parent_id,
+    createdAt: f.created_at,
+    updatedAt: f.updated_at,
+  }
+}
+
+function mapProject(p: ProjectMeta): WorkspaceProject {
+  return {
+    id: p.id,
+    name: p.name,
+    folderId: p.folder_id ?? null,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at,
+    thumbnail: p.thumbnail,
+  }
+}
+
 function seedWorkspace(): PersistedWorkspace {
-  // 首次无 localStorage 数据时，用 mock 项目种子填充演示数据
   const folderId = 'f-default'
   const folder: WorkspaceFolder = {
     id: folderId,
@@ -86,13 +118,15 @@ function writeStorage(data: PersistedWorkspace) {
 
 interface WorkspaceStore extends PersistedWorkspace {
   initialized: boolean
-  init: () => void
-  createFolder: (parentId: string | null) => WorkspaceFolder
-  renameFolder: (id: string, name: string) => void
-  createProject: (folderId: string | null) => WorkspaceProject
+  loading: boolean
+  init: () => Promise<void>
+  reload: () => Promise<void>
+  createFolder: (parentId: string | null) => Promise<WorkspaceFolder>
+  renameFolder: (id: string, name: string) => Promise<void>
+  createProject: (folderId: string | null, name?: string) => Promise<WorkspaceProject>
   getProject: (id: string) => WorkspaceProject | undefined
-  updateProject: (id: string, patch: Partial<Pick<WorkspaceProject, 'name' | 'updatedAt' | 'thumbnail' | 'folderId'>>) => void
-  deleteProject: (id: string) => void
+  updateProject: (id: string, patch: Partial<Pick<WorkspaceProject, 'name' | 'updatedAt' | 'thumbnail' | 'folderId'>>) => Promise<void>
+  deleteProject: (id: string) => Promise<void>
   countProjectsInFolder: (folderId: string) => number
   getFolder: (id: string) => WorkspaceFolder | undefined
 }
@@ -101,15 +135,59 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   folders: [],
   projects: [],
   initialized: false,
+  loading: false,
 
-  init: () => {
-    if (get().initialized) return
-    const data = readStorage()
-    set({ ...data, initialized: true })
+  init: async () => {
+    if (get().initialized || get().loading) return
+    set({ loading: true })
+    try {
+      if (getToken()) {
+        const [foldersRaw, projectsRaw] = await Promise.all([
+          listFolders(),
+          listProjects(),
+        ])
+        set({
+          folders: foldersRaw.map(mapFolder),
+          projects: projectsRaw.map(mapProject),
+          initialized: true,
+          loading: false,
+        })
+        return
+      }
+      const data = readStorage()
+      set({ ...data, initialized: true, loading: false })
+    } catch {
+      const data = readStorage()
+      set({ ...data, initialized: true, loading: false })
+    }
   },
 
-  /** 在当前 parentId 下新建文件夹，名称默认「未命名文件夹」 */
-  createFolder: (parentId) => {
+  reload: async () => {
+    if (!getToken() || get().loading) return
+    set({ loading: true })
+    try {
+      const [foldersRaw, projectsRaw] = await Promise.all([
+        listFolders(),
+        listProjects(),
+      ])
+      set({
+        folders: foldersRaw.map(mapFolder),
+        projects: projectsRaw.map(mapProject),
+        initialized: true,
+        loading: false,
+      })
+    } catch {
+      set({ loading: false })
+    }
+  },
+
+  createFolder: async (parentId) => {
+    if (getToken()) {
+      const row = await apiCreateFolder(undefined, parentId)
+      const folder = mapFolder(row)
+      set((s) => ({ folders: [...s.folders, folder] }))
+      return folder
+    }
     const folder: WorkspaceFolder = {
       id: `f-${generateUUID().slice(0, 8)}`,
       name: '未命名文件夹',
@@ -125,7 +203,15 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     return folder
   },
 
-  renameFolder: (id, name) => {
+  renameFolder: async (id, name) => {
+    if (getToken()) {
+      const row = await apiUpdateFolder(id, { name })
+      const folder = mapFolder(row)
+      set((s) => ({
+        folders: s.folders.map((f) => (f.id === id ? folder : f)),
+      }))
+      return
+    }
     set((s) => {
       const folders = s.folders.map((f) =>
         f.id === id ? { ...f, name, updatedAt: nowIso() } : f,
@@ -135,10 +221,16 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     })
   },
 
-  createProject: (folderId) => {
+  createProject: async (folderId, name = 'Untitled') => {
+    if (getToken()) {
+      const row = await apiCreateProject(name, folderId)
+      const project = mapProject(row)
+      set((s) => ({ projects: [project, ...s.projects] }))
+      return project
+    }
     const project: WorkspaceProject = {
       id: `p-${generateUUID().slice(0, 8)}`,
-      name: 'Untitled',
+      name,
       folderId,
       createdAt: nowIso(),
       updatedAt: nowIso(),
@@ -153,7 +245,19 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
 
   getProject: (id) => get().projects.find((p) => p.id === id),
 
-  updateProject: (id, patch) => {
+  updateProject: async (id, patch) => {
+    if (getToken()) {
+      const apiPatch: Parameters<typeof patchProject>[1] = {}
+      if (patch.name !== undefined) apiPatch.name = patch.name
+      if (patch.thumbnail !== undefined) apiPatch.thumbnail = patch.thumbnail
+      if (patch.folderId !== undefined) apiPatch.folderId = patch.folderId
+      const row = await patchProject(id, apiPatch)
+      const updated = mapProject(row)
+      set((s) => ({
+        projects: s.projects.map((p) => (p.id === id ? { ...p, ...updated, ...patch } : p)),
+      }))
+      return
+    }
     set((s) => {
       const projects = s.projects.map((p) =>
         p.id === id ? { ...p, ...patch, updatedAt: patch.updatedAt ?? nowIso() } : p,
@@ -163,10 +267,13 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     })
   },
 
-  deleteProject: (id) => {
+  deleteProject: async (id) => {
+    if (getToken()) {
+      await deleteProjectCloud(id)
+    }
     set((s) => {
       const projects = s.projects.filter((p) => p.id !== id)
-      writeStorage({ folders: s.folders, projects })
+      if (!getToken()) writeStorage({ folders: s.folders, projects })
       return { projects }
     })
   },

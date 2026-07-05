@@ -11,6 +11,7 @@ type Message = { role: 'user' | 'assistant'; content: string }
 
 export function AgentChat({
   variant = 'default',
+  projectId,
   initialPrompt,
   modelId = AI_MODEL_OPTIONS[0].id,
   autoModel = true,
@@ -18,6 +19,7 @@ export function AgentChat({
   onAutoModelChange,
 }: {
   variant?: 'default' | 'canvas'
+  projectId?: string
   initialPrompt?: string
   modelId?: string
   autoModel?: boolean
@@ -93,6 +95,7 @@ export function AgentChat({
           trimmed,
           context,
           conversationId,
+          projectId,
           selectedModelId,
           selectedAuto,
         )
@@ -108,7 +111,7 @@ export function AgentChat({
       setLoading(false)
       sendingRef.current = false
     }
-  }, [nodes, edges, applyStoryboard, conversationId, selectedModelId, selectedAuto])
+  }, [nodes, edges, applyStoryboard, conversationId, projectId, selectedModelId, selectedAuto])
 
   const send = () => {
     const text = input.trim()

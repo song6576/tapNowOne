@@ -15,6 +15,7 @@ export async function agentChat(
   message: string,
   context?: string,
   conversationId?: string,
+  projectId?: string,
   model?: string,
   auto = true,
 ): Promise<{ reply: string; conversationId?: string }> {
@@ -24,7 +25,7 @@ export async function agentChat(
       reply: `（Mock Agent）收到你的消息。当前画布上下文：\n${context?.slice(0, 200) ?? '空画布'}\n\n配置 VITE_USE_MOCK=false 并启动后端后可使用真实百炼对话。`,
     }
   }
-  return real.agentChat(message, context, conversationId, model, auto)
+  return real.agentChat(message, context, conversationId, projectId, model, auto)
 }
 
 export async function agentStoryboard(

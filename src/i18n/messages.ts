@@ -258,6 +258,10 @@ export type Messages = {
   }
   profile: {
     changeBanner: string
+    uploadBanner: string
+    uploadAvatar: string
+    cycleBannerGradient: string
+    resetBannerGradient: string
     following: string
     followers: string
     favorites: string
@@ -288,6 +292,8 @@ export type Messages = {
     showJoinDate: string
     email: string
     comingSoon: string
+    save: string
+    saveSuccess: string
     sections: {
       subscription: string
       benefits: string
@@ -677,6 +683,10 @@ const zh: Messages = {
   },
   profile: {
     changeBanner: '更换背景图片',
+    uploadBanner: '上传背景图片',
+    uploadAvatar: '上传头像',
+    cycleBannerGradient: '切换渐变色',
+    resetBannerGradient: '恢复渐变',
     following: '已关注',
     followers: '粉丝',
     favorites: '收藏',
@@ -707,6 +717,8 @@ const zh: Messages = {
     showJoinDate: '显示入驻时间',
     email: '邮箱',
     comingSoon: '功能即将上线',
+    save: '保存',
+    saveSuccess: '个人资料已保存',
     sections: {
       subscription: '订阅和充值',
       benefits: '权益和账单',
@@ -1118,6 +1130,10 @@ const en: Messages = {
   },
   profile: {
     changeBanner: 'Change background',
+    uploadBanner: 'Upload banner',
+    uploadAvatar: 'Upload avatar',
+    cycleBannerGradient: 'Cycle gradient',
+    resetBannerGradient: 'Use gradient',
     following: 'Following',
     followers: 'Followers',
     favorites: 'Favorites',
@@ -1148,6 +1164,8 @@ const en: Messages = {
     showJoinDate: 'Show join date',
     email: 'Email',
     comingSoon: 'Coming soon',
+    save: 'Save',
+    saveSuccess: 'Profile saved',
     sections: {
       subscription: 'Subscription & recharge',
       benefits: 'Benefits & billing',

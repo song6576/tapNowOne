@@ -72,7 +72,6 @@ export function AccountSettingsModal() {
   const profile = useProfileStore((s) => s.profile)
   const closeAccountModal = useProfileStore((s) => s.closeAccountModal)
   const setAccountNav = useProfileStore((s) => s.setAccountNav)
-  const updateProfile = useProfileStore((s) => s.updateProfile)
   const initProfile = useProfileStore((s) => s.init)
 
   const user = useAuthStore((s) => s.user)
@@ -113,7 +112,7 @@ export function AccountSettingsModal() {
   const renderContent = () => {
     switch (nav) {
       case 'personal':
-        return <PersonalSettingsView user={user} profile={profile} onUpdate={updateProfile} />
+        return <PersonalSettingsView user={user} profile={profile} />
       case 'subscription':
         return <SubscriptionView />
       case 'modelMarket':

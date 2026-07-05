@@ -1,9 +1,15 @@
 /** 个人主页：背景横幅、资料侧栏、作品集与代表作 */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { uploadBanner, uploadAvatar } from '../api/client'
+import { ProjectGridCard } from '../components/project/ProjectGridCard'
+import { NewProjectCard } from '../components/project/NewProjectCard'
 import { useAuthStore } from '../store/authStore'
 import { useProfileStore } from '../store/profileStore'
+import { useWorkspaceStore } from '../store/workspaceStore'
 import { useI18n } from '../store/langStore'
 import { useToastStore } from '../store/toastStore'
+import { getToken } from '../utils/auth'
 
 function ProfileAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
   if (avatarUrl) {
@@ -17,46 +23,107 @@ function ProfileAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string |
   )
 }
 
-const BANNER_PRESETS = [
-  'linear-gradient(135deg, #1a1a1e 0%, #2d2d35 50%, #1a1a1e 100%)',
-  'linear-gradient(135deg, #1e1b2e 0%, #3d2c5a 50%, #1a1528 100%)',
-  'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
-  'linear-gradient(135deg, #200122 0%, #6f0000 100%)',
-]
+const DEFAULT_BANNER = 'linear-gradient(135deg, #1a1a1e 0%, #2d2d35 50%, #1a1a1e 100%)'
 
 export function ProfilePage() {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const updateUser = useAuthStore((s) => s.updateUser)
   const profile = useProfileStore((s) => s.profile)
   const init = useProfileStore((s) => s.init)
-  const updateProfile = useProfileStore((s) => s.updateProfile)
   const openAccountModal = useProfileStore((s) => s.openAccountModal)
+  const wsReload = useWorkspaceStore((s) => s.reload)
+  const projects = useWorkspaceStore((s) => s.projects)
+  const wsLoading = useWorkspaceStore((s) => s.loading)
+  const createProject = useWorkspaceStore((s) => s.createProject)
   const { t } = useI18n()
   const p = t.profile
   const showToast = useToastStore((s) => s.showToast)
 
+  const sortedProjects = useMemo(
+    () => [...projects].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+    [projects],
+  )
+
+  useEffect(() => { init() }, [init])
+  useEffect(() => { void wsReload() }, [wsReload])
+
+  const bannerInputRef = useRef<HTMLInputElement>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
   const [mainTab, setMainTab] = useState<'portfolio' | 'saved'>('portfolio')
   const [contentTab, setContentTab] = useState<'works' | 'series'>('works')
 
-  useEffect(() => { init() }, [init])
+  const handleNewProject = async () => {
+    if (!getToken()) {
+      navigate('/login')
+      return
+    }
+    const proj = await createProject(null)
+    navigate(`/canvas/${proj.id}`)
+  }
 
   if (!user) return null
 
-  const cycleBanner = () => {
-    const idx = BANNER_PRESETS.indexOf(profile.bannerStyle)
-    const next = BANNER_PRESETS[(idx + 1 + BANNER_PRESETS.length) % BANNER_PRESETS.length]
-    updateProfile({ bannerStyle: next })
-    showToast({ type: 'success', message: p.changeBanner })
+  const pickBannerImage = () => {
+    if (!getToken()) {
+      navigate('/login')
+      return
+    }
+    bannerInputRef.current?.click()
   }
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const { user: nextUser } = await uploadBanner(file)
+      updateUser(nextUser)
+      showToast({ type: 'success', message: p.uploadBanner })
+    } catch (err) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : '上传失败' })
+    }
+  }
+
+  const pickAvatar = () => {
+    if (!getToken()) {
+      navigate('/login')
+      return
+    }
+    avatarInputRef.current?.click()
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const { user: nextUser } = await uploadAvatar(file)
+      updateUser(nextUser)
+      showToast({ type: 'success', message: t.account.personalProfile })
+    } catch (err) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : '上传失败' })
+    }
+  }
+
+  const bannerBackground = user.banner_url
+    ? `url(${user.banner_url}) center/cover no-repeat`
+    : profile.bannerStyle || DEFAULT_BANNER
 
   return (
     <main className="profile-page flex-1 overflow-y-auto">
-      <div className="profile-banner" style={{ background: profile.bannerStyle }}>
-        <button type="button" onClick={cycleBanner} className="profile-banner-btn ui-clickable">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {p.changeBanner}
-        </button>
+      <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleBannerUpload} />
+      <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleAvatarUpload} />
+      <div className="profile-banner group" style={{ background: bannerBackground }}>
+        <div className="profile-banner-actions">
+          <button type="button" onClick={pickBannerImage} className="profile-banner-btn ui-clickable">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {p.uploadBanner}
+          </button>
+        </div>
       </div>
 
       <div className="profile-body mx-auto max-w-[1200px] px-5 pb-12 md:px-8">
@@ -64,12 +131,14 @@ export function ProfilePage() {
           <aside className="profile-sidebar">
             <div className="profile-sidebar-card">
               <div className="relative mx-auto w-fit">
-                <ProfileAvatar name={user.name} avatarUrl={user.avatar_url} />
+                <button type="button" onClick={() => openAccountModal('personal')} className="ui-clickable block rounded-full" title={t.account.nav.personal}>
+                  <ProfileAvatar name={user.name} avatarUrl={user.avatar_url} />
+                </button>
                 <button
                   type="button"
-                  onClick={() => openAccountModal('personal')}
+                  onClick={pickAvatar}
                   className="profile-avatar-edit ui-clickable"
-                  title={t.account.nav.personal}
+                  title={p.uploadAvatar}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round" />
@@ -77,7 +146,9 @@ export function ProfilePage() {
                 </button>
               </div>
               <h1 className="mt-4 text-center text-lg font-semibold text-white">{user.name}</h1>
-              <p className="mt-2 text-center text-sm leading-relaxed text-white/45">{profile.bio}</p>
+              <p className="mt-2 text-center text-sm leading-relaxed text-white/45">
+                {user.bio || profile.bio || 'I am turning imagination into reality.'}
+              </p>
 
               <div className="profile-stats mt-6 grid grid-cols-3 gap-2 text-center">
                 <div>
@@ -156,7 +227,7 @@ export function ProfilePage() {
                     onClick={() => setContentTab('works')}
                     className={`profile-sub-tab ui-clickable ${contentTab === 'works' ? 'profile-sub-tab--active' : ''}`}
                   >
-                    {p.tabWorks} (0)
+                    {p.tabWorks} ({sortedProjects.length})
                   </button>
                   <button
                     type="button"
@@ -173,9 +244,36 @@ export function ProfilePage() {
                   </svg>
                 </button>
               </div>
-              <div className="profile-works-empty mt-6 flex min-h-[160px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
-                {p.worksEmpty}
-              </div>
+              {contentTab === 'series' ? (
+                <div className="profile-works-empty mt-6 flex min-h-[160px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
+                  {t.account.comingSoon}
+                </div>
+              ) : wsLoading ? (
+                <div className="profile-works-empty mt-6 flex min-h-[160px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
+                  ...
+                </div>
+              ) : sortedProjects.length === 0 ? (
+                <div className="mt-6">
+                  <div className="profile-works-empty flex min-h-[120px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
+                    {p.worksEmpty}
+                  </div>
+                  <div className="mt-4 grid max-w-xs gap-4 sm:grid-cols-2">
+                    <NewProjectCard label={t.home.newProject} onClick={() => void handleNewProject()} />
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <NewProjectCard label={t.home.newProject} onClick={() => void handleNewProject()} />
+                  {sortedProjects.map((proj) => (
+                    <ProjectGridCard
+                      key={proj.id}
+                      project={proj}
+                      editedAtLabel={t.home.editedAt}
+                      onOpen={() => navigate(`/canvas/${proj.id}`)}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         </div>

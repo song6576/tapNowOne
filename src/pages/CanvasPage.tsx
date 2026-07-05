@@ -14,6 +14,9 @@ import { useWorkspaceStore } from '../store/workspaceStore'
 import type { CanvasProject } from '../types'
 import type { NodeType } from '../types'
 import { mockGetTapTVWorkflow } from '../mock/api'
+import { getProject as fetchCloudProject, uploadProjectAsset } from '../api/client'
+import { getToken } from '../utils/auth'
+import { useToastStore } from '../store/toastStore'
 import { nodePositionAtCursor } from '../utils/canvasLayout'
 import { AI_MODEL_OPTIONS } from '../config/agentModels'
 import { useI18n } from '../store/langStore'
@@ -53,6 +56,7 @@ export function CanvasPage() {
   const resetCanvas = useCanvasStore((s) => s.resetCanvas)
   const loadProject = useCanvasStore((s) => s.loadProject)
   const addNode = useCanvasStore((s) => s.addNode)
+  const addUploadedAsset = useCanvasStore((s) => s.addUploadedAsset)
   const applyStoryboard = useCanvasStore((s) => s.applyStoryboard)
 
   const wsInit = useWorkspaceStore((s) => s.init)
@@ -70,6 +74,9 @@ export function CanvasPage() {
   const navStateRef = useRef(location.state as CanvasNavState)
   const agentNavRef = useRef(readAgentNav(navStateRef.current))
   const canvasBootstrappedRef = useRef(false)
+  const uploadInputRef = useRef<HTMLInputElement>(null)
+  const uploadPositionRef = useRef<{ x: number; y: number } | undefined>(undefined)
+  const showToast = useToastStore((s) => s.showToast)
 
   const [showAgentPanel, setShowAgentPanel] = useState(agentNavRef.current.open)
   const [agentInitialPrompt, setAgentInitialPrompt] = useState(agentNavRef.current.prompt)
@@ -127,9 +134,26 @@ export function CanvasPage() {
     }
 
     if (projectId) {
+      resetCanvas()
+      window.history.replaceState({}, '')
+
+      if (getToken()) {
+        fetchCloudProject(projectId)
+          .then((row) => {
+            loadProject({
+              ...row.data,
+              id: row.id,
+              name: row.name,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+            })
+          })
+          .catch(() => navigate('/home/projects'))
+        return
+      }
+
       const wp = getProject(projectId)
       if (wp) {
-        resetCanvas()
         loadProject({
           id: wp.id,
           name: wp.name,
@@ -142,7 +166,6 @@ export function CanvasPage() {
       } else {
         navigate('/home/projects')
       }
-      window.history.replaceState({}, '')
       return
     }
 
@@ -157,13 +180,13 @@ export function CanvasPage() {
 
   const handleNameChange = useCallback((name: string) => {
     setProjectName(name)
-    if (projectId) updateProject(projectId, { name, updatedAt: new Date().toISOString() })
+    if (projectId) void updateProject(projectId, { name, updatedAt: new Date().toISOString() })
   }, [setProjectName, updateProject, projectId])
 
-  const handleNewProject = useCallback(() => {
+  const handleNewProject = useCallback(async () => {
     const wp = projectId ? getProject(projectId) : null
     const folderId = wp?.folderId ?? (location.state as { folderId?: string | null } | null)?.folderId ?? null
-    const proj = createProject(folderId)
+    const proj = await createProject(folderId)
     navigate(`/canvas/${proj.id}`, { state: { folderId, isNew: true } })
   }, [projectId, getProject, createProject, navigate, location.state])
 
@@ -176,14 +199,48 @@ export function CanvasPage() {
   }, [])
 
   const handleAddFromMenu = useCallback((type: CanvasAddAction) => {
-    if (type === 'playlist' || type === 'world3d' || type === 'upload') return
+    if (type === 'upload') {
+      uploadPositionRef.current = addMenu?.flowPosition
+      setAddMenu(null)
+      if (!getToken()) {
+        navigate('/login')
+        return
+      }
+      uploadInputRef.current?.click()
+      return
+    }
+    if (type === 'playlist' || type === 'world3d') return
     if (addMenu?.flowPosition) {
       handleAddNode(type, nodePositionAtCursor(addMenu.flowPosition))
     } else {
       handleAddNode(type)
     }
     setAddMenu(null)
-  }, [addMenu, handleAddNode])
+  }, [addMenu, handleAddNode, navigate])
+
+  const handleUploadFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const result = await uploadProjectAsset(file, projectId)
+      addUploadedAsset(
+        result.url,
+        result.mime_type,
+        result.filename,
+        uploadPositionRef.current
+          ? nodePositionAtCursor(uploadPositionRef.current)
+          : undefined,
+      )
+      uploadPositionRef.current = undefined
+      showToast({ type: 'success', message: '资源已上传' })
+    } catch (err) {
+      showToast({
+        type: 'info',
+        message: err instanceof Error ? err.message : '上传失败',
+      })
+    }
+  }, [projectId, addUploadedAsset, showToast])
 
   const handlePaneDoubleClick = useCallback((e: MouseEvent, flowPosition: { x: number; y: number }) => {
     openAddMenu(e.clientX, e.clientY, flowPosition)
@@ -226,6 +283,13 @@ export function CanvasPage() {
 
   return (
     <ReactFlowProvider>
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept="image/*,video/*,audio/*"
+        className="hidden"
+        onChange={handleUploadFile}
+      />
       <div className="canvas-page relative flex h-full flex-col bg-[#050505]">
         <CanvasTopBar
           projectName={project.name}
@@ -243,7 +307,11 @@ export function CanvasPage() {
               onPaneDoubleClick={handlePaneDoubleClick}
               onPaneContextMenu={handlePaneContextMenu}
             />
-            <CanvasToolbar onAddNode={handleAddNode} onOpenAddMenu={handleOpenAddMenuFromToolbar} />
+            <CanvasToolbar
+              onAddNode={handleAddNode}
+              onOpenAddMenu={handleOpenAddMenuFromToolbar}
+              onOpenAgent={() => setShowAgentPanel(true)}
+            />
             {isEmpty && (
               <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                 <CanvasQuickActions
@@ -265,6 +333,7 @@ export function CanvasPage() {
           {showAgentPanel && (
             <CanvasAgentPanel
               key={projectId ?? 'canvas-agent'}
+              projectId={projectId}
               initialPrompt={agentInitialPrompt}
               modelId={agentModelId}
               autoModel={agentAutoModel}

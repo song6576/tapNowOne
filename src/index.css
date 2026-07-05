@@ -423,6 +423,8 @@ html, body, #root {
   min-width: 260px;
   max-height: 420px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .model-dropdown-icon {
   display: flex;
@@ -1467,6 +1469,11 @@ html, body, #root {
   padding: 8px 10px;
 }
 .node-inline-editor-meta {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.35);
 }
@@ -2082,12 +2089,36 @@ html, body, #root {
 .profile-banner {
   position: relative;
   height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
 }
 @media (min-width: 768px) {
   .profile-banner { height: 240px; }
+}
+.profile-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(5, 5, 5, 0.55) 100%);
+  pointer-events: none;
+}
+.profile-banner-actions {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.profile-banner:hover .profile-banner-actions,
+.profile-banner:focus-within .profile-banner-actions {
+  opacity: 1;
+}
+@media (max-width: 767px) {
+  .profile-banner-actions { opacity: 1; }
 }
 .profile-banner-btn {
   display: inline-flex;

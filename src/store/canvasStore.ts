@@ -9,12 +9,15 @@ import {
   addEdge,
 } from '@xyflow/react'
 import type { CanvasNode, CanvasEdge, CanvasProject, NodeType, NodeData } from '../types'
-import { createDefaultNodeData } from '../types'
+import { createDefaultNodeData, NODE_META } from '../types'
 import { loadProject, saveProject, createEmptyProject } from '../utils/storage'
 import { generateUUID } from '../utils/uuid'
 import { buildEffectivePrompt, getUpstreamInputs } from '../utils/upstream'
 import { getWorkflowOrder } from '../utils/workflow'
 import { generateNode as apiGenerate, composeVideo } from '../services/api'
+import { resolveAgentModel } from '../config/agentModels'
+import { patchProject, getProject as fetchCloudProject } from '../api/client'
+import { getToken } from '../utils/auth'
 import { collectComposeClips } from '../utils/compose'
 import { nextToolbarNodePosition } from '../utils/canvasLayout'
 import type { StoryboardScene } from '../api/client'
@@ -37,6 +40,7 @@ interface CanvasStore {
   onEdgesChange: (changes: EdgeChange<CanvasEdge>[]) => void
   onConnect: (connection: Connection) => void
   addNode: (type: NodeType, position?: { x: number; y: number }) => void
+  addUploadedAsset: (url: string, mimeType: string, filename: string, position?: { x: number; y: number }) => void
   updateNodeData: (id: string, data: Partial<NodeData>) => void
   selectNode: (id: string | null) => void
   deleteSelected: () => void
@@ -54,8 +58,9 @@ interface CanvasStore {
   getProjectPayload: () => CanvasProject
 }
 
-/** 防抖写入 localStorage，避免拖拽节点时频繁 IO */
+/** 防抖写入 localStorage / 云端，避免拖拽节点时频繁 IO */
 let persistTimer: ReturnType<typeof setTimeout> | null = null
+let cloudPersistTimer: ReturnType<typeof setTimeout> | null = null
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
   project: createEmptyProject(),
@@ -153,6 +158,34 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     get().schedulePersist()
   },
 
+  addUploadedAsset: (url, mimeType, filename, position) => {
+    const nodeType: NodeType = mimeType.startsWith('video/')
+      ? 'video'
+      : mimeType.startsWith('audio/')
+        ? 'audio'
+        : 'image'
+    const { nodes } = get()
+    const pos = position ?? nextToolbarNodePosition(nodes.length)
+    const id = generateUUID()
+    const newNode: CanvasNode = {
+      id,
+      type: nodeType,
+      position: pos,
+      data: {
+        ...createDefaultNodeData(nodeType),
+        label: filename.replace(/\.[^.]+$/, '') || NODE_META[nodeType].label,
+        status: 'done',
+        outputUrl: url,
+      },
+      selected: true,
+    }
+    set((s) => ({
+      nodes: [...s.nodes.map((n) => ({ ...n, selected: false })), newNode],
+      selectedNodeId: id,
+    }))
+    get().schedulePersist()
+  },
+
   updateNodeData: (id, data) => {
     set((s) => ({
       nodes: s.nodes.map((n) =>
@@ -198,7 +231,9 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   schedulePersist: () => {
     if (persistTimer) clearTimeout(persistTimer)
-    persistTimer = setTimeout(() => get().persist(), 800) // 800ms 防抖
+    persistTimer = setTimeout(() => get().persist(), 800)
+    if (cloudPersistTimer) clearTimeout(cloudPersistTimer)
+    cloudPersistTimer = setTimeout(() => void get().saveToCloud(), 800)
   },
 
   persist: () => {
@@ -226,11 +261,15 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const { upstreamText, upstreamImageUrl } = getUpstreamInputs(nodeId, nodes, edges)
     const effectivePrompt = buildEffectivePrompt(node, nodes, edges)
 
+    const autoModel = node.data.autoModel !== false
+    const resolvedModel = resolveAgentModel(node.data.model, autoModel)
+
     try {
       const resultUrl = await apiGenerate({
         node_type: nodeType,
         prompt: effectivePrompt,
-        model: node.data.model,
+        model: resolvedModel,
+        auto: autoModel,
         upstream_text: upstreamText,
         upstream_image_url: upstreamImageUrl,
         duration: node.data.duration ?? 4,
@@ -317,12 +356,25 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   saveToCloud: async () => {
-    get().persist()
-    // Mock 模式：仅本地保存；后续接 backend saveProjectCloud
+    const { cloudId, getProjectPayload } = get()
+    if (!cloudId || !getToken()) return
+    const payload = getProjectPayload()
+    try {
+      await patchProject(cloudId, { data: payload, name: payload.name })
+    } catch {
+      /* autosave best-effort */
+    }
   },
 
-  loadCloudProject: async (_id) => {
-    get().init()
+  loadCloudProject: async (id) => {
+    const row = await fetchCloudProject(id)
+    get().loadProject({
+      ...row.data,
+      id: row.id,
+      name: row.name,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    })
   },
 
   exportVideo: async () => {
