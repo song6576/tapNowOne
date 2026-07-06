@@ -684,17 +684,17 @@ html, body, #root {
   }
 }
 
-/* 工作空间：一行 3 个，卡片更紧凑 */
+/* 工作空间：按屏幕宽度自适应列数，不限制总宽度 */
 .workspace-project-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
-  max-width: 920px;
+  width: 100%;
 }
-@media (max-width: 900px) {
+@media (min-width: 1536px) {
   .workspace-project-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: none;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
   }
 }
 @media (max-width: 520px) {

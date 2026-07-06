@@ -151,7 +151,7 @@ export function ProjectsPage() {
 
   return (
     <main className={`home-page flex-1 overflow-y-auto px-5 py-6 md:px-8 ${selectMode ? 'home-page--select-mode' : ''}`}>
-      <div className="mx-auto max-w-[1200px]">
+      <div className="w-full">
         <div className="workspace-page-toolbar mb-6">
           <div className="workspace-page-toolbar__row">
             <div className="workspace-page-toolbar__start">
