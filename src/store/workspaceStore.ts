@@ -8,9 +8,11 @@ import {
   listFolders,
   listProjects,
   patchProject,
+  searchWorkspace,
   updateFolder as apiUpdateFolder,
   type FolderMeta,
   type ProjectMeta,
+  type WorkspaceSearchParams,
 } from '../api/client'
 import { MOCK_PROJECTS } from '../mock/data'
 import { getToken } from '../utils/auth'
@@ -24,6 +26,7 @@ export type WorkspaceFolder = {
   createdAt: string
   updatedAt: string
   cover?: string
+  projectCount?: number
 }
 
 export type WorkspaceProject = {
@@ -58,6 +61,7 @@ function mapFolder(f: FolderMeta): WorkspaceFolder {
     parentId: f.parent_id,
     createdAt: f.created_at,
     updatedAt: f.updated_at,
+    projectCount: f.project_count,
   }
 }
 
@@ -125,9 +129,13 @@ interface WorkspaceStore extends PersistedWorkspace {
   initialized: boolean
   loading: boolean
   scopeTeamId: string | null
+  lastSearchParams: WorkspaceSearchParams | null
+  activeFolder: WorkspaceFolder | null
   setScope: (teamId: string | null) => Promise<void>
   init: () => Promise<void>
   reload: () => Promise<void>
+  search: (params: WorkspaceSearchParams) => Promise<void>
+  refreshSearch: () => Promise<void>
   createFolder: (parentId: string | null, name: string) => Promise<WorkspaceFolder>
   renameFolder: (id: string, name: string) => Promise<void>
   deleteFolder: (id: string) => Promise<void>
@@ -146,6 +154,8 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   initialized: false,
   loading: false,
   scopeTeamId: null,
+  lastSearchParams: null,
+  activeFolder: null,
 
   setScope: async (teamId) => {
     set({ scopeTeamId: teamId, initialized: false })
@@ -204,6 +214,34 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     }
   },
 
+  search: async (params) => {
+    if (!getToken()) return
+    set({ loading: true, lastSearchParams: params })
+    try {
+      const teamId = params.teamId !== undefined ? params.teamId : get().scopeTeamId
+      const result = await searchWorkspace({ ...params, teamId })
+      set({
+        folders: result.folders.map((f) => ({ ...mapFolder(f), cover: pickWorkspaceCover(f.id) })),
+        projects: result.projects.map((p) => ({
+          ...mapProject(p),
+          thumbnail: p.thumbnail ?? pickWorkspaceCover(p.id),
+        })),
+        activeFolder: result.current_folder
+          ? { ...mapFolder(result.current_folder), cover: pickWorkspaceCover(result.current_folder.id) }
+          : null,
+        initialized: true,
+        loading: false,
+      })
+    } catch {
+      set({ loading: false })
+    }
+  },
+
+  refreshSearch: async () => {
+    const params = get().lastSearchParams
+    if (params) await get().search(params)
+  },
+
   createFolder: async (parentId, name) => {
     const trimmed = name.trim() || '未命名文件夹'
     const teamId = get().scopeTeamId
@@ -212,6 +250,10 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       const folder: WorkspaceFolder = {
         ...mapFolder(row),
         cover: pickWorkspaceCover(row.id),
+      }
+      if (get().lastSearchParams) {
+        await get().refreshSearch()
+        return get().folders.find((f) => f.id === folder.id) ?? folder
       }
       set((s) => ({ folders: [...s.folders, folder] }))
       return folder
@@ -237,6 +279,10 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     if (getToken()) {
       const row = await apiUpdateFolder(id, { name })
       const folder = mapFolder(row)
+      if (get().lastSearchParams) {
+        await get().refreshSearch()
+        return
+      }
       set((s) => ({
         folders: s.folders.map((f) =>
           f.id === id ? { ...f, ...folder, cover: f.cover ?? pickWorkspaceCover(f.id) } : f,
@@ -256,6 +302,10 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   deleteFolder: async (id) => {
     if (getToken()) {
       await apiDeleteFolder(id)
+      if (get().lastSearchParams) {
+        await get().refreshSearch()
+        return
+      }
     }
     set((s) => {
       const folder = s.folders.find((f) => f.id === id)
@@ -278,6 +328,10 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       const project: WorkspaceProject = {
         ...mapProject(row),
         thumbnail: pickWorkspaceCover(row.id),
+      }
+      if (get().lastSearchParams) {
+        await get().refreshSearch()
+        return get().projects.find((p) => p.id === project.id) ?? project
       }
       set((s) => ({ projects: [project, ...s.projects] }))
       return project
@@ -336,6 +390,10 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   deleteProject: async (id) => {
     if (getToken()) {
       await deleteProjectCloud(id)
+      if (get().lastSearchParams) {
+        await get().refreshSearch()
+        return
+      }
     }
     set((s) => {
       const projects = s.projects.filter((p) => p.id !== id)
@@ -347,5 +405,11 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   countProjectsInFolder: (folderId) =>
     get().projects.filter((p) => p.folderId === folderId).length,
 
-  getFolder: (id) => get().folders.find((f) => f.id === id),
+  getFolder: (id) => {
+    const hit = get().folders.find((f) => f.id === id)
+    if (hit) return hit
+    const active = get().activeFolder
+    if (active?.id === id) return active
+    return undefined
+  },
 }))

@@ -46,6 +46,22 @@ export type FolderMeta = {
   parent_id: string | null
   created_at: string
   updated_at: string
+  project_count?: number
+}
+
+export type WorkspaceSearchParams = {
+  teamId?: string | null
+  parentId?: string | null
+  q?: string
+  type?: 'all' | 'folders' | 'projects'
+  sortBy?: 'updatedAt' | 'createdAt'
+  sortOrder?: 'asc' | 'desc'
+}
+
+export type WorkspaceSearchResult = {
+  folders: FolderMeta[]
+  projects: ProjectMeta[]
+  current_folder?: FolderMeta | null
 }
 
 export type AgentConversationMeta = {
@@ -251,6 +267,18 @@ function teamScopeQuery(teamId?: string | null) {
   return `?teamId=${encodeURIComponent(teamId)}`
 }
 
+function workspaceSearchQuery(params: WorkspaceSearchParams) {
+  const qs = new URLSearchParams()
+  if (params.teamId) qs.set('teamId', params.teamId)
+  if (params.parentId) qs.set('parentId', params.parentId)
+  if (params.q?.trim()) qs.set('q', params.q.trim())
+  if (params.type && params.type !== 'all') qs.set('type', params.type)
+  if (params.sortBy) qs.set('sortBy', params.sortBy)
+  if (params.sortOrder) qs.set('sortOrder', params.sortOrder)
+  const s = qs.toString()
+  return s ? `?${s}` : ''
+}
+
 export async function listTeams(): Promise<TeamsListResponse> {
   const res = await fetch(`${API_BASE}/teams`, { headers: { ...authHeaders() } })
   if (!res.ok) throw new Error(await parseError(res))
@@ -375,6 +403,14 @@ export async function acceptTeamInvite(token: string): Promise<{
 }
 
 // ── Folders ──
+
+export async function searchWorkspace(params: WorkspaceSearchParams = {}): Promise<WorkspaceSearchResult> {
+  const res = await fetch(`${API_BASE}/workspace${workspaceSearchQuery(params)}`, {
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
 
 export async function listFolders(teamId?: string | null): Promise<FolderMeta[]> {
   const res = await fetch(`${API_BASE}/folders${teamScopeQuery(teamId)}`, { headers: { ...authHeaders() } })

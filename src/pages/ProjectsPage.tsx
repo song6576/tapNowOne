@@ -17,6 +17,7 @@ import {
   type WorkspaceViewMode,
 } from '../store/workspaceStore'
 import { PERSONAL_TEAM_ID, useTeamStore } from '../store/teamStore'
+import { useAuthStore } from '../store/authStore'
 
 type WorkspaceTab = 'personal' | 'team'
 
@@ -27,6 +28,7 @@ export function ProjectsPage() {
   const ws = t.workspace
 
   const init = useWorkspaceStore((s) => s.init)
+  const searchWorkspaceItems = useWorkspaceStore((s) => s.search)
   const setScope = useWorkspaceStore((s) => s.setScope)
   const folders = useWorkspaceStore((s) => s.folders)
   const projects = useWorkspaceStore((s) => s.projects)
@@ -48,11 +50,40 @@ export function ProjectsPage() {
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
 
   const activeTeamId = useTeamStore((s) => s.activeTeamId)
+  const isLoggedIn = Boolean(useAuthStore((s) => s.user))
 
   const folderId = searchParams.get('folder')
   const currentFolder = folderId ? getFolder(folderId) : null
 
-  useEffect(() => { init() }, [init])
+  useEffect(() => {
+    if (!isLoggedIn) void init()
+  }, [init, isLoggedIn])
+
+  useEffect(() => {
+    if (!isLoggedIn) return
+    if (tab === 'team' && activeTeamId === PERSONAL_TEAM_ID && !folderId) return
+
+    const timer = window.setTimeout(() => {
+      void searchWorkspaceItems({
+        teamId: tab === 'team' ? activeTeamId : null,
+        parentId: folderId,
+        q: search,
+        type: filter.typeFilter,
+        sortBy: filter.sortBy,
+        sortOrder: filter.sortOrder,
+      })
+    }, search.trim() ? 300 : 0)
+
+    return () => window.clearTimeout(timer)
+  }, [
+    isLoggedIn,
+    tab,
+    activeTeamId,
+    folderId,
+    search,
+    filter,
+    searchWorkspaceItems,
+  ])
 
   useEffect(() => {
     if (tab === 'personal') {
@@ -114,6 +145,19 @@ export function ProjectsPage() {
   }
 
   const rows = useMemo(() => {
+    if (isLoggedIn) {
+      const folderRows: WorkspaceRow[] = folders.map((item) => ({
+        kind: 'folder' as const,
+        item,
+        projectCount: item.projectCount ?? countProjectsInFolder(item.id),
+      }))
+      const projectRows: WorkspaceRow[] = projects.map((item) => ({
+        kind: 'project' as const,
+        item,
+      }))
+      return [...folderRows, ...projectRows]
+    }
+
     const childFolders = folders.filter((f) => f.parentId === folderId)
     const childProjects = projects.filter((p) => p.folderId === folderId)
     const q = search.trim().toLowerCase()
@@ -145,7 +189,7 @@ export function ProjectsPage() {
     }
 
     return [...folderRows.sort(sortFn), ...projectRows.sort(sortFn)]
-  }, [folders, projects, folderId, search, filter, countProjectsInFolder])
+  }, [isLoggedIn, folders, projects, folderId, search, filter, countProjectsInFolder])
 
   const itemCount = rows.length
 
