@@ -56,6 +56,7 @@ export type WorkspaceSearchParams = {
   type?: 'all' | 'folders' | 'projects'
   sortBy?: 'updatedAt' | 'createdAt'
   sortOrder?: 'asc' | 'desc'
+  flat?: boolean
 }
 
 export type WorkspaceSearchResult = {
@@ -275,6 +276,7 @@ function workspaceSearchQuery(params: WorkspaceSearchParams) {
   if (params.type && params.type !== 'all') qs.set('type', params.type)
   if (params.sortBy) qs.set('sortBy', params.sortBy)
   if (params.sortOrder) qs.set('sortOrder', params.sortOrder)
+  if (params.flat) qs.set('flat', 'true')
   const s = qs.toString()
   return s ? `?${s}` : ''
 }
@@ -779,6 +781,26 @@ export async function cloneTapTVWork(id: string): Promise<ProjectMeta> {
   const res = await fetch(`${API_BASE}/taptv/${id}/clone`, {
     method: 'POST',
     headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export type PublishTapTVPayload = {
+  title: string
+  description?: string
+  projectId: string
+  videoUrl: string
+  coverUrl?: string
+  subtitleUrl?: string
+  category?: string
+}
+
+export async function publishTapTV(payload: PublishTapTVPayload): Promise<{ id: string; title: string; message: string }> {
+  const res = await fetch(`${API_BASE}/taptv/publish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()

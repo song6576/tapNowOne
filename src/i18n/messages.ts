@@ -182,11 +182,24 @@ export type Messages = {
     workDescPlaceholder: string
     publicCanvas: string
     selectCanvas: string
+    changeCanvas: string
     uploadSubtitle: string
     subtitleHint: string
+    subtitleUploaded: string
     cancel: string
     submit: string
+    submitting: string
     success: string
+    canvasPicker: {
+      title: string
+      updatedAt: string
+    }
+    errors: {
+      titleRequired: string
+      videoRequired: string
+      canvasRequired: string
+      submitFailed: string
+    }
   }
   canvas: {
     untitled: string
@@ -672,11 +685,24 @@ const zh: Messages = {
     workDescPlaceholder: '请输入作品描述',
     publicCanvas: '公开画布',
     selectCanvas: '选择画布',
+    changeCanvas: '点击更换画布',
     uploadSubtitle: '上传字幕',
     subtitleHint: '（仅支持 .srt，最大 2MB）',
+    subtitleUploaded: '字幕已上传',
     cancel: '取消',
     submit: '发布并投稿',
+    submitting: '发布中...',
     success: '作品已提交审核',
+    canvasPicker: {
+      title: '选择画布',
+      updatedAt: '更新于',
+    },
+    errors: {
+      titleRequired: '请输入作品名称',
+      videoRequired: '请上传作品视频',
+      canvasRequired: '请选择公开画布',
+      submitFailed: '发布失败，请稍后重试',
+    },
   },
   canvas: {
     untitled: 'Untitled',
@@ -1184,11 +1210,24 @@ const en: Messages = {
     workDescPlaceholder: 'Enter description',
     publicCanvas: 'Public canvas',
     selectCanvas: 'Select canvas',
+    changeCanvas: 'Tap to change canvas',
     uploadSubtitle: 'Upload subtitles',
     subtitleHint: '(.srt only, max 2MB)',
+    subtitleUploaded: 'Subtitles uploaded',
     cancel: 'Cancel',
     submit: 'Publish & submit',
+    submitting: 'Publishing...',
     success: 'Work submitted for review',
+    canvasPicker: {
+      title: 'Select canvas',
+      updatedAt: 'Updated',
+    },
+    errors: {
+      titleRequired: 'Please enter a work title',
+      videoRequired: 'Please upload a video',
+      canvasRequired: 'Please select a public canvas',
+      submitFailed: 'Publish failed. Please try again.',
+    },
   },
   canvas: {
     untitled: 'Untitled',

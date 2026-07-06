@@ -99,7 +99,14 @@ export function TapTVPage() {
         </div>
       </div>
 
-      <PublishModal open={publishOpen} onClose={() => setPublishOpen(false)} />
+      <PublishModal
+        open={publishOpen}
+        onClose={() => setPublishOpen(false)}
+        onPublished={() => {
+          setSort('latest')
+          setPublishOpen(false)
+        }}
+      />
     </main>
   )
 }

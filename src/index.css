@@ -1450,6 +1450,77 @@ html, body, #root {
   background: rgba(0, 0, 0, 0.25);
   cursor: pointer;
 }
+.publish-canvas-selected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+}
+.publish-canvas-selected-thumb {
+  width: 72px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+/* ── Canvas picker modal ── */
+.canvas-picker-tabs .page-tab {
+  padding-bottom: 10px;
+}
+.canvas-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  max-height: min(52vh, 480px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.canvas-picker-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #131316;
+  text-align: left;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.canvas-picker-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+.canvas-picker-card--selected {
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+.canvas-picker-card-footer {
+  padding: 8px 10px 10px;
+}
+.canvas-picker-card-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+.canvas-picker-card-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+}
+.canvas-picker-empty {
+  display: flex;
+  min-height: 200px;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.35);
+}
 
 /* ── Canvas page ── */
 .canvas-topbar-btn {

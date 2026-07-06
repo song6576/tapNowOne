@@ -9,9 +9,10 @@ interface ModalProps {
   children: ReactNode
   footer?: ReactNode
   wide?: boolean
+  stacked?: boolean
 }
 
-export function Modal({ open, onClose, title, subtitle, children, footer, wide }: ModalProps) {
+export function Modal({ open, onClose, title, subtitle, children, footer, wide, stacked }: ModalProps) {
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -28,7 +29,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
   if (!open) return null
 
   return (
-    <div className="modal-root fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className={`modal-root fixed inset-0 flex items-center justify-center p-4 ${stacked ? 'z-[60]' : 'z-50'}`}>
       <button type="button" className="modal-backdrop absolute inset-0 bg-black/70" onClick={onClose} aria-label="Close" />
       <div
         role="dialog"
