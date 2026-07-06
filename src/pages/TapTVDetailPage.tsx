@@ -1,6 +1,6 @@
-/** TapTV 详情：视频播放 + 互动 + 查看创作过程 */
+/** TapTV 详情：紧凑视频 + 首屏作者信息 + 悬浮返回 */
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import type { TapTVItem } from '../mock/data'
 import {
   followTapTVUser,
@@ -83,6 +83,14 @@ export function TapTVDetailPage() {
     }
   }
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/taptv')
+    }
+  }
+
   if (!item) {
     return (
       <div className="flex flex-1 items-center justify-center text-white/40">
@@ -93,23 +101,34 @@ export function TapTVDetailPage() {
 
   return (
     <main className="taptv-detail-page flex-1 overflow-y-auto">
-      <div className="home-section-pad py-6 md:py-8">
-        <div className="home-wide-stack taptv-detail-shell">
-          <div className="taptv-detail-player overflow-hidden rounded-2xl bg-black">
-            <video
-              className="aspect-video w-full bg-black object-contain"
-              controls
-              playsInline
-              preload="metadata"
-              src={item.videoUrl}
-            >
-              <track kind="captions" />
-            </video>
-          </div>
+      <div className="taptv-detail-layout">
+        <div className="taptv-detail-player group">
+          <button
+            type="button"
+            className="taptv-detail-back-btn ui-clickable"
+            onClick={handleBack}
+            aria-label={d.back}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {d.back}
+          </button>
+          <video
+            className="taptv-detail-video"
+            controls
+            playsInline
+            preload="metadata"
+            src={item.videoUrl}
+          >
+            <track kind="captions" />
+          </video>
+        </div>
 
-          <h1 className="taptv-detail-title mt-5 font-semibold leading-snug text-white">{item.title}</h1>
+        <div className="taptv-detail-info home-section-pad">
+          <h1 className="taptv-detail-title font-semibold leading-snug text-white">{item.title}</h1>
 
-          <div className="taptv-detail-meta mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="taptv-detail-meta mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex min-w-0 items-center gap-3">
               <span className="taptv-detail-avatar">{item.authorAvatar}</span>
               <div className="min-w-0">
@@ -167,14 +186,10 @@ export function TapTVDetailPage() {
           </div>
 
           {item.description && (
-            <div className="mt-5 whitespace-pre-line text-sm leading-relaxed text-white/45">
+            <div className="taptv-detail-desc mt-5 whitespace-pre-line text-sm leading-relaxed text-white/45">
               {item.description}
             </div>
           )}
-
-          <Link to="/taptv" className="mt-8 inline-block text-sm text-white/35 transition hover:text-white/60">
-            {d.browseAll}
-          </Link>
         </div>
       </div>
     </main>
