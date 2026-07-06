@@ -1,5 +1,5 @@
 /** 账户管理弹窗：左侧导航 + 各子页面视图 */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Portal } from '../ui/Portal'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
@@ -18,7 +18,7 @@ import {
 } from './AccountViews'
 import { useAuthStore } from '../../store/authStore'
 import { useProfileStore, type AccountNavId } from '../../store/profileStore'
-import { useTeamStore } from '../../store/teamStore'
+import { useTeamStore, PERSONAL_TEAM_ID } from '../../store/teamStore'
 import { useI18n } from '../../store/langStore'
 
 type NavItem = { id: AccountNavId; labelKey: AccountNavId | 'logout'; info?: boolean }
@@ -77,6 +77,8 @@ export function AccountSettingsModal() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const tapiesBalance = useTeamStore((s) => s.tapiesBalance)
+  const teams = useTeamStore((s) => s.teams)
+  const activeTeamId = useTeamStore((s) => s.activeTeamId)
   const getActiveTeam = useTeamStore((s) => s.getActiveTeam)
   const initTeam = useTeamStore((s) => s.init)
 
@@ -87,7 +89,7 @@ export function AccountSettingsModal() {
 
   useEffect(() => { initProfile() }, [initProfile])
   useEffect(() => {
-    if (user?.name) initTeam(user.name)
+    if (user?.name) void initTeam(user.name)
   }, [user?.name, initTeam])
 
   useEffect(() => {
@@ -105,9 +107,15 @@ export function AccountSettingsModal() {
     }
   }, [open, closeAccountModal])
 
-  if (!open || !user) return null
-
   const activeTeam = getActiveTeam()
+  const settingsTeam = useMemo(() => {
+    if (activeTeamId !== PERSONAL_TEAM_ID) {
+      return teams.find((t) => t.id === activeTeamId)
+    }
+    return teams.find((t) => !t.isPersonal)
+  }, [teams, activeTeamId])
+
+  if (!open || !user) return null
 
   const renderContent = () => {
     switch (nav) {
@@ -128,7 +136,7 @@ export function AccountSettingsModal() {
       case 'usage':
         return <UsageView team={activeTeam} />
       case 'team':
-        return <TeamSettingsView user={user} team={activeTeam} />
+        return <TeamSettingsView user={user} team={settingsTeam} />
       case 'agentTutorials':
         return <AgentTutorialsView />
       default:

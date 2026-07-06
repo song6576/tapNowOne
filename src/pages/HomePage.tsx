@@ -1,13 +1,13 @@
-/** 首页：Hero 输入框 + 最近项目 + 精选轮播 + 探索 TapTV（mock 并行加载） */
+/** 首页：Hero 输入框 + 最近项目 + 精选轮播 + 探索 TapTV */
 import { useEffect, useState } from 'react'
 import { HeroPrompt } from '../components/home/HeroPrompt'
 import { ProjectRow } from '../components/home/ProjectRow'
 import { FeaturedCarousel } from '../components/home/FeaturedCarousel'
 import { ProjectRowSkeleton } from '../components/home/ProjectRowSkeleton'
 import { FeaturedCarouselSkeleton } from '../components/home/FeaturedCarouselSkeleton'
-import { mockGetFeatured, mockGetTapTV } from '../mock/api'
 import type { FeaturedItem, TapTVItem } from '../mock/data'
 import { TapTVExploreSection } from '../components/home/TapTVExploreSection'
+import { getFeatured, getTapTV } from '../services/api'
 import { useWorkspaceStore } from '../store/workspaceStore'
 
 export function HomePage() {
@@ -21,7 +21,7 @@ export function HomePage() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([mockGetFeatured(), mockGetTapTV()])
+    Promise.all([getFeatured(), getTapTV({ sort: 'featured', limit: 8 })])
       .then(([f, tv]) => {
         if (!cancelled) {
           setFeatured(f)

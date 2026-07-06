@@ -1,6 +1,8 @@
 /** 账户管理各子页面视图（订阅/充值/账单等） */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { uploadAvatar, updateUserProfile } from '../../api/client'
+import { listTeamMembers, removeTeamMember, uploadAvatar, updateUserProfile, type TeamMemberRow } from '../../api/client'
+import { TeamInviteModal } from '../team/TeamInviteModal'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { useAuthStore } from '../../store/authStore'
 import type { User } from '../../utils/auth'
 import { profileFieldsFromUser, type UserProfile } from '../../store/profileStore'
@@ -522,10 +524,36 @@ export function TeamSettingsView({ user, team }: { user: User; team?: Team }) {
   const v = t.accountViews.teamSettings
   const showToast = useToastStore((s) => s.showToast)
   const [query, setQuery] = useState('')
-  const teamInitial = team?.initial ?? user.name.trim()[0]?.toUpperCase() ?? 'T'
-  const teamName = team?.name ?? `${user.name}的团队`
-  const teamId = team?.teamId ?? '—'
-  const userInitial = user.name.trim()[0] ?? 'U'
+  const [members, setMembers] = useState<TeamMemberRow[]>([])
+  const [loading, setLoading] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [removeTarget, setRemoveTarget] = useState<TeamMemberRow | null>(null)
+  const [removing, setRemoving] = useState(false)
+
+  const resolvedTeam = team?.isPersonal ? undefined : team
+  const teamInitial = resolvedTeam?.initial ?? user.name.trim()[0]?.toUpperCase() ?? 'T'
+  const teamName = resolvedTeam?.name ?? `${user.name}的团队`
+  const teamId = resolvedTeam?.teamId ?? '—'
+  const teamUuid = resolvedTeam?.id
+  const canInvite = Boolean(resolvedTeam?.isOwner)
+
+  const refreshMembers = () => {
+    if (!teamUuid) return
+    setLoading(true)
+    void listTeamMembers(teamUuid)
+      .then((res) => setMembers(res.members))
+      .catch((err: unknown) => {
+        showToast({
+          type: 'info',
+          message: err instanceof Error ? err.message : v.loadFailed,
+        })
+      })
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    refreshMembers()
+  }, [teamUuid, showToast, v.loadFailed])
 
   const copyTeamId = async () => {
     try {
@@ -536,10 +564,56 @@ export function TeamSettingsView({ user, team }: { user: User; team?: Team }) {
     }
   }
 
-  const showMember = !query.trim() || user.name.toLowerCase().includes(query.trim().toLowerCase()) || user.email.toLowerCase().includes(query.trim().toLowerCase())
+  const q = query.trim().toLowerCase()
+  const filteredMembers = useMemo(() => {
+    if (!q) return members
+    return members.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
+    )
+  }, [members, q])
+
+  const handleRemoveMember = () => {
+    if (!teamUuid || !removeTarget) return
+    setRemoving(true)
+    void removeTeamMember(teamUuid, removeTarget.user_id)
+      .then(() => {
+        setMembers((prev) => prev.filter((m) => m.user_id !== removeTarget.user_id))
+        setRemoveTarget(null)
+        showToast({ type: 'success', message: v.removeSuccess })
+      })
+      .catch((err: unknown) => {
+        showToast({
+          type: 'info',
+          message: err instanceof Error ? err.message : v.removeMember,
+        })
+      })
+      .finally(() => setRemoving(false))
+  }
+
+  if (!resolvedTeam) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center text-sm text-white/35">
+        {v.noTeam}
+      </div>
+    )
+  }
 
   return (
     <div className="team-settings-view">
+      {teamUuid && (
+        <TeamInviteModal open={inviteOpen} teamId={teamUuid} onClose={() => setInviteOpen(false)} />
+      )}
+      <ConfirmDialog
+        open={Boolean(removeTarget)}
+        title={v.removeConfirmTitle}
+        message={v.removeConfirmMessage.replace('{name}', removeTarget?.name ?? '')}
+        confirmLabel={v.removeMember}
+        cancelLabel={t.account.logoutConfirm.cancel}
+        danger
+        onCancel={() => !removing && setRemoveTarget(null)}
+        onConfirm={handleRemoveMember}
+      />
+
       <div className="team-settings-header">
         <div className="relative shrink-0">
           <span className="team-settings-avatar">{teamInitial}</span>
@@ -567,7 +641,7 @@ export function TeamSettingsView({ user, team }: { user: User; team?: Team }) {
       <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-xl font-semibold text-white">{v.title}</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className="team-settings-icon-btn ui-clickable" aria-label="Refresh">
+          <button type="button" onClick={refreshMembers} className="team-settings-icon-btn ui-clickable" aria-label="Refresh">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M23 4v6h-6M1 20v-6h6" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" strokeLinecap="round" strokeLinejoin="round" />
@@ -586,10 +660,12 @@ export function TeamSettingsView({ user, team }: { user: User; team?: Team }) {
               className="team-settings-search-input"
             />
           </div>
-          <button type="button" className="team-settings-invite ui-clickable">
-            <span className="text-base leading-none">+</span>
-            {v.inviteMember}
-          </button>
+          {canInvite && (
+            <button type="button" onClick={() => setInviteOpen(true)} className="team-settings-invite ui-clickable">
+              <span className="text-base leading-none">+</span>
+              {v.inviteMember}
+            </button>
+          )}
         </div>
       </div>
 
@@ -605,39 +681,68 @@ export function TeamSettingsView({ user, team }: { user: User; team?: Team }) {
           <span>{v.colRole}</span>
         </div>
 
-        {showMember ? (
-          <div className="team-settings-member-row">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="relative shrink-0">
-                <span className="team-member-avatar">{userInitial}</span>
-                <span className="team-member-crown">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M2 18l3-10 4 4 3-8 3 8 4-4 3 10H2z" />
-                  </svg>
-                </span>
+        {loading ? (
+          <div className="flex min-h-[120px] items-center justify-center text-sm text-white/35">…</div>
+        ) : filteredMembers.length > 0 ? (
+          filteredMembers.map((m) => {
+            const initial = m.name.trim()[0]?.toUpperCase() ?? 'U'
+            const unlimited = m.quota_limit === null
+            const usagePct = unlimited
+              ? 0
+              : m.quota_limit
+                ? Math.min(100, (m.quota_used / m.quota_limit) * 100)
+                : 0
+            return (
+              <div key={m.user_id} className="team-settings-member-row">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative shrink-0">
+                    <span className="team-member-avatar">{initial}</span>
+                    {m.role === 'owner' && (
+                      <span className="team-member-crown">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M2 18l3-10 4 4 3-8 3 8 4-4 3 10H2z" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">
+                      {m.name} {m.is_self && <span className="text-white/45">{v.you}</span>}
+                    </p>
+                    <p className="truncate text-xs text-white/35">{m.email}</p>
+                  </div>
+                </div>
+                <div className="team-member-usage">
+                  <div className="flex items-center justify-between text-xs text-white/40">
+                    <span>{unlimited ? v.unlimitedQuota : `${m.quota_used} / ${m.quota_limit}`}</span>
+                    <span>{unlimited ? '∞' : ''}</span>
+                  </div>
+                  <div className="team-member-usage-bar">
+                    <div className="team-member-usage-fill" style={{ width: unlimited ? '0%' : `${usagePct}%` }} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select className="team-member-role min-w-0 flex-1" defaultValue={m.role} disabled>
+                    <option value="owner">{v.owner}</option>
+                    <option value="member">{v.member}</option>
+                  </select>
+                  {canInvite && m.role !== 'owner' && (
+                    <button
+                      type="button"
+                      onClick={() => setRemoveTarget(m)}
+                      className="team-member-remove ui-clickable"
+                      aria-label={v.removeMember}
+                      title={v.removeMember}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-white">
-                  {user.name} <span className="text-white/45">{v.you}</span>
-                </p>
-                <p className="truncate text-xs text-white/35">{user.email}</p>
-              </div>
-            </div>
-            <div className="team-member-usage">
-              <div className="flex items-center justify-between text-xs text-white/40">
-                <span>{v.unlimitedQuota}</span>
-                <span>∞</span>
-              </div>
-              <div className="team-member-usage-bar">
-                <div className="team-member-usage-fill" />
-              </div>
-            </div>
-            <div>
-              <select className="team-member-role" defaultValue="owner" disabled>
-                <option value="owner">{v.owner}</option>
-              </select>
-            </div>
-          </div>
+            )
+          })
         ) : (
           <div className="flex min-h-[120px] items-center justify-center text-sm text-white/35">{v.searchPlaceholder}</div>
         )}

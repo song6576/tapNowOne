@@ -107,6 +107,7 @@ export type TapTVItem = {
   title: string
   author: string
   authorAvatar: string
+  authorUserId?: number | null
   cover: string
   videoUrl: string
   description?: string
@@ -120,6 +121,9 @@ export type TapTVItem = {
   category: TapTVCategory
   publishedAt: string
   featured?: boolean
+  likedByMe?: boolean
+  favoritedByMe?: boolean
+  followingAuthor?: boolean
 }
 
 export type TapTVCategory =

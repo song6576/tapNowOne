@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { HoverDropdown } from '../ui/HoverDropdown'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { InputDialog } from '../ui/InputDialog'
+import { WorkspaceFolderPicker } from '../workspace/WorkspaceFolderPicker'
+import { WorkspaceTeamPicker } from '../workspace/WorkspaceTeamPicker'
 import { useI18n } from '../../store/langStore'
 import { useToastStore } from '../../store/toastStore'
 import { useWorkspaceStore, type WorkspaceProject } from '../../store/workspaceStore'
@@ -43,10 +45,12 @@ function MenuDivider() {
 export const ProjectCardMenu = memo(function ProjectCardMenu({
   project,
   onOpen,
+  onEnterSelectMode,
   variant = 'overlay',
 }: {
   project: WorkspaceProject
   onOpen?: () => void
+  onEnterSelectMode?: (projectId: string) => void
   /** overlay=卡片悬浮角标；inline=列表行内按钮 */
   variant?: 'overlay' | 'inline'
 }) {
@@ -60,6 +64,8 @@ export const ProjectCardMenu = memo(function ProjectCardMenu({
   const [open, setOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [folderPickerOpen, setFolderPickerOpen] = useState(false)
+  const [teamPickerOpen, setTeamPickerOpen] = useState(false)
 
   const closeMenu = () => setOpen(false)
 
@@ -97,8 +103,46 @@ export const ProjectCardMenu = memo(function ProjectCardMenu({
     }
   }
 
-  const handleComingSoon = () => {
+  const handleMoveToFolder = () => {
     closeMenu()
+    setFolderPickerOpen(true)
+  }
+
+  const handleMoveToFolderConfirm = (folderId: string | null) => {
+    setFolderPickerOpen(false)
+    void updateProject(project.id, { folderId }).then(() => {
+      showToast({ type: 'success', message: m.moveToFolderSuccess })
+    }).catch((err: unknown) => {
+      showToast({
+        type: 'info',
+        message: err instanceof Error ? err.message : m.comingSoon,
+      })
+    })
+  }
+
+  const handleMoveToTeam = () => {
+    closeMenu()
+    setTeamPickerOpen(true)
+  }
+
+  const handleMoveToTeamConfirm = (teamId: string) => {
+    setTeamPickerOpen(false)
+    void updateProject(project.id, { teamId, folderId: null }).then(() => {
+      showToast({ type: 'success', message: m.moveToTeamSuccess })
+    }).catch((err: unknown) => {
+      showToast({
+        type: 'info',
+        message: err instanceof Error ? err.message : m.comingSoon,
+      })
+    })
+  }
+
+  const handleSelect = () => {
+    closeMenu()
+    if (onEnterSelectMode) {
+      onEnterSelectMode(project.id)
+      return
+    }
     showToast({ type: 'info', message: m.comingSoon })
   }
 
@@ -120,11 +164,11 @@ export const ProjectCardMenu = memo(function ProjectCardMenu({
     <div className="project-card-menu-panel ui-glass-panel">
       <MenuItem label={m.open} onClick={handleOpen} />
       <MenuItem label={m.rename} onClick={handleRename} />
-      <MenuItem label={m.select} onClick={handleComingSoon} />
+      <MenuItem label={m.select} onClick={handleSelect} />
       <MenuDivider />
-      <MenuItem label={m.moveTo} onClick={handleComingSoon} />
+      <MenuItem label={m.moveTo} onClick={handleMoveToFolder} />
       <MenuItem label={m.shareLink} onClick={handleShare} />
-      <MenuItem label={m.moveToTeam} onClick={handleComingSoon} />
+      <MenuItem label={m.moveToTeam} onClick={handleMoveToTeam} />
       <MenuDivider />
       <MenuItem label={m.delete} onClick={handleDelete} danger />
     </div>
@@ -179,6 +223,18 @@ export const ProjectCardMenu = memo(function ProjectCardMenu({
         danger
         onCancel={() => setDeleteOpen(false)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <WorkspaceFolderPicker
+        open={folderPickerOpen}
+        onClose={() => setFolderPickerOpen(false)}
+        onPick={handleMoveToFolderConfirm}
+      />
+
+      <WorkspaceTeamPicker
+        open={teamPickerOpen}
+        onClose={() => setTeamPickerOpen(false)}
+        onPick={handleMoveToTeamConfirm}
       />
     </>
   )

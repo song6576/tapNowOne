@@ -1,26 +1,57 @@
 /** TapTV 列表：排序 Tab、分类 Pills、搜索、发布弹窗 */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TabBar } from '../components/ui/TabBar'
 import { SearchInput } from '../components/ui/SearchInput'
 import { FilterPills } from '../components/ui/FilterPills'
 import { TapTVCard } from '../components/taptv/TapTVCard'
 import { PublishModal } from '../components/taptv/PublishModal'
-import { mockGetTapTV } from '../mock/api'
 import { TAPTV_CATEGORY_IDS, type TapTVCategory, type TapTVItem, type TapTVSort } from '../mock/data'
+import { getTapTV } from '../services/api'
 import { useI18n } from '../store/langStore'
+import { useToastStore } from '../store/toastStore'
+import { getToken } from '../utils/auth'
 
 export function TapTVPage() {
   const navigate = useNavigate()
   const { t } = useI18n()
   const tv = t.taptv
+  const showToast = useToastStore((s) => s.showToast)
   const [items, setItems] = useState<TapTVItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<TapTVSort>('featured')
   const [category, setCategory] = useState<TapTVCategory>('all')
   const [search, setSearch] = useState('')
   const [publishOpen, setPublishOpen] = useState(false)
 
-  useEffect(() => { mockGetTapTV().then(setItems) }, [])
+  useEffect(() => {
+    if (sort === 'following' && !getToken()) {
+      setItems([])
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    getTapTV({ sort, category, search })
+      .then((list) => {
+        if (!cancelled) setItems(list)
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setItems([])
+          if (sort === 'following') {
+            showToast({
+              type: 'info',
+              message: err instanceof Error ? err.message : tv.sortFollowing,
+            })
+          }
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [sort, category, search, showToast, tv.sortFollowing])
 
   const sortTabs = [
     { id: 'featured' as const, label: tv.sortFeatured },
@@ -33,35 +64,6 @@ export function TapTVPage() {
     id,
     label: tv.categories[id],
   }))
-
-  /** 分类 → 搜索 → 排序 Tab 的链式筛选 */
-  const filtered = useMemo(() => {
-    let list = [...items]
-    if (category !== 'all') {
-      list = list.filter((item) => item.category === category)
-    }
-    const q = search.trim().toLowerCase()
-    if (q) {
-      list = list.filter(
-        (item) => item.title.toLowerCase().includes(q) || item.author.toLowerCase().includes(q),
-      )
-    }
-    switch (sort) {
-      case 'featured':
-        list.sort((a, b) => Number(b.featured) - Number(a.featured))
-        break
-      case 'hot':
-        list.sort((a, b) => b.likes - a.likes)
-        break
-      case 'latest':
-        list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-        break
-      case 'following':
-        list = list.slice(0, 4)
-        break
-    }
-    return list
-  }, [items, sort, category, search])
 
   return (
     <main className="home-page flex-1 overflow-y-auto">
@@ -79,11 +81,21 @@ export function TapTVPage() {
 
         <FilterPills<TapTVCategory> options={categoryOptions} active={category} onChange={setCategory} className="mb-6" />
 
-        <div className="taptv-explore-grid">
-          {filtered.map((item) => (
-            <TapTVCard key={item.id} item={item} onClick={() => navigate(`/taptv/${item.id}`)} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex min-h-[200px] items-center justify-center text-sm text-white/35">
+            {t.taptv.detail.loading}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex min-h-[200px] items-center justify-center text-sm text-white/35">
+            {t.workspace.empty}
+          </div>
+        ) : (
+          <div className="taptv-explore-grid">
+            {items.map((item) => (
+              <TapTVCard key={item.id} item={item} onClick={() => navigate(`/taptv/${item.id}`)} />
+            ))}
+          </div>
+        )}
         </div>
       </div>
 

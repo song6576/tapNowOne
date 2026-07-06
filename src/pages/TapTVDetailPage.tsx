@@ -1,20 +1,87 @@
 /** TapTV 详情：视频播放 + 互动 + 查看创作过程 */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { mockGetTapTVItem } from '../mock/api'
 import type { TapTVItem } from '../mock/data'
+import {
+  followTapTVUser,
+  getTapTVItem,
+  recordTapTVShare,
+  toggleTapTVFavorite,
+  toggleTapTVLike,
+} from '../services/api'
 import { useI18n } from '../store/langStore'
+import { useToastStore } from '../store/toastStore'
+import { getToken } from '../utils/auth'
 
 export function TapTVDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { t } = useI18n()
   const d = t.taptv.detail
+  const showToast = useToastStore((s) => s.showToast)
   const [item, setItem] = useState<TapTVItem | null>(null)
+  const [following, setFollowing] = useState(false)
+
+  const reload = useCallback(async () => {
+    if (!id) return
+    const row = await getTapTVItem(id)
+    setItem(row ?? null)
+    setFollowing(!!row?.followingAuthor)
+  }, [id])
 
   useEffect(() => {
-    if (id) mockGetTapTVItem(id).then((r) => setItem(r ?? null))
-  }, [id])
+    void reload()
+  }, [reload])
+
+  const requireLogin = () => {
+    if (getToken()) return true
+    showToast({ type: 'info', message: t.login.title })
+    navigate('/login')
+    return false
+  }
+
+  const handleLike = async () => {
+    if (!item || !requireLogin()) return
+    try {
+      const res = await toggleTapTVLike(item.id)
+      setItem((prev) => prev ? { ...prev, likes: res.likes, likedByMe: res.liked } : prev)
+    } catch (err: unknown) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : t.workspace.projectMenu.comingSoon })
+    }
+  }
+
+  const handleFavorite = async () => {
+    if (!item || !requireLogin()) return
+    try {
+      const res = await toggleTapTVFavorite(item.id)
+      setItem((prev) => prev ? { ...prev, favorites: res.favorites, favoritedByMe: res.favorited } : prev)
+    } catch (err: unknown) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : t.workspace.projectMenu.comingSoon })
+    }
+  }
+
+  const handleShare = async () => {
+    if (!item) return
+    const url = `${window.location.origin}/taptv/${item.id}`
+    try {
+      await navigator.clipboard.writeText(url)
+      const res = await recordTapTVShare(item.id)
+      setItem((prev) => prev ? { ...prev, shares: res.shares } : prev)
+      showToast({ type: 'success', message: t.workspace.projectMenu.shareCopied })
+    } catch {
+      showToast({ type: 'info', message: url })
+    }
+  }
+
+  const handleFollow = async () => {
+    if (!item?.authorUserId || !requireLogin()) return
+    try {
+      const res = await followTapTVUser(item.authorUserId)
+      setFollowing(res.following)
+    } catch (err: unknown) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : t.workspace.projectMenu.comingSoon })
+    }
+  }
 
   if (!item) {
     return (
@@ -48,25 +115,39 @@ export function TapTVDetailPage() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-white">{item.author}</p>
               </div>
-              <button type="button" className="taptv-follow-btn ui-clickable shrink-0">
-                + {d.follow}
-              </button>
+              {item.authorUserId != null && (
+                <button
+                  type="button"
+                  className={`taptv-follow-btn ui-clickable shrink-0 ${following ? 'taptv-follow-btn--active' : ''}`}
+                  onClick={() => void handleFollow()}
+                >
+                  {following ? d.follow : `+ ${d.follow}`}
+                </button>
+              )}
             </div>
 
             <div className="taptv-detail-actions flex flex-wrap items-center gap-2">
-              <button type="button" className="taptv-stat-btn ui-clickable">
+              <button
+                type="button"
+                className={`taptv-stat-btn ui-clickable ${item.likedByMe ? 'taptv-stat-btn--active' : ''}`}
+                onClick={() => void handleLike()}
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 {item.likes}
               </button>
-              <button type="button" className="taptv-stat-btn ui-clickable">
+              <button
+                type="button"
+                className={`taptv-stat-btn ui-clickable ${item.favoritedByMe ? 'taptv-stat-btn--active' : ''}`}
+                onClick={() => void handleFavorite()}
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeLinejoin="round" />
                 </svg>
                 {item.favorites}
               </button>
-              <button type="button" className="taptv-stat-btn ui-clickable">
+              <button type="button" className="taptv-stat-btn ui-clickable" onClick={() => void handleShare()}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

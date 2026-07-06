@@ -68,6 +68,7 @@ export type Messages = {
     showAll: string
     newProject: string
     newFolder: string
+    folderNamePlaceholder: string
     empty: string
     colPreview: string
     colName: string
@@ -90,11 +91,28 @@ export type Messages = {
       shareCopied: string
       renameSuccess: string
       deleteSuccess: string
+      moveToTeamSuccess: string
+      moveToFolderSuccess: string
+      pickTeamTitle: string
+      pickTeamEmpty: string
       deleteTitle: string
       deleteMessage: string
       renamePlaceholder: string
       confirm: string
       cancel: string
+    }
+    folderMenu: {
+      open: string
+      rename: string
+      delete: string
+      renameSuccess: string
+      deleteSuccess: string
+      deleteTitle: string
+      deleteMessage: string
+      renamePlaceholder: string
+      confirm: string
+      cancel: string
+      error: string
     }
     filter: {
       filterSection: string
@@ -107,6 +125,19 @@ export type Messages = {
       sortCreated: string
       newestFirst: string
       oldestFirst: string
+    }
+    selection: {
+      selectedCount: string
+      addToFolder: string
+      collaborate: string
+      deleteSelected: string
+      deleteTitle: string
+      deleteMessage: string
+      moveSuccess: string
+      deleteSuccess: string
+      pickFolder: string
+      rootFolder: string
+      cancel: string
     }
   }
   taptv: {
@@ -412,6 +443,40 @@ export type Messages = {
       unlimitedQuota: string
       you: string
       owner: string
+      member: string
+      noTeam: string
+      loadFailed: string
+      removeMember: string
+      removeConfirmTitle: string
+      removeConfirmMessage: string
+      removeSuccess: string
+      invite: {
+        title: string
+        desc: string
+        expiresIn: string
+        unlimitedNote: string
+        editSettings: string
+        copyLink: string
+        copiedLink: string
+        regenerate: string
+        settingsTitle: string
+        expiresDays: string
+        unlimitedQuota: string
+        saveSettings: string
+        savedSettings: string
+      }
+      join: {
+        title: string
+        desc: string
+        memberCount: string
+        unlimitedNote: string
+        accept: string
+        accepting: string
+        success: string
+        invalid: string
+        alreadyMember: string
+        goProjects: string
+      }
     }
     agentTutorials: {
       modelsTitle: string
@@ -493,6 +558,7 @@ const zh: Messages = {
     showAll: '显示全部',
     newProject: '新建项目',
     newFolder: '新建文件夹',
+    folderNamePlaceholder: '输入文件夹名称',
     empty: '暂无匹配项目',
     colPreview: '预览',
     colName: '名称',
@@ -515,11 +581,28 @@ const zh: Messages = {
       shareCopied: '项目链接已复制',
       renameSuccess: '重命名成功',
       deleteSuccess: '项目已删除',
+      moveToTeamSuccess: '已移动至团队',
+      moveToFolderSuccess: '已移动到文件夹',
+      pickTeamTitle: '选择目标团队',
+      pickTeamEmpty: '请先创建团队',
       deleteTitle: '删除项目',
       deleteMessage: '确定删除「{name}」？此操作无法撤销。',
       renamePlaceholder: '输入项目名称',
       confirm: '确认',
       cancel: '取消',
+    },
+    folderMenu: {
+      open: '打开',
+      rename: '重命名',
+      delete: '删除',
+      renameSuccess: '文件夹已重命名',
+      deleteSuccess: '文件夹已删除',
+      deleteTitle: '删除文件夹',
+      deleteMessage: '确定删除文件夹「{name}」？其中的项目将移至上级目录。',
+      renamePlaceholder: '输入文件夹名称',
+      confirm: '确认',
+      cancel: '取消',
+      error: '操作失败，请稍后重试',
     },
     filter: {
       filterSection: '筛选',
@@ -532,6 +615,19 @@ const zh: Messages = {
       sortCreated: '按创建日期',
       newestFirst: '最新优先',
       oldestFirst: '最早优先',
+    },
+    selection: {
+      selectedCount: '已选择 {count} 个画布',
+      addToFolder: '添加到文件夹',
+      collaborate: '协作',
+      deleteSelected: '删除',
+      deleteTitle: '删除所选项目',
+      deleteMessage: '确定删除所选的 {count} 个项目？此操作无法撤销。',
+      moveSuccess: '已移动到文件夹',
+      deleteSuccess: '所选项目已删除',
+      pickFolder: '选择目标文件夹',
+      rootFolder: '根目录',
+      cancel: '取消',
     },
   },
   taptv: {
@@ -846,6 +942,40 @@ const zh: Messages = {
       unlimitedQuota: '无额度限制',
       you: '（你）',
       owner: '所有者',
+      member: '成员',
+      noTeam: '请先创建团队后再管理成员',
+      loadFailed: '加载成员失败',
+      removeMember: '移除',
+      removeConfirmTitle: '移除成员',
+      removeConfirmMessage: '确定将 {name} 移出团队？移除后将无法访问团队资源。',
+      removeSuccess: '已移除成员',
+      invite: {
+        title: '邀请成员',
+        desc: '分享此链接邀请朋友加入您的团队。他们加入后将立即获得团队资源访问权限。',
+        expiresIn: '此链接设置为 {days} 天内有效',
+        unlimitedNote: '通过此链接加入的成员拥有无限 Tapies 使用量。',
+        editSettings: '编辑链接设置',
+        copyLink: '复制链接',
+        copiedLink: '已复制邀请链接',
+        regenerate: '重新生成链接',
+        settingsTitle: '链接设置',
+        expiresDays: '有效天数',
+        unlimitedQuota: '加入成员无限 Tapies',
+        saveSettings: '保存设置',
+        savedSettings: '链接设置已保存',
+      },
+      join: {
+        title: '加入团队',
+        desc: '你收到了加入以下团队的邀请',
+        memberCount: '{count} 位成员',
+        unlimitedNote: '加入后将拥有无限 Tapies 使用量',
+        accept: '加入团队',
+        accepting: '加入中…',
+        success: '已成功加入团队',
+        invalid: '邀请链接无效或已过期',
+        alreadyMember: '你已是该团队成员',
+        goProjects: '前往工作空间',
+      },
     },
     agentTutorials: {
       modelsTitle: '不同模型适合的任务',
@@ -940,6 +1070,7 @@ const en: Messages = {
     showAll: 'Show all',
     newProject: 'New project',
     newFolder: 'New folder',
+    folderNamePlaceholder: 'Folder name',
     empty: 'No matching items',
     colPreview: 'Preview',
     colName: 'Name',
@@ -962,11 +1093,28 @@ const en: Messages = {
       shareCopied: 'Project link copied',
       renameSuccess: 'Renamed successfully',
       deleteSuccess: 'Project deleted',
+      moveToTeamSuccess: 'Moved to team',
+      moveToFolderSuccess: 'Moved to folder',
+      pickTeamTitle: 'Choose a team',
+      pickTeamEmpty: 'Create a team first',
       deleteTitle: 'Delete project',
       deleteMessage: 'Delete "{name}"? This cannot be undone.',
       renamePlaceholder: 'Project name',
       confirm: 'Confirm',
       cancel: 'Cancel',
+    },
+    folderMenu: {
+      open: 'Open',
+      rename: 'Rename',
+      delete: 'Delete',
+      renameSuccess: 'Folder renamed',
+      deleteSuccess: 'Folder deleted',
+      deleteTitle: 'Delete folder',
+      deleteMessage: 'Delete folder "{name}"? Projects inside will move to the parent folder.',
+      renamePlaceholder: 'Folder name',
+      confirm: 'Confirm',
+      cancel: 'Cancel',
+      error: 'Action failed. Please try again.',
     },
     filter: {
       filterSection: 'Filter',
@@ -979,6 +1127,19 @@ const en: Messages = {
       sortCreated: 'Creation date',
       newestFirst: 'Newest first',
       oldestFirst: 'Oldest first',
+    },
+    selection: {
+      selectedCount: '{count} canvas selected',
+      addToFolder: 'Add to folder',
+      collaborate: 'Collaborate',
+      deleteSelected: 'Delete',
+      deleteTitle: 'Delete selected projects',
+      deleteMessage: 'Delete {count} selected projects? This cannot be undone.',
+      moveSuccess: 'Moved to folder',
+      deleteSuccess: 'Selected projects deleted',
+      pickFolder: 'Choose a folder',
+      rootFolder: 'Root',
+      cancel: 'Cancel',
     },
   },
   taptv: {
@@ -1293,6 +1454,40 @@ const en: Messages = {
       unlimitedQuota: 'Unlimited',
       you: '(you)',
       owner: 'Owner',
+      member: 'Member',
+      noTeam: 'Create a team first to manage members',
+      loadFailed: 'Failed to load members',
+      removeMember: 'Remove',
+      removeConfirmTitle: 'Remove member',
+      removeConfirmMessage: 'Remove {name} from the team? They will lose access to team resources.',
+      removeSuccess: 'Member removed',
+      invite: {
+        title: 'Invite members',
+        desc: 'Share this link to invite friends to your team. They will get access to team resources right after joining.',
+        expiresIn: 'This link is valid for {days} days',
+        unlimitedNote: 'Members who join through this link have unlimited Tapies usage.',
+        editSettings: 'Edit link settings',
+        copyLink: 'Copy link',
+        copiedLink: 'Invite link copied',
+        regenerate: 'Regenerate link',
+        settingsTitle: 'Link settings',
+        expiresDays: 'Valid for (days)',
+        unlimitedQuota: 'Unlimited Tapies for invitees',
+        saveSettings: 'Save settings',
+        savedSettings: 'Link settings saved',
+      },
+      join: {
+        title: 'Join team',
+        desc: 'You have been invited to join',
+        memberCount: '{count} members',
+        unlimitedNote: 'Unlimited Tapies after joining',
+        accept: 'Join team',
+        accepting: 'Joining…',
+        success: 'Successfully joined the team',
+        invalid: 'Invite link is invalid or expired',
+        alreadyMember: 'You are already a member of this team',
+        goProjects: 'Go to workspace',
+      },
     },
     agentTutorials: {
       modelsTitle: 'Tasks suited to each model',

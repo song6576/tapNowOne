@@ -5,10 +5,43 @@
 import { USE_MOCK } from '../config'
 import * as mock from '../mock/api'
 import * as real from '../api/client'
+import type { TapTVCategory, TapTVSort } from '../mock/data'
 
 export const listProjects = USE_MOCK ? mock.mockListProjects : real.listProjects
-export const getTapTV = USE_MOCK ? mock.mockGetTapTV : (() => Promise.reject(new Error('TapTV API 待接入')))
-export const getTapTVItem = USE_MOCK ? mock.mockGetTapTVItem : (() => Promise.reject(new Error('TapTV API 待接入')))
+export const getFeatured = USE_MOCK ? mock.mockGetFeatured : real.listFeatured
+export const getTapTV = USE_MOCK
+  ? mock.mockGetTapTV
+  : (params?: real.TapTVListParams) => real.listTapTV(params)
+export const getTapTVItem = USE_MOCK ? mock.mockGetTapTVItem : real.getTapTVItem
+export const getTapTVWorkflow = USE_MOCK ? mock.mockGetTapTVWorkflow : real.getTapTVWorkflow
+
+export async function toggleTapTVLike(id: string) {
+  if (USE_MOCK) return { liked: true, likes: 0 }
+  return real.toggleTapTVLike(id)
+}
+
+export async function toggleTapTVFavorite(id: string) {
+  if (USE_MOCK) return { favorited: true, favorites: 0 }
+  return real.toggleTapTVFavorite(id)
+}
+
+export async function recordTapTVShare(id: string) {
+  if (USE_MOCK) return { shares: 0 }
+  return real.recordTapTVShare(id)
+}
+
+export async function followTapTVUser(userId: number) {
+  if (USE_MOCK) return { following: true }
+  return real.followTapTVUser(userId)
+}
+
+export async function cloneTapTVWork(id: string) {
+  if (USE_MOCK) throw new Error('Mock 模式下请使用本地克隆')
+  return real.cloneTapTVWork(id)
+}
+
+export type { TapTVListParams } from '../api/client'
+export type { TapTVCategory, TapTVSort }
 
 /** Agent 对话：Mock 返回占位文案，真实模式走百炼 Qwen */
 export async function agentChat(

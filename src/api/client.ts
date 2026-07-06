@@ -5,6 +5,7 @@
 import { authHeaders } from '../utils/auth'
 import type { User } from '../utils/auth'
 import type { CanvasProject } from '../types'
+import type { FeaturedItem, TapTVCategory, TapTVItem, TapTVSort } from '../mock/data'
 
 export type GeneratePayload = {
   node_type: 'image' | 'video' | 'audio'
@@ -33,6 +34,7 @@ export type ProjectMeta = {
   id: string
   name: string
   folder_id?: string | null
+  team_id?: string | null
   thumbnail?: string
   created_at: string
   updated_at: string
@@ -225,19 +227,170 @@ export async function updateUserProfile(payload: UpdateUserProfilePayload): Prom
   return res.json()
 }
 
-// ── Folders ──
+// ── Teams ──
 
-export async function listFolders(): Promise<FolderMeta[]> {
-  const res = await fetch(`${API_BASE}/folders`, { headers: { ...authHeaders() } })
+export type TeamMeta = {
+  id: string
+  name: string
+  public_id: string
+  initial: string
+  tapies_balance: number
+  role: string
+  is_owner: boolean
+}
+
+export type TeamsListResponse = {
+  active_team_id: string | null
+  personal_tapies_balance: number
+  personal_name: string | null
+  teams: TeamMeta[]
+}
+
+function teamScopeQuery(teamId?: string | null) {
+  if (!teamId) return ''
+  return `?teamId=${encodeURIComponent(teamId)}`
+}
+
+export async function listTeams(): Promise<TeamsListResponse> {
+  const res = await fetch(`${API_BASE}/teams`, { headers: { ...authHeaders() } })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
 }
 
-export async function createFolder(name?: string, parentId?: string | null): Promise<FolderMeta> {
+export async function createTeam(name: string): Promise<TeamMeta & { active_team_id: string }> {
+  const res = await fetch(`${API_BASE}/teams`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function switchActiveTeam(teamId: string | null): Promise<{ active_team_id: string | null }> {
+  const res = await fetch(`${API_BASE}/teams/active`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ teamId }),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export type TeamMemberRow = {
+  user_id: number
+  name: string
+  email: string
+  avatar_url: string | null
+  role: string
+  quota_used: number
+  quota_limit: number | null
+  is_self: boolean
+}
+
+export type TeamInviteLink = {
+  token: string
+  url: string
+  expires_at: string
+  expires_in_days: number
+  unlimited_quota: boolean
+  use_count: number
+  max_uses: number | null
+}
+
+export type TeamInvitePreview = {
+  team_name: string | null
+  member_count: number
+  expires_at: string | null
+  unlimited_quota: boolean
+  valid: boolean
+  reason: string | null
+}
+
+export async function listTeamMembers(teamId: string): Promise<{ members: TeamMemberRow[] }> {
+  const res = await fetch(`${API_BASE}/teams/${encodeURIComponent(teamId)}/members`, {
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function removeTeamMember(teamId: string, userId: number): Promise<{ removed_user_id: number }> {
+  const res = await fetch(
+    `${API_BASE}/teams/${encodeURIComponent(teamId)}/members/${userId}`,
+    { method: 'DELETE', headers: { ...authHeaders() } },
+  )
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function getTeamInviteLink(teamId: string): Promise<TeamInviteLink> {
+  const res = await fetch(`${API_BASE}/teams/${encodeURIComponent(teamId)}/invite-link`, {
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function regenerateTeamInviteLink(teamId: string): Promise<TeamInviteLink> {
+  const res = await fetch(`${API_BASE}/teams/${encodeURIComponent(teamId)}/invite-link/regenerate`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function updateTeamInviteLink(
+  teamId: string,
+  body: { expiresInDays?: number; unlimitedQuota?: boolean },
+): Promise<TeamInviteLink> {
+  const res = await fetch(`${API_BASE}/teams/${encodeURIComponent(teamId)}/invite-link`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function previewTeamInvite(token: string): Promise<TeamInvitePreview> {
+  const res = await fetch(`${API_BASE}/teams/invites/${encodeURIComponent(token)}`)
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function acceptTeamInvite(token: string): Promise<{
+  team_id: string
+  team_name: string
+  role: string
+  active_team_id: string
+}> {
+  const res = await fetch(`${API_BASE}/teams/invites/${encodeURIComponent(token)}/accept`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+// ── Folders ──
+
+export async function listFolders(teamId?: string | null): Promise<FolderMeta[]> {
+  const res = await fetch(`${API_BASE}/folders${teamScopeQuery(teamId)}`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function createFolder(
+  name?: string,
+  parentId?: string | null,
+  teamId?: string | null,
+): Promise<FolderMeta> {
   const res = await fetch(`${API_BASE}/folders`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ name, parentId: parentId ?? undefined }),
+    body: JSON.stringify({ name, parentId: parentId ?? undefined, teamId: teamId ?? undefined }),
   })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
@@ -266,8 +419,8 @@ export async function deleteFolder(id: string): Promise<void> {
 
 // ── Projects ──
 
-export async function listProjects(): Promise<ProjectMeta[]> {
-  const res = await fetch(`${API_BASE}/projects`, { headers: { ...authHeaders() } })
+export async function listProjects(teamId?: string | null): Promise<ProjectMeta[]> {
+  const res = await fetch(`${API_BASE}/projects${teamScopeQuery(teamId)}`, { headers: { ...authHeaders() } })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
 }
@@ -290,11 +443,17 @@ export async function createProject(
   name?: string,
   folderId?: string | null,
   data?: CanvasProject,
+  teamId?: string | null,
 ): Promise<ProjectMeta> {
   const res = await fetch(`${API_BASE}/projects`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ name, folderId: folderId ?? undefined, data }),
+    body: JSON.stringify({
+      name,
+      folderId: folderId ?? undefined,
+      data,
+      teamId: teamId ?? undefined,
+    }),
   })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
@@ -302,7 +461,13 @@ export async function createProject(
 
 export async function patchProject(
   id: string,
-  patch: { name?: string; data?: CanvasProject; thumbnail?: string; folderId?: string | null },
+  patch: {
+    name?: string
+    data?: CanvasProject
+    thumbnail?: string
+    folderId?: string | null
+    teamId?: string | null
+  },
 ): Promise<ProjectMeta> {
   const res = await fetch(`${API_BASE}/projects/${id}`, {
     method: 'PATCH',
@@ -418,4 +583,167 @@ export async function agentStoryboard(
   if (!res.ok) throw new Error(await parseError(res))
   const data = await res.json()
   return data.scenes
+}
+
+// ── Home / TapTV ──
+
+export type FeaturedBannerMeta = {
+  id: string
+  title: string
+  subtitle?: string
+  cover: string
+  link?: string
+}
+
+export type TapTVItemMeta = {
+  id: string
+  title: string
+  author: string
+  author_avatar: string
+  author_user_id?: number | null
+  cover: string
+  video_url: string
+  description?: string
+  producer?: string
+  forks: number
+  likes: number
+  favorites: number
+  shares: number
+  tags: string[]
+  node_count: number
+  category: string
+  published_at: string
+  featured?: boolean
+  liked_by_me?: boolean
+  favorited_by_me?: boolean
+  following_author?: boolean
+}
+
+export function mapFeaturedItem(row: FeaturedBannerMeta): FeaturedItem {
+  return {
+    id: row.id,
+    title: row.title,
+    subtitle: row.subtitle,
+    cover: row.cover,
+    link: row.link,
+  }
+}
+
+export function mapTapTVItem(row: TapTVItemMeta): TapTVItem {
+  return {
+    id: row.id,
+    title: row.title,
+    author: row.author,
+    authorAvatar: row.author_avatar,
+    authorUserId: row.author_user_id,
+    cover: row.cover,
+    videoUrl: row.video_url,
+    description: row.description,
+    producer: row.producer,
+    forks: row.forks,
+    likes: row.likes,
+    favorites: row.favorites,
+    shares: row.shares,
+    tags: row.tags,
+    nodeCount: row.node_count,
+    category: row.category as TapTVItem['category'],
+    publishedAt: row.published_at,
+    featured: row.featured,
+    likedByMe: row.liked_by_me,
+    favoritedByMe: row.favorited_by_me,
+    followingAuthor: row.following_author,
+  }
+}
+
+export type TapTVListParams = {
+  sort?: TapTVSort
+  category?: TapTVCategory
+  search?: string
+  limit?: number
+  page?: number
+}
+
+function buildTapTVQuery(params?: TapTVListParams) {
+  const q = new URLSearchParams()
+  if (params?.sort) q.set('sort', params.sort)
+  if (params?.category && params.category !== 'all') q.set('category', params.category)
+  if (params?.search?.trim()) q.set('search', params.search.trim())
+  if (params?.limit) q.set('limit', String(params.limit))
+  if (params?.page) q.set('page', String(params.page))
+  const s = q.toString()
+  return s ? `?${s}` : ''
+}
+
+export async function listFeatured(): Promise<FeaturedItem[]> {
+  const res = await fetch(`${API_BASE}/home/featured`)
+  if (!res.ok) throw new Error(await parseError(res))
+  const rows = (await res.json()) as FeaturedBannerMeta[]
+  return rows.map(mapFeaturedItem)
+}
+
+export async function listTapTV(params?: TapTVListParams): Promise<TapTVItem[]> {
+  const res = await fetch(`${API_BASE}/taptv${buildTapTVQuery(params)}`, {
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  const rows = (await res.json()) as TapTVItemMeta[]
+  return rows.map(mapTapTVItem)
+}
+
+export async function getTapTVItem(id: string): Promise<TapTVItem | undefined> {
+  const res = await fetch(`${API_BASE}/taptv/${id}`, {
+    headers: { ...authHeaders() },
+  })
+  if (res.status === 404) return undefined
+  if (!res.ok) throw new Error(await parseError(res))
+  const row = (await res.json()) as TapTVItemMeta
+  return mapTapTVItem(row)
+}
+
+export async function getTapTVWorkflow(id: string): Promise<CanvasProject> {
+  const res = await fetch(`${API_BASE}/taptv/${id}/workflow`)
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json() as Promise<CanvasProject>
+}
+
+export async function toggleTapTVLike(id: string): Promise<{ liked: boolean; likes: number }> {
+  const res = await fetch(`${API_BASE}/taptv/${id}/like`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function toggleTapTVFavorite(id: string): Promise<{ favorited: boolean; favorites: number }> {
+  const res = await fetch(`${API_BASE}/taptv/${id}/favorite`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function recordTapTVShare(id: string): Promise<{ shares: number }> {
+  const res = await fetch(`${API_BASE}/taptv/${id}/share`, { method: 'POST' })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function followTapTVUser(userId: number): Promise<{ following: boolean }> {
+  const res = await fetch(`${API_BASE}/taptv/users/${userId}/follow`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function cloneTapTVWork(id: string): Promise<ProjectMeta> {
+  const res = await fetch(`${API_BASE}/taptv/${id}/clone`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
 }

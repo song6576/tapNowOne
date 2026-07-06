@@ -20,9 +20,17 @@ export function CreateTeamModal() {
 
   const handleSubmit = () => {
     if (!canSubmit) return
-    createTeam(name.trim())
-    setName('')
-    showToast({ type: 'success', message: c.success })
+    void createTeam(name.trim())
+      .then(() => {
+        setName('')
+        showToast({ type: 'success', message: c.success })
+      })
+      .catch((err: unknown) => {
+        showToast({
+          type: 'info',
+          message: err instanceof Error ? err.message : c.cancel,
+        })
+      })
   }
 
   return (

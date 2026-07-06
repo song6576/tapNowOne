@@ -13,7 +13,7 @@ import { useCanvasStore } from '../store/canvasStore'
 import { useWorkspaceStore } from '../store/workspaceStore'
 import type { CanvasProject } from '../types'
 import type { NodeType } from '../types'
-import { mockGetTapTVWorkflow } from '../mock/api'
+import { getTapTVWorkflow } from '../services/api'
 import { getProject as fetchCloudProject, uploadProjectAsset } from '../api/client'
 import { getToken } from '../utils/auth'
 import { useToastStore } from '../store/toastStore'
@@ -110,7 +110,7 @@ export function CanvasPage() {
 
     if (state?.forkFrom) {
       resetCanvas()
-      mockGetTapTVWorkflow(state.forkFrom).then((wf) => {
+      getTapTVWorkflow(state.forkFrom).then((wf) => {
         if (wf) {
           loadProject({
             ...wf,

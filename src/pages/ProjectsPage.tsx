@@ -3,45 +3,22 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { TabBar } from '../components/ui/TabBar'
 import { SearchInput } from '../components/ui/SearchInput'
+import { InputDialog } from '../components/ui/InputDialog'
 import { WorkspaceFilterDropdown, type WorkspaceFilterState } from '../components/workspace/WorkspaceFilterDropdown'
 import { WorkspaceListView, type WorkspaceRow } from '../components/workspace/WorkspaceListView'
+import { WorkspaceSelectionBar } from '../components/workspace/WorkspaceSelectionBar'
+import { WorkspaceViewToggle } from '../components/workspace/WorkspaceViewToggle'
 import { ProjectGridCard } from '../components/project/ProjectGridCard'
+import { FolderGridCard } from '../components/project/FolderGridCard'
 import { NewProjectCard } from '../components/project/NewProjectCard'
 import { useI18n } from '../store/langStore'
 import {
   useWorkspaceStore,
-  type WorkspaceFolder,
   type WorkspaceViewMode,
 } from '../store/workspaceStore'
+import { PERSONAL_TEAM_ID, useTeamStore } from '../store/teamStore'
 
 type WorkspaceTab = 'personal' | 'team'
-
-function FolderGridCard({
-  folder,
-  projectCount,
-  onClick,
-}: {
-  folder: WorkspaceFolder
-  projectCount: number
-  onClick: () => void
-}) {
-  const { t } = useI18n()
-  return (
-    <button type="button" onClick={onClick} className="home-project-card overflow-hidden text-left">
-      <div className="flex aspect-video w-full items-center justify-center bg-white/[0.03]">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-white/30">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-        </svg>
-      </div>
-      <div className="p-3">
-        <h3 className="truncate text-sm font-medium text-white/90">{folder.name}</h3>
-        <p className="mt-1 text-xs text-white/35">
-          {projectCount} {t.workspace.projectCountUnit}
-        </p>
-      </div>
-    </button>
-  )
-}
 
 export function ProjectsPage() {
   const navigate = useNavigate()
@@ -50,6 +27,7 @@ export function ProjectsPage() {
   const ws = t.workspace
 
   const init = useWorkspaceStore((s) => s.init)
+  const setScope = useWorkspaceStore((s) => s.setScope)
   const folders = useWorkspaceStore((s) => s.folders)
   const projects = useWorkspaceStore((s) => s.projects)
   const createFolder = useWorkspaceStore((s) => s.createFolder)
@@ -65,23 +43,46 @@ export function ProjectsPage() {
     sortBy: 'updatedAt',
     sortOrder: 'desc',
   })
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false)
 
-  const folderId = searchParams.get('folder') // ?folder=xxx 进入子文件夹
+  const activeTeamId = useTeamStore((s) => s.activeTeamId)
+
+  const folderId = searchParams.get('folder')
   const currentFolder = folderId ? getFolder(folderId) : null
 
   useEffect(() => { init() }, [init])
 
   useEffect(() => {
+    if (tab === 'personal') {
+      void setScope(null)
+      return
+    }
+    if (activeTeamId === PERSONAL_TEAM_ID) {
+      useWorkspaceStore.setState({ folders: [], projects: [], initialized: true, scopeTeamId: null })
+      return
+    }
+    void setScope(activeTeamId)
+  }, [tab, activeTeamId, setScope])
+
+  useEffect(() => {
     if (folderId && !getFolder(folderId)) setSearchParams({})
   }, [folderId, getFolder, setSearchParams])
+
+  useEffect(() => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }, [folderId])
 
   const handleNewProject = async () => {
     const proj = await createProject(folderId)
     navigate(`/canvas/${proj.id}`, { state: { folderId, isNew: true } })
   }
 
-  const handleNewFolder = async () => {
-    await createFolder(folderId)
+  const handleCreateFolder = async (name: string) => {
+    await createFolder(folderId, name)
+    setFolderDialogOpen(false)
   }
 
   const openFolder = (id: string) => {
@@ -92,7 +93,26 @@ export function ProjectsPage() {
     setSearchParams({})
   }
 
-  /** 合并文件夹/项目行，应用搜索、类型筛选与排序 */
+  const exitSelectMode = () => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const enterSelectMode = (projectId: string) => {
+    setSelectMode(true)
+    setSelectedIds(new Set([projectId]))
+  }
+
+  const toggleSelect = (projectId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(projectId)) next.delete(projectId)
+      else next.add(projectId)
+      if (next.size === 0) setSelectMode(false)
+      return next
+    })
+  }
+
   const rows = useMemo(() => {
     const childFolders = folders.filter((f) => f.parentId === folderId)
     const childProjects = projects.filter((p) => p.folderId === folderId)
@@ -130,7 +150,7 @@ export function ProjectsPage() {
   const itemCount = rows.length
 
   return (
-    <main className="home-page flex-1 overflow-y-auto px-5 py-6 md:px-8">
+    <main className={`home-page flex-1 overflow-y-auto px-5 py-6 md:px-8 ${selectMode ? 'home-page--select-mode' : ''}`}>
       <div className="mx-auto max-w-[1200px]">
         <div className="workspace-page-toolbar mb-6">
           <div className="workspace-page-toolbar__row">
@@ -161,45 +181,27 @@ export function ProjectsPage() {
             <div className="workspace-page-toolbar__actions">
               <SearchInput value={search} onChange={setSearch} placeholder={ws.search} className="w-full sm:w-[200px]" />
               <WorkspaceFilterDropdown value={filter} onChange={setFilter} />
-              <button
-                type="button"
-                className={`workspace-icon-btn ui-clickable ${viewMode === 'grid' ? 'workspace-icon-btn--active' : ''}`}
-                title="Grid view"
-                onClick={() => setViewMode('grid')}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className={`workspace-icon-btn ui-clickable ${viewMode === 'list' ? 'workspace-icon-btn--active' : ''}`}
-                title="List view"
-                onClick={() => setViewMode('list')}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
-                </svg>
-              </button>
-              <button type="button" className="workspace-icon-btn ui-clickable" title={ws.newFolder} onClick={handleNewFolder}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                  <path d="M12 11v6M9 14h6" strokeLinecap="round" />
-                </svg>
-              </button>
-              <button type="button" className="workspace-new-btn ui-clickable" onClick={handleNewProject}>
-                + {ws.newProject}
-              </button>
+              <WorkspaceViewToggle value={viewMode} onChange={setViewMode} />
+              {!selectMode && (
+                <>
+                  <button type="button" className="workspace-icon-btn ui-clickable" title={ws.newFolder} onClick={() => setFolderDialogOpen(true)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                      <path d="M12 11v6M9 14h6" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                  <button type="button" className="workspace-new-btn ui-clickable" onClick={handleNewProject}>
+                    + {ws.newProject}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
 
-        {tab === 'team' && !currentFolder ? (
-          <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
-            {ws.empty}
+        {tab === 'team' && activeTeamId === PERSONAL_TEAM_ID && !currentFolder ? (
+          <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
+            <span>{ws.empty}</span>
           </div>
         ) : viewMode === 'list' ? (
           rows.length === 0 ? (
@@ -211,18 +213,22 @@ export function ProjectsPage() {
               rows={rows}
               onOpenFolder={openFolder}
               onOpenProject={(id) => navigate(`/canvas/${id}`)}
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onEnterSelectMode={enterSelectMode}
             />
           )
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <NewProjectCard label={ws.newProject} onClick={handleNewProject} />
+          <div className="workspace-project-grid">
+            {!selectMode && <NewProjectCard variant="workspace" label={ws.newProject} onClick={handleNewProject} />}
             {rows.map((row) =>
               row.kind === 'folder' ? (
                 <FolderGridCard
                   key={row.item.id}
                   folder={row.item}
                   projectCount={row.projectCount}
-                  onClick={() => openFolder(row.item.id)}
+                  onOpen={() => openFolder(row.item.id)}
                 />
               ) : (
                 <ProjectGridCard
@@ -230,12 +236,35 @@ export function ProjectsPage() {
                   project={row.item}
                   editedAtLabel={t.home.editedAt}
                   onOpen={() => navigate(`/canvas/${row.item.id}`)}
+                  selectMode={selectMode}
+                  selected={selectedIds.has(row.item.id)}
+                  onToggleSelect={() => toggleSelect(row.item.id)}
+                  onEnterSelectMode={enterSelectMode}
                 />
               ),
             )}
           </div>
         )}
       </div>
+
+      {selectMode && selectedIds.size > 0 && (
+        <WorkspaceSelectionBar
+          selectedIds={[...selectedIds]}
+          onClear={exitSelectMode}
+          onDone={exitSelectMode}
+        />
+      )}
+
+      <InputDialog
+        open={folderDialogOpen}
+        title={ws.newFolder}
+        value=""
+        placeholder={ws.folderNamePlaceholder}
+        confirmLabel={ws.folderMenu.confirm}
+        cancelLabel={ws.folderMenu.cancel}
+        onCancel={() => setFolderDialogOpen(false)}
+        onConfirm={handleCreateFolder}
+      />
     </main>
   )
 }

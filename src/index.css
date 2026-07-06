@@ -680,53 +680,318 @@ html, body, #root {
 @media (max-width: 767px) {
   .home-project-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+/* 工作空间：一行 3 个，卡片更紧凑 */
+.workspace-project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 920px;
+}
+@media (max-width: 900px) {
+  .workspace-project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: none;
+  }
+}
+@media (max-width: 520px) {
+  .workspace-project-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 .home-project-card {
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #131316;
   overflow: hidden;
-  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .home-project-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+}
+.home-project-card > button,
+.home-project-card.home-project-card--new {
+  width: 100%;
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
 }
 
+/* ── New project card (workspace) ── */
+.home-project-card.home-project-card--new {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #131316;
+}
+.home-project-card--new:hover {
+  background: #16161b;
+}
+
+/* ── New project card (home) ── */
+.home-project-new {
+  background: rgba(255, 255, 255, 0.03);
+}
+.home-project-new:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+}
 .home-project-new-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.03);
 }
-.home-project-new-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.home-project-new-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.home-project-new .home-project-new-icon {
   width: 52px;
   height: 52px;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.92);
   color: #0a0a0a;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
-  transition: transform 0.18s ease, background 0.18s ease;
 }
 .home-project-new:hover .home-project-new-icon {
   transform: scale(1.04);
   background: #fff;
 }
-.home-project-new-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+.home-project-new-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1.65 / 1;
+  background: #1a1a1f;
+}
+.home-project-new-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.home-project-new-icon--workspace {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #111;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+}
+.home-project-card--new:hover .home-project-new-icon--workspace {
+  transform: scale(1.05);
+  background: #fff;
+}
+
+/* ── Card footer (shared) ── */
+.home-project-card-footer {
+  width: 100%;
+  padding: 9px 11px 10px;
+  background: #131316;
+}
+.home-project-card-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.92);
+}
+.home-project-card-meta {
+  margin-top: 2px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.36);
+}
+.home-project-card-meta-sep {
+  margin: 0 5px;
+  color: rgba(255, 255, 255, 0.22);
 }
 
 .home-project-thumb {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 1.48 / 1;
   overflow: hidden;
 }
+
+/* ── Project cover blur ── */
+.workspace-cover-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.65 / 1;
+  overflow: hidden;
+  background: #101014;
+  isolation: isolate;
+}
+.workspace-cover-thumb--list {
+  width: 72px;
+  height: 44px;
+  aspect-ratio: auto;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.workspace-cover-thumb--home {
+  aspect-ratio: 16 / 10;
+}
+.workspace-cover-mesh {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.workspace-cover-layers {
+  position: absolute;
+  inset: 0;
+}
+.workspace-cover-blurhash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.92;
+  transition: opacity 0.5s ease;
+}
+.workspace-cover-layers--loaded .workspace-cover-blurhash {
+  opacity: 0;
+}
+.workspace-cover-blurhash canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+.workspace-cover-blur-img {
+  position: absolute;
+  inset: -25%;
+  z-index: 2;
+  width: 150%;
+  height: 150%;
+  object-fit: cover;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.55s ease;
+}
+.workspace-cover-blur-img--card {
+  filter: blur(64px) saturate(1.45) brightness(0.62) contrast(1.05);
+  transform: scale(1.12);
+}
+.workspace-cover-blur-img--list {
+  inset: -40%;
+  width: 180%;
+  height: 180%;
+  filter: blur(32px) saturate(1.35) brightness(0.68);
+  transform: scale(1.08);
+}
+.workspace-cover-layers--loaded .workspace-cover-blur-img {
+  opacity: 1;
+}
+.workspace-cover-gradient {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.workspace-cover-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background:
+    linear-gradient(180deg, rgba(8, 8, 12, 0.02) 0%, rgba(8, 8, 12, 0.32) 100%),
+    radial-gradient(ellipse 120% 95% at 50% -8%, rgba(255, 255, 255, 0.08) 0%, transparent 55%);
+  pointer-events: none;
+}
+.workspace-cover-overlay--folder {
+  background:
+    linear-gradient(180deg, rgba(6, 6, 10, 0.02) 0%, rgba(6, 6, 10, 0.28) 55%, rgba(6, 6, 10, 0.5) 100%);
+}
+
+/* ── Folder stack preview (TapNow pocket) ── */
+.folder-stack-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.65 / 1;
+  overflow: hidden;
+  background: #101014;
+}
+.folder-stack-preview__bg {
+  position: absolute;
+  inset: 0;
+}
+.folder-stack-preview__files {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14%;
+}
+.folder-stack-preview__file {
+  position: absolute;
+  width: 54%;
+  height: 58%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(160deg, #f4f5f7 0%, #e8ebf0 45%, #d8dde6 100%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+.folder-stack-preview__file--0 {
+  transform: rotate(-7deg) translate(-12%, 6%);
+  z-index: 1;
+  opacity: 0.82;
+}
+.folder-stack-preview__file--1 {
+  transform: rotate(-2deg) translate(0, 2%);
+  z-index: 2;
+  opacity: 0.92;
+}
+.folder-stack-preview__file--2 {
+  transform: rotate(4deg) translate(10%, -2%);
+  z-index: 3;
+}
+.folder-stack-preview__file-mark {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.folder-stack-preview__pocket {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  height: 46%;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(18, 18, 22, 0.55) 100%
+  );
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.workspace-cover-thumb .workspace-select-checkbox-anchor {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+}
+
 .home-project-thumb-blur {
   position: absolute;
   inset: -8px;
@@ -1063,6 +1328,11 @@ html, body, #root {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.75);
 }
+.taptv-follow-btn--active {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
 .taptv-stat-btn {
   display: inline-flex;
   align-items: center;
@@ -1073,6 +1343,11 @@ html, body, #root {
   padding: 8px 12px;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.65);
+}
+.taptv-stat-btn--active {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 .taptv-workflow-btn {
   display: inline-flex;
@@ -1718,6 +1993,185 @@ html, body, #root {
   border-color: rgba(255, 255, 255, 0.22);
   color: #fff;
 }
+
+.workspace-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 3px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+.workspace-view-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.workspace-view-toggle__btn:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+.workspace-view-toggle__btn--active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.home-page--select-mode {
+  padding-bottom: 96px;
+}
+
+.home-project-card--select-mode {
+  cursor: pointer;
+}
+.home-project-card--select-mode:hover {
+  transform: none;
+}
+.home-project-card--selected {
+  border-color: rgba(255, 255, 255, 0.92);
+  border-width: 2px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.home-project-card--selected:hover {
+  border-color: #fff;
+}
+
+.workspace-select-checkbox-anchor {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 6;
+}
+.workspace-select-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(8, 8, 10, 0.35);
+  color: #0a0a0a;
+  backdrop-filter: blur(6px);
+}
+.workspace-select-checkbox--checked {
+  background: #fff;
+  border-color: #fff;
+}
+
+.workspace-selection-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: min(92vw, 420px);
+  padding: 10px 14px 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(22, 22, 24, 0.96);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+  transform: translateX(-50%);
+}
+.workspace-selection-bar__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.workspace-selection-bar__close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+.workspace-selection-bar__count {
+  flex: 1;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: nowrap;
+}
+.workspace-selection-bar__divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.workspace-selection-bar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.workspace-selection-bar__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.workspace-selection-bar__action:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.workspace-selection-bar__action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.workspace-selection-bar__action--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+.workspace-folder-picker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.workspace-folder-picker__item {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.workspace-folder-picker__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.workspace-list-row--selected {
+  background: rgba(255, 255, 255, 0.04);
+}
+.workspace-list-row--selected:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .workspace-filter-menu {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
@@ -1738,6 +2192,8 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -2781,6 +3237,73 @@ html, body, #root {
   padding: 8px 12px;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.55);
+}
+.team-member-remove {
+  display: flex;
+  height: 34px;
+  width: 34px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.35);
+}
+.team-member-remove:hover {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.08);
+  color: #fca5a5;
+}
+
+/* ── Team invite modal ── */
+.team-invite-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 4px 4px 14px;
+}
+.team-invite-link-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  outline: none;
+}
+.team-invite-copy {
+  display: flex;
+  height: 36px;
+  width: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: none;
+  background: #38bdf8;
+  color: #000;
+}
+.team-invite-notice {
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.06);
+  padding: 12px 14px;
+}
+.team-invite-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 14px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.team-join-card {
+  text-align: center;
 }
 
 /* ── Agent tutorials ── */

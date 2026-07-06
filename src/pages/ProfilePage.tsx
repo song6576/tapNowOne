@@ -258,15 +258,16 @@ export function ProfilePage() {
                     {p.worksEmpty}
                   </div>
                   <div className="mt-4 grid max-w-xs gap-4 sm:grid-cols-2">
-                    <NewProjectCard label={t.home.newProject} onClick={() => void handleNewProject()} />
+                    <NewProjectCard variant="home" label={t.home.newProject} onClick={() => void handleNewProject()} />
                   </div>
                 </div>
               ) : (
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <NewProjectCard label={t.home.newProject} onClick={() => void handleNewProject()} />
+                  <NewProjectCard variant="home" label={t.home.newProject} onClick={() => void handleNewProject()} />
                   {sortedProjects.map((proj) => (
                     <ProjectGridCard
                       key={proj.id}
+                      variant="home"
                       project={proj}
                       editedAtLabel={t.home.editedAt}
                       onOpen={() => navigate(`/canvas/${proj.id}`)}

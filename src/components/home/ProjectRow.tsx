@@ -25,11 +25,12 @@ export const ProjectRow = memo(function ProjectRow() {
   return (
     <section className="w-full">
       <div className="home-project-grid">
-        <NewProjectCard label={t.home.newProject} onClick={handleNewProject} />
+        <NewProjectCard variant="home" label={t.home.newProject} onClick={handleNewProject} />
 
         {recentProjects.map((p) => (
           <ProjectGridCard
             key={p.id}
+            variant="home"
             project={p}
             editedAtLabel={t.home.editedAt}
             onOpen={() => navigate(`/canvas/${p.id}`)}

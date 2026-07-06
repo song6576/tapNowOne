@@ -13,6 +13,7 @@ import { TapTVWorkflowPage } from './pages/TapTVWorkflowPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CanvasPage } from './pages/CanvasPage'
 import { LoginPage } from './pages/LoginPage'
+import { TeamJoinPage } from './pages/TeamJoinPage'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/home/projects" element={<ProjectsPage />} />
             <Route path="/taptv" element={<TapTVPage />} />
             <Route path="/taptv/:id" element={<TapTVDetailPage />} />
+            <Route path="/team/join/:token" element={<TeamJoinPage />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/home" replace />} />

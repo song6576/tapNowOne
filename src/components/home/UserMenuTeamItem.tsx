@@ -63,7 +63,7 @@ export function UserMenuTeamItem({ submenuSide = 'left' }: { submenuSide?: UserM
               <button
                 key={team.id}
                 type="button"
-                onClick={() => switchTeam(team.id)}
+                onClick={() => void switchTeam(team.id)}
                 className="ui-clickable flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition hover:bg-white/5"
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10 text-xs font-medium text-white/70">
