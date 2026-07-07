@@ -727,6 +727,29 @@ export async function listFeatured(): Promise<FeaturedItem[]> {
   return rows.map(mapFeaturedItem)
 }
 
+export type HomeDashboardResponse = {
+  featured: FeaturedBannerMeta[]
+  taptv: TapTVItemMeta[]
+}
+
+export type HomeDashboard = {
+  featured: FeaturedItem[]
+  taptv: TapTVItem[]
+}
+
+/** GET /api/home/dashboard — 首页聚合（精选 + TapTV 预览） */
+export async function fetchHomeDashboard(): Promise<HomeDashboard> {
+  const res = await fetch(`${API_BASE}/home/dashboard`, {
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  const data = (await res.json()) as HomeDashboardResponse
+  return {
+    featured: data.featured.map(mapFeaturedItem),
+    taptv: data.taptv.map(mapTapTVItem),
+  }
+}
+
 /**
  * GET /api/taptv — 作品列表
  * @param params.sort featured | following | hot | latest

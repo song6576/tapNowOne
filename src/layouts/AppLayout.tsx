@@ -1,8 +1,14 @@
+import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { HomeTopNav } from '../components/home/HomeTopNav'
+import { bootstrapAppShell } from '../store/appBootstrap'
 
-/** TapNowOne 主应用壳：顶部导航 + 内容区 */
+/** TapNowOne 主应用壳：顶部导航 + 内容区 + 一次性数据 bootstrap */
 export function AppLayout() {
+  useEffect(() => {
+    void bootstrapAppShell()
+  }, [])
+
   return (
     <div className="relative flex h-full flex-col bg-black">
       <HomeTopNav />

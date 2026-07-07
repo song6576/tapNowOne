@@ -9,6 +9,7 @@ import {
 } from '../api/client'
 import { getToken } from '../utils/auth'
 import { generateUUID } from '../utils/uuid'
+import { createInFlight } from '../utils/inFlight'
 import { useWorkspaceStore } from './workspaceStore'
 
 export const PERSONAL_TEAM_ID = 'personal'
@@ -64,7 +65,7 @@ interface TeamStore extends PersistedTeams {
   createTeamModalOpen: boolean
   initializedFor: string | null
   loading: boolean
-  init: (userName: string) => Promise<void>
+  init: (userName: string, options?: { force?: boolean }) => Promise<void>
   openCreateTeamModal: () => void
   closeCreateTeamModal: () => void
   createTeam: (name: string) => Promise<Team>
@@ -72,6 +73,8 @@ interface TeamStore extends PersistedTeams {
   getActiveTeam: () => Team | undefined
   getActiveTeamScopeId: () => string | null
 }
+
+const runTeamInit = createInFlight()
 
 export const useTeamStore = create<TeamStore>((set, get) => ({
   teams: [],
@@ -81,52 +84,69 @@ export const useTeamStore = create<TeamStore>((set, get) => ({
   initializedFor: null,
   loading: false,
 
-  init: async (userName) => {
-    if (get().initializedFor === userName && get().teams.length > 0) return
-    set({ loading: true })
-    try {
-      if (getToken()) {
-        const res = await apiListTeams()
-        const displayName = res.personal_name?.trim() || userName
-        const personal: Team = {
-          id: PERSONAL_TEAM_ID,
-          name: `${displayName}的团队`,
-          initial: displayName.trim()[0]?.toUpperCase() ?? 'T',
-          isPersonal: true,
-        }
-        const teams: Team[] = [
-          personal,
-          ...res.teams.map((t) => ({
-            id: t.id,
-            name: t.name,
-            initial: t.initial,
-            teamId: t.public_id,
-            tapiesBalance: t.tapies_balance,
-            role: t.role,
-            isOwner: t.is_owner,
-          })),
-        ]
-        teams[0] = { ...personal, tapiesBalance: res.personal_tapies_balance }
-        const activeTeamId = res.active_team_id ?? PERSONAL_TEAM_ID
-        const tapiesBalance =
-          activeTeamId === PERSONAL_TEAM_ID
-            ? res.personal_tapies_balance
-            : res.teams.find((t) => t.id === activeTeamId)?.tapies_balance ?? 0
-        set({
-          teams,
-          activeTeamId,
-          tapiesBalance,
-          initializedFor: userName,
-          loading: false,
-        })
+  init: async (userName, options) => {
+    if (
+      !options?.force &&
+      get().initializedFor === userName &&
+      get().teams.length > 0
+    ) {
+      return
+    }
+
+    return runTeamInit(async () => {
+      if (
+        !options?.force &&
+        get().initializedFor === userName &&
+        get().teams.length > 0
+      ) {
         return
       }
-      const data = readTeams(userName)
-      set({ ...data, initializedFor: userName, loading: false })
-    } catch {
-      const data = readTeams(userName)
-      set({ ...data, initializedFor: userName, loading: false })
-    }
+
+      set({ loading: true })
+      try {
+        if (getToken()) {
+          const res = await apiListTeams()
+          const displayName = res.personal_name?.trim() || userName
+          const personal: Team = {
+            id: PERSONAL_TEAM_ID,
+            name: `${displayName}的团队`,
+            initial: displayName.trim()[0]?.toUpperCase() ?? 'T',
+            isPersonal: true,
+          }
+          const teams: Team[] = [
+            personal,
+            ...res.teams.map((t) => ({
+              id: t.id,
+              name: t.name,
+              initial: t.initial,
+              teamId: t.public_id,
+              tapiesBalance: t.tapies_balance,
+              role: t.role,
+              isOwner: t.is_owner,
+            })),
+          ]
+          teams[0] = { ...personal, tapiesBalance: res.personal_tapies_balance }
+          const activeTeamId = res.active_team_id ?? PERSONAL_TEAM_ID
+          const tapiesBalance =
+            activeTeamId === PERSONAL_TEAM_ID
+              ? res.personal_tapies_balance
+              : res.teams.find((t) => t.id === activeTeamId)?.tapies_balance ?? 0
+          set({
+            teams,
+            activeTeamId,
+            tapiesBalance,
+            initializedFor: userName,
+            loading: false,
+          })
+          return
+        }
+        const data = readTeams(userName)
+        set({ ...data, initializedFor: userName, loading: false })
+      } catch {
+        const data = readTeams(userName)
+        set({ ...data, initializedFor: userName, loading: false })
+      }
+    })
   },
 
   openCreateTeamModal: () => set({ createTeamModalOpen: true }),

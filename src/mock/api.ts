@@ -80,6 +80,12 @@ export async function mockGetFeatured(): Promise<FeaturedItem[]> {
   return MOCK_FEATURED
 }
 
+export async function mockGetHomeDashboard(): Promise<{ featured: FeaturedItem[]; taptv: TapTVItem[] }> {
+  await delay(200)
+  const [featured, taptv] = await Promise.all([mockGetFeatured(), mockGetTapTV()])
+  return { featured, taptv: taptv.slice(0, 8) }
+}
+
 export async function mockGetTapTVItem(id: string): Promise<TapTVItem | undefined> {
   await delay()
   const item = MOCK_TAPTV.find((t) => t.id === id)

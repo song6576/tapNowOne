@@ -72,7 +72,6 @@ export function AccountSettingsModal() {
   const profile = useProfileStore((s) => s.profile)
   const closeAccountModal = useProfileStore((s) => s.closeAccountModal)
   const setAccountNav = useProfileStore((s) => s.setAccountNav)
-  const initProfile = useProfileStore((s) => s.init)
 
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
@@ -80,17 +79,11 @@ export function AccountSettingsModal() {
   const teams = useTeamStore((s) => s.teams)
   const activeTeamId = useTeamStore((s) => s.activeTeamId)
   const getActiveTeam = useTeamStore((s) => s.getActiveTeam)
-  const initTeam = useTeamStore((s) => s.init)
 
   const navigate = useNavigate()
   const { t } = useI18n()
   const a = t.account
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
-
-  useEffect(() => { initProfile() }, [initProfile])
-  useEffect(() => {
-    if (user?.name) void initTeam(user.name)
-  }, [user?.name, initTeam])
 
   useEffect(() => {
     if (!open) setLogoutConfirmOpen(false)

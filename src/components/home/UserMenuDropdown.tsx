@@ -44,9 +44,7 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
-  const initProfile = useProfileStore((s) => s.init)
   const openAccountModal = useProfileStore((s) => s.openAccountModal)
-  const initTeam = useTeamStore((s) => s.init)
   const tapiesBalance = useTeamStore((s) => s.tapiesBalance)
   const openCreateTeamModal = useTeamStore((s) => s.openCreateTeamModal)
   const { t } = useI18n()
@@ -56,10 +54,6 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
-  useEffect(() => { initProfile() }, [initProfile])
-  useEffect(() => {
-    if (user?.name) initTeam(user.name)
-  }, [user?.name, initTeam])
   useEffect(() => {
     setMenuOpen(false)
     setLogoutConfirmOpen(false)

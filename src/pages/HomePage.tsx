@@ -1,40 +1,31 @@
 /** 首页：Hero 输入框 + 最近项目 + 精选轮播 + 探索 TapTV */
-import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { HeroPrompt } from '../components/home/HeroPrompt'
 import { ProjectRow } from '../components/home/ProjectRow'
 import { FeaturedCarousel } from '../components/home/FeaturedCarousel'
 import { ProjectRowSkeleton } from '../components/home/ProjectRowSkeleton'
 import { FeaturedCarouselSkeleton } from '../components/home/FeaturedCarouselSkeleton'
-import type { FeaturedItem, TapTVItem } from '../mock/data'
+import type { TapTVItem } from '../mock/data'
 import { TapTVExploreSection } from '../components/home/TapTVExploreSection'
-import { getFeatured, getTapTV } from '../services/api'
+import { useHomeDashboard } from '../hooks/useHomeQueries'
+import { queryKeys } from '../lib/queryKeys'
+import type { HomeDashboard } from '../api/client'
 import { useWorkspaceStore } from '../store/workspaceStore'
 
 export function HomePage() {
-  const initWorkspace = useWorkspaceStore((s) => s.init)
+  const queryClient = useQueryClient()
   const workspaceReady = useWorkspaceStore((s) => s.initialized)
-  const [featured, setFeatured] = useState<FeaturedItem[]>([])
-  const [taptv, setTaptv] = useState<TapTVItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading } = useHomeDashboard()
 
-  useEffect(() => { initWorkspace() }, [initWorkspace])
+  const featured = data?.featured ?? []
+  const taptv = data?.taptv ?? []
+  const projectsLoading = !workspaceReady || isLoading
 
-  useEffect(() => {
-    let cancelled = false
-    Promise.all([getFeatured(), getTapTV({ sort: 'featured', limit: 8 })])
-      .then(([f, tv]) => {
-        if (!cancelled) {
-          setFeatured(f)
-          setTaptv(tv)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [])
-
-  const projectsLoading = !workspaceReady || loading
+  const handleTapTVItemsChange = (items: TapTVItem[]) => {
+    queryClient.setQueryData<HomeDashboard>(queryKeys.home.dashboard, (prev) =>
+      prev ? { ...prev, taptv: items } : prev,
+    )
+  }
 
   return (
     <main className="home-page flex flex-1 flex-col overflow-y-auto">
@@ -50,16 +41,16 @@ export function HomePage() {
 
         <section className="home-featured-section home-section-pad border-t border-white/[0.04]">
           <div className="home-wide-stack">
-            {loading ? <FeaturedCarouselSkeleton /> : <FeaturedCarousel items={featured} />}
+            {isLoading ? <FeaturedCarouselSkeleton /> : <FeaturedCarousel items={featured} />}
           </div>
         </section>
 
         <section className="home-taptv-section home-section-pad border-t border-white/[0.04] py-10 md:py-12">
           <div className="home-wide-stack">
-            {!loading && (
+            {!isLoading && (
               <TapTVExploreSection
                 items={taptv}
-                onItemsChange={setTaptv}
+                onItemsChange={handleTapTVItemsChange}
               />
             )}
           </div>

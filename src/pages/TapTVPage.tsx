@@ -1,5 +1,6 @@
 /** TapTV 列表：排序 Tab、分类 Pills、搜索、发布弹窗 */
 import { useCallback, useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { TabBar } from '../components/ui/TabBar'
 import { SearchInput } from '../components/ui/SearchInput'
@@ -7,51 +8,26 @@ import { FilterPills } from '../components/ui/FilterPills'
 import { TapTVCard } from '../components/taptv/TapTVCard'
 import { PublishModal } from '../components/taptv/PublishModal'
 import { TAPTV_CATEGORY_IDS, type TapTVCategory, type TapTVItem, type TapTVSort } from '../mock/data'
-import { getTapTV, toggleTapTVFavorite, toggleTapTVLike } from '../services/api'
+import { toggleTapTVFavorite, toggleTapTVLike } from '../services/api'
+import { useTapTVList } from '../hooks/useTapTVList'
+import { queryKeys } from '../lib/queryKeys'
 import { useI18n } from '../store/langStore'
 import { useToastStore } from '../store/toastStore'
 import { getToken } from '../utils/auth'
 
 export function TapTVPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { t } = useI18n()
   const tv = t.taptv
   const showToast = useToastStore((s) => s.showToast)
-  const [items, setItems] = useState<TapTVItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<TapTVSort>('featured')
   const [category, setCategory] = useState<TapTVCategory>('all')
   const [search, setSearch] = useState('')
   const [publishOpen, setPublishOpen] = useState(false)
 
-  useEffect(() => {
-    if (sort === 'following' && !getToken()) {
-      setItems([])
-      setLoading(false)
-      return
-    }
-    let cancelled = false
-    setLoading(true)
-    getTapTV({ sort, category, search })
-      .then((list) => {
-        if (!cancelled) setItems(list)
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setItems([])
-          if (sort === 'following') {
-            showToast({
-              type: 'info',
-              message: err instanceof Error ? err.message : tv.sortFollowing,
-            })
-          }
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [sort, category, search, showToast, tv.sortFollowing])
+  const listParams = { sort, category, search }
+  const { data: items = [], isLoading, isError, error } = useTapTVList(listParams)
 
   const sortTabs = [
     { id: 'featured' as const, label: tv.sortFeatured },
@@ -66,8 +42,20 @@ export function TapTVPage() {
   }))
 
   const patchItem = useCallback((id: string, patch: Partial<TapTVItem>) => {
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)))
-  }, [])
+    const key = queryKeys.taptv.list({ sort, category, search })
+    queryClient.setQueryData<TapTVItem[]>(key, (prev) =>
+      prev?.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    )
+  }, [queryClient, sort, category, search])
+
+  useEffect(() => {
+    if (isError && sort === 'following') {
+      showToast({
+        type: 'info',
+        message: error instanceof Error ? error.message : tv.sortFollowing,
+      })
+    }
+  }, [isError, sort, error, showToast, tv.sortFollowing])
 
   const requireLogin = () => {
     if (getToken()) return true
@@ -112,7 +100,7 @@ export function TapTVPage() {
 
         <FilterPills<TapTVCategory> options={categoryOptions} active={category} onChange={setCategory} className="mb-6" />
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex min-h-[200px] items-center justify-center text-sm text-white/35">
             {t.taptv.detail.loading}
           </div>
@@ -142,6 +130,8 @@ export function TapTVPage() {
         onPublished={() => {
           setSort('latest')
           setPublishOpen(false)
+          void queryClient.invalidateQueries({ queryKey: ['taptv'] })
+          void queryClient.invalidateQueries({ queryKey: queryKeys.home.dashboard })
         }}
       />
     </main>

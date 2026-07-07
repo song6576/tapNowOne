@@ -38,7 +38,7 @@ export function TeamJoinPage() {
     void acceptTeamInvite(token)
       .then(async (res) => {
         setJoined(true)
-        if (user?.name) await initTeam(user.name)
+        if (user?.name) await initTeam(user.name, { force: true })
         await switchTeam(res.team_id)
         await useWorkspaceStore.getState().setScope(res.team_id)
         showToast({ type: 'success', message: v.success })

@@ -18,6 +18,7 @@ import { MOCK_PROJECTS } from '../mock/data'
 import { getToken } from '../utils/auth'
 import { pickWorkspaceCover } from '../utils/workspaceCover'
 import { generateUUID } from '../utils/uuid'
+import { createInFlight } from '../utils/inFlight'
 
 export type WorkspaceFolder = {
   id: string
@@ -148,6 +149,8 @@ interface WorkspaceStore extends PersistedWorkspace {
   getFolder: (id: string) => WorkspaceFolder | undefined
 }
 
+const runWorkspaceInit = createInFlight()
+
 export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   folders: [],
   projects: [],
@@ -163,32 +166,35 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   },
 
   init: async () => {
-    if (get().initialized || get().loading) return
-    set({ loading: true })
-    try {
-      if (getToken()) {
-        const teamId = get().scopeTeamId
-        const [foldersRaw, projectsRaw] = await Promise.all([
-          listFolders(teamId),
-          listProjects(teamId),
-        ])
-        set({
-          folders: foldersRaw.map((f) => ({ ...mapFolder(f), cover: pickWorkspaceCover(f.id) })),
-          projects: projectsRaw.map((p) => ({
-            ...mapProject(p),
-            thumbnail: p.thumbnail ?? pickWorkspaceCover(p.id),
-          })),
-          initialized: true,
-          loading: false,
-        })
-        return
+    if (get().initialized) return
+    return runWorkspaceInit(async () => {
+      if (get().initialized) return
+      set({ loading: true })
+      try {
+        if (getToken()) {
+          const teamId = get().scopeTeamId
+          const [foldersRaw, projectsRaw] = await Promise.all([
+            listFolders(teamId),
+            listProjects(teamId),
+          ])
+          set({
+            folders: foldersRaw.map((f) => ({ ...mapFolder(f), cover: pickWorkspaceCover(f.id) })),
+            projects: projectsRaw.map((p) => ({
+              ...mapProject(p),
+              thumbnail: p.thumbnail ?? pickWorkspaceCover(p.id),
+            })),
+            initialized: true,
+            loading: false,
+          })
+          return
+        }
+        const data = readStorage()
+        set({ ...data, initialized: true, loading: false })
+      } catch {
+        const data = readStorage()
+        set({ ...data, initialized: true, loading: false })
       }
-      const data = readStorage()
-      set({ ...data, initialized: true, loading: false })
-    } catch {
-      const data = readStorage()
-      set({ ...data, initialized: true, loading: false })
-    }
+    })
   },
 
   reload: async () => {

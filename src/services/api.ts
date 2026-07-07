@@ -9,6 +9,7 @@ import type { TapTVCategory, TapTVSort } from '../mock/data'
 
 export const listProjects = USE_MOCK ? mock.mockListProjects : real.listProjects
 export const getFeatured = USE_MOCK ? mock.mockGetFeatured : real.listFeatured
+export const getHomeDashboard = USE_MOCK ? mock.mockGetHomeDashboard : real.fetchHomeDashboard
 export const getTapTV = USE_MOCK
   ? mock.mockGetTapTV
   : (params?: real.TapTVListParams) => real.listTapTV(params)

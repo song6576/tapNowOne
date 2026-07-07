@@ -1,8 +1,14 @@
 /** 认证状态：登录/注册/Google 登录、token 校验、登出 */
 import { create } from 'zustand'
 import { clearAuth, getStoredUser, setAuth, type User } from '../utils/auth'
+import { createInFlight } from '../utils/inFlight'
+import { resetAppBootstrap } from './appBootstrapState'
 import { useProfileStore } from './profileStore'
+import { PERSONAL_TEAM_ID, useTeamStore } from './teamStore'
+import { useWorkspaceStore } from './workspaceStore'
 import * as api from '../api/client'
+
+const runAuthInit = createInFlight()
 
 interface AuthStore {
   user: User | null
@@ -24,21 +30,26 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   /** 应用启动：有 token 则请求 /auth/me 校验，失败则清本地凭证 */
   init: async () => {
-    const token = localStorage.getItem('tapflow_token')
-    if (!token) {
-      set({ initialized: true })
-      return
-    }
-    try {
-      const user = await api.fetchMe()
-      set({ user })
-      useProfileStore.getState().syncFromUser(user)
-    } catch {
-      clearAuth()
-      set({ user: null })
-    } finally {
-      set({ initialized: true })
-    }
+    if (get().initialized) return
+    return runAuthInit(async () => {
+      if (get().initialized) return
+
+      const token = localStorage.getItem('tapflow_token')
+      if (!token) {
+        set({ initialized: true })
+        return
+      }
+      try {
+        const user = await api.fetchMe()
+        set({ user })
+        useProfileStore.getState().syncFromUser(user)
+      } catch {
+        clearAuth()
+        set({ user: null })
+      } finally {
+        set({ initialized: true })
+      }
+    })
   },
 
   login: async (email, password) => {
@@ -79,7 +90,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   logout: () => {
     clearAuth()
-    set({ user: null })
+    set({ user: null, initialized: true })
+    resetAppBootstrap()
+    useTeamStore.setState({
+      teams: [],
+      activeTeamId: PERSONAL_TEAM_ID,
+      tapiesBalance: 0,
+      initializedFor: null,
+      loading: false,
+    })
+    useWorkspaceStore.setState({
+      folders: [],
+      projects: [],
+      initialized: false,
+      loading: false,
+      scopeTeamId: null,
+    })
   },
 
   updateUser: (user) => {
