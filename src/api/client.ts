@@ -624,7 +624,7 @@ export async function agentStoryboard(
 }
 
 // ── Home / TapTV ──
-// 接口完整说明见 docs/API.md；数据库字段见 docs/SQL.md §7
+// 接口完整说明见 backend-nest/docs/API.md；数据库字段见 docs/SQL.md §7
 
 /** 后端 GET /api/home/featured 单条结构 */
 export type FeaturedBannerMeta = {
