@@ -1245,9 +1245,48 @@ html, body, #root {
   aspect-ratio: 4 / 3;
   border-radius: 14px;
   overflow: hidden;
+  background: #0a0a0c;
 }
 .taptv-card-cover--video {
   aspect-ratio: 16 / 9;
+}
+.taptv-card-cover-img,
+.taptv-card-cover-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.22s ease;
+}
+.taptv-card-cover-fallback {
+  pointer-events: none;
+}
+.taptv-card-cover-img--hidden,
+.taptv-card-cover-fallback--hidden {
+  opacity: 0;
+}
+.taptv-card-video {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  pointer-events: none;
+}
+.taptv-card-video--visible {
+  opacity: 1;
+}
+.taptv-card-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 
 /* 探索 TapTV：桌面 4 列 / 平板 3 列 / 手机 2 列 */
@@ -1270,11 +1309,43 @@ html, body, #root {
 .taptv-card-overlay {
   position: absolute;
   inset: 0;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: 12px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.1) 55%, transparent 100%);
+  pointer-events: none;
+}
+.taptv-card-actions {
+  pointer-events: auto;
+}
+.taptv-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 4px 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.taptv-card-action:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+.taptv-card-action--like-active {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.12);
+}
+.taptv-card-action--fav-active {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.12);
 }
 .taptv-card-avatar {
   display: flex;
@@ -1410,9 +1481,9 @@ html, body, #root {
   color: rgba(255, 255, 255, 0.65);
 }
 .taptv-stat-btn--active {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
 }
 .taptv-workflow-btn {
   display: inline-flex;

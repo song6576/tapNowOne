@@ -56,7 +56,12 @@ export function HomePage() {
 
         <section className="home-taptv-section home-section-pad border-t border-white/[0.04] py-10 md:py-12">
           <div className="home-wide-stack">
-            {!loading && <TapTVExploreSection items={taptv} />}
+            {!loading && (
+              <TapTVExploreSection
+                items={taptv}
+                onItemsChange={setTaptv}
+              />
+            )}
           </div>
         </section>
       </div>

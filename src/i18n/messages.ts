@@ -313,6 +313,7 @@ export type Messages = {
     tabPortfolio: string
     tabSaved: string
     savedLocked: string
+    savedEmpty: string
     featuredWorks: string
     featuredEmpty: string
     addFeatured: string
@@ -816,6 +817,7 @@ const zh: Messages = {
     tabPortfolio: '我的作品集',
     tabSaved: '我的收藏',
     savedLocked: '暂未开放',
+    savedEmpty: '还没有收藏的作品，去 TapTV 探索吧',
     featuredWorks: '代表作',
     featuredEmpty: '向全世界展示你最得意的创作。',
     addFeatured: '添加代表作',
@@ -1341,6 +1343,7 @@ const en: Messages = {
     tabPortfolio: 'My portfolio',
     tabSaved: 'My favorites',
     savedLocked: 'Coming soon',
+    savedEmpty: 'No favorites yet — explore TapTV to find works you love',
     featuredWorks: 'Featured works',
     featuredEmpty: 'Show the world your best creations.',
     addFeatured: 'Add featured work',

@@ -14,8 +14,26 @@ import {
 } from './data'
 import type { CanvasProject } from '../types'
 import { getTapTVWorkflow } from './taptvWorkflows'
+import {
+  readTapTVFavorites,
+  readTapTVLikes,
+  toggleTapTVFavoriteLocal,
+  toggleTapTVLikeLocal,
+} from '../utils/taptvLocalState'
 
 const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms))
+
+/** Mock：为列表项附加 localStorage 中的 likedByMe / favoritedByMe */
+function withLocalFlags(items: TapTVItem[]): TapTVItem[] {
+  const likes = readTapTVLikes()
+  const favs = readTapTVFavorites()
+  return items.map((item) => ({
+    ...item,
+    likedByMe: likes.has(item.id),
+    favoritedByMe: favs.has(item.id),
+    likes: item.likes + (likes.has(item.id) ? 0 : 0),
+  }))
+}
 
 export async function mockGetUser() {
   await delay()
@@ -29,7 +47,32 @@ export async function mockListProjects(): Promise<MockProject[]> {
 
 export async function mockGetTapTV(): Promise<TapTVItem[]> {
   await delay()
-  return MOCK_TAPTV
+  return withLocalFlags(MOCK_TAPTV)
+}
+
+/** Mock：GET /api/taptv/favorites — 从 MOCK_TAPTV 过滤已收藏 id */
+export async function mockListTapTVFavorites(): Promise<TapTVItem[]> {
+  await delay()
+  const favs = readTapTVFavorites()
+  return withLocalFlags(MOCK_TAPTV.filter((t) => favs.has(t.id)))
+}
+
+/** Mock：POST /api/taptv/:id/like */
+export async function mockToggleTapTVLike(id: string) {
+  await delay(120)
+  const liked = toggleTapTVLikeLocal(id)
+  const item = MOCK_TAPTV.find((t) => t.id === id)
+  const base = item?.likes ?? 0
+  return { liked, likes: liked ? base + 1 : Math.max(0, base - 1) }
+}
+
+/** Mock：POST /api/taptv/:id/favorite */
+export async function mockToggleTapTVFavorite(id: string) {
+  await delay(120)
+  const favorited = toggleTapTVFavoriteLocal(id)
+  const item = MOCK_TAPTV.find((t) => t.id === id)
+  const base = item?.favorites ?? 0
+  return { favorited, favorites: favorited ? base + 1 : Math.max(0, base - 1) }
 }
 
 export async function mockGetFeatured(): Promise<FeaturedItem[]> {
@@ -39,7 +82,10 @@ export async function mockGetFeatured(): Promise<FeaturedItem[]> {
 
 export async function mockGetTapTVItem(id: string): Promise<TapTVItem | undefined> {
   await delay()
-  return MOCK_TAPTV.find((t) => t.id === id)
+  const item = MOCK_TAPTV.find((t) => t.id === id)
+  if (!item) return undefined
+  const [mapped] = withLocalFlags([item])
+  return mapped
 }
 
 export async function mockGetTapTVWorkflow(id: string): Promise<CanvasProject | undefined> {

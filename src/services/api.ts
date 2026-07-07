@@ -15,14 +15,28 @@ export const getTapTV = USE_MOCK
 export const getTapTVItem = USE_MOCK ? mock.mockGetTapTVItem : real.getTapTVItem
 export const getTapTVWorkflow = USE_MOCK ? mock.mockGetTapTVWorkflow : real.getTapTVWorkflow
 
+/**
+ * 切换点赞。Mock：localStorage；真实：POST /api/taptv/:id/like
+ * 返回 liked 用于点亮卡片/详情页图标。
+ */
 export async function toggleTapTVLike(id: string) {
-  if (USE_MOCK) return { liked: true, likes: 0 }
+  if (USE_MOCK) return mock.mockToggleTapTVLike(id)
   return real.toggleTapTVLike(id)
 }
 
+/**
+ * 切换收藏。Mock：localStorage；真实：POST /api/taptv/:id/favorite
+ * 个人主页「我的收藏」列表来自 listTapTVFavorites。
+ */
 export async function toggleTapTVFavorite(id: string) {
-  if (USE_MOCK) return { favorited: true, favorites: 0 }
+  if (USE_MOCK) return mock.mockToggleTapTVFavorite(id)
   return real.toggleTapTVFavorite(id)
+}
+
+/** 我的收藏列表。Mock：过滤 localStorage；真实：GET /api/taptv/favorites */
+export async function listTapTVFavorites() {
+  if (USE_MOCK) return mock.mockListTapTVFavorites()
+  return real.listTapTVFavorites()
 }
 
 export async function recordTapTVShare(id: string) {

@@ -1,5 +1,5 @@
 /** TapTV 详情：紧凑视频 + 首屏作者信息 + 悬浮返回 */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { TapTVItem } from '../mock/data'
 import {
@@ -21,6 +21,7 @@ export function TapTVDetailPage() {
   const showToast = useToastStore((s) => s.showToast)
   const [item, setItem] = useState<TapTVItem | null>(null)
   const [following, setFollowing] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const reload = useCallback(async () => {
     if (!id) return
@@ -32,6 +33,15 @@ export function TapTVDetailPage() {
   useEffect(() => {
     void reload()
   }, [reload])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !item?.videoUrl) return
+    video.muted = true
+    void video.play().catch(() => {
+      /* 浏览器策略阻止时，用户可手动点击播放 */
+    })
+  }, [item?.videoUrl])
 
   const requireLogin = () => {
     if (getToken()) return true
@@ -115,10 +125,13 @@ export function TapTVDetailPage() {
             {d.back}
           </button>
           <video
+            ref={videoRef}
             className="taptv-detail-video"
             controls
+            autoPlay
+            muted
             playsInline
-            preload="metadata"
+            preload="auto"
             src={item.videoUrl}
           >
             <track kind="captions" />
@@ -151,7 +164,7 @@ export function TapTVDetailPage() {
                 className={`taptv-stat-btn ui-clickable ${item.likedByMe ? 'taptv-stat-btn--active' : ''}`}
                 onClick={() => void handleLike()}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={item.likedByMe ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
                   <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 {item.likes}
@@ -161,7 +174,7 @@ export function TapTVDetailPage() {
                 className={`taptv-stat-btn ui-clickable ${item.favoritedByMe ? 'taptv-stat-btn--active' : ''}`}
                 onClick={() => void handleFavorite()}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={item.favoritedByMe ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeLinejoin="round" />
                 </svg>
                 {item.favorites}

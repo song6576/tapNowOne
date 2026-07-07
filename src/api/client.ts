@@ -624,7 +624,9 @@ export async function agentStoryboard(
 }
 
 // ── Home / TapTV ──
+// 接口完整说明见 docs/API.md；数据库字段见 docs/SQL.md §7
 
+/** 后端 GET /api/home/featured 单条结构 */
 export type FeaturedBannerMeta = {
   id: string
   title: string
@@ -633,6 +635,10 @@ export type FeaturedBannerMeta = {
   link?: string
 }
 
+/**
+ * 后端 TapTV 作品 JSON（snake_case）。
+ * cover → 列表封面；video_url → 悬浮播放；liked_by_me / favorited_by_me 需登录才有意义。
+ */
 export type TapTVItemMeta = {
   id: string
   title: string
@@ -667,6 +673,7 @@ export function mapFeaturedItem(row: FeaturedBannerMeta): FeaturedItem {
   }
 }
 
+/** 将后端 snake_case 转为前端 TapTVItem（camelCase） */
 export function mapTapTVItem(row: TapTVItemMeta): TapTVItem {
   return {
     id: row.id,
@@ -712,6 +719,7 @@ function buildTapTVQuery(params?: TapTVListParams) {
   return s ? `?${s}` : ''
 }
 
+/** GET /api/home/featured — 首页精选轮播 */
 export async function listFeatured(): Promise<FeaturedItem[]> {
   const res = await fetch(`${API_BASE}/home/featured`)
   if (!res.ok) throw new Error(await parseError(res))
@@ -719,6 +727,11 @@ export async function listFeatured(): Promise<FeaturedItem[]> {
   return rows.map(mapFeaturedItem)
 }
 
+/**
+ * GET /api/taptv — 作品列表
+ * @param params.sort featured | following | hot | latest
+ * @param params.category 分类 slug，all 表示全部
+ */
 export async function listTapTV(params?: TapTVListParams): Promise<TapTVItem[]> {
   const res = await fetch(`${API_BASE}/taptv${buildTapTVQuery(params)}`, {
     headers: { ...authHeaders() },
@@ -728,6 +741,7 @@ export async function listTapTV(params?: TapTVListParams): Promise<TapTVItem[]> 
   return rows.map(mapTapTVItem)
 }
 
+/** GET /api/taptv/:id — 作品详情；404 返回 undefined */
 export async function getTapTVItem(id: string): Promise<TapTVItem | undefined> {
   const res = await fetch(`${API_BASE}/taptv/${id}`, {
     headers: { ...authHeaders() },
@@ -744,6 +758,21 @@ export async function getTapTVWorkflow(id: string): Promise<CanvasProject> {
   return res.json() as Promise<CanvasProject>
 }
 
+/**
+ * GET /api/taptv/favorites — 我的收藏（需登录）
+ * 后端查 taptv_favorite，按收藏时间倒序；用于 ProfilePage「我的收藏」
+ */
+export async function listTapTVFavorites(): Promise<TapTVItem[]> {
+  const res = await fetch(`${API_BASE}/taptv/favorites`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  const rows = (await res.json()) as TapTVItemMeta[]
+  return rows.map(mapTapTVItem)
+}
+
+/**
+ * POST /api/taptv/:id/like — 切换点赞
+ * @returns liked 当前是否已赞；likes 更新后总数（前端用于点亮图标）
+ */
 export async function toggleTapTVLike(id: string): Promise<{ liked: boolean; likes: number }> {
   const res = await fetch(`${API_BASE}/taptv/${id}/like`, {
     method: 'POST',
@@ -753,6 +782,10 @@ export async function toggleTapTVLike(id: string): Promise<{ liked: boolean; lik
   return res.json()
 }
 
+/**
+ * POST /api/taptv/:id/favorite — 切换收藏
+ * @returns favorited 当前是否已藏；favorites 更新后总数
+ */
 export async function toggleTapTVFavorite(id: string): Promise<{ favorited: boolean; favorites: number }> {
   const res = await fetch(`${API_BASE}/taptv/${id}/favorite`, {
     method: 'POST',
@@ -796,6 +829,10 @@ export type PublishTapTVPayload = {
   category?: string
 }
 
+/**
+ * POST /api/taptv/publish — 从画布发布作品
+ * coverUrl 写入 taptv_work.cover；videoUrl 用于列表悬浮播放
+ */
 export async function publishTapTV(payload: PublishTapTVPayload): Promise<{ id: string; title: string; message: string }> {
   const res = await fetch(`${API_BASE}/taptv/publish`, {
     method: 'POST',

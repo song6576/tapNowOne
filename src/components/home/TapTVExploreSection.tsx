@@ -1,17 +1,59 @@
 /** 首页探索 TapTV 区块：4 列卡片网格 + 查看全部 */
-import { memo } from 'react'
+import { memo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { TapTVItem } from '../../mock/data'
+import { toggleTapTVFavorite, toggleTapTVLike } from '../../services/api'
 import { useI18n } from '../../store/langStore'
+import { useToastStore } from '../../store/toastStore'
+import { getToken } from '../../utils/auth'
 import { TapTVCard } from '../taptv/TapTVCard'
 
 interface TapTVExploreSectionProps {
   items: TapTVItem[]
+  onItemsChange?: (items: TapTVItem[]) => void
 }
 
-export const TapTVExploreSection = memo(function TapTVExploreSection({ items }: TapTVExploreSectionProps) {
+export const TapTVExploreSection = memo(function TapTVExploreSection({
+  items,
+  onItemsChange,
+}: TapTVExploreSectionProps) {
   const navigate = useNavigate()
   const { t } = useI18n()
+  const showToast = useToastStore((s) => s.showToast)
+
+  const patchItem = useCallback(
+    (id: string, patch: Partial<TapTVItem>) => {
+      onItemsChange?.(items.map((item) => (item.id === id ? { ...item, ...patch } : item)))
+    },
+    [items, onItemsChange],
+  )
+
+  const requireLogin = () => {
+    if (getToken()) return true
+    showToast({ type: 'info', message: t.login.title })
+    navigate('/login')
+    return false
+  }
+
+  const handleLike = async (item: TapTVItem) => {
+    if (!requireLogin()) return
+    try {
+      const res = await toggleTapTVLike(item.id)
+      patchItem(item.id, { likedByMe: res.liked, likes: res.likes })
+    } catch (err: unknown) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : t.taptv.detail.loading })
+    }
+  }
+
+  const handleFavorite = async (item: TapTVItem) => {
+    if (!requireLogin()) return
+    try {
+      const res = await toggleTapTVFavorite(item.id)
+      patchItem(item.id, { favoritedByMe: res.favorited, favorites: res.favorites })
+    } catch (err: unknown) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : t.taptv.detail.loading })
+    }
+  }
 
   if (items.length === 0) return null
 
@@ -25,7 +67,13 @@ export const TapTVExploreSection = memo(function TapTVExploreSection({ items }: 
       </div>
       <div className="taptv-explore-grid">
         {items.slice(0, 8).map((item) => (
-          <TapTVCard key={item.id} item={item} onClick={() => navigate(`/taptv/${item.id}`)} />
+          <TapTVCard
+            key={item.id}
+            item={item}
+            onClick={() => navigate(`/taptv/${item.id}`)}
+            onLike={() => void handleLike(item)}
+            onFavorite={() => void handleFavorite(item)}
+          />
         ))}
       </div>
     </section>

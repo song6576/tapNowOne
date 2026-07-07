@@ -1,9 +1,12 @@
 /** 个人主页：背景横幅、资料侧栏、作品集与代表作 */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { TapTVCard } from '../components/taptv/TapTVCard'
 import { uploadBanner, uploadAvatar } from '../api/client'
 import { ProjectGridCard } from '../components/project/ProjectGridCard'
 import { NewProjectCard } from '../components/project/NewProjectCard'
+import type { TapTVItem } from '../mock/data'
+import { listTapTVFavorites, toggleTapTVFavorite, toggleTapTVLike } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import { useProfileStore } from '../store/profileStore'
 import { useWorkspaceStore } from '../store/workspaceStore'
@@ -53,6 +56,61 @@ export function ProfilePage() {
 
   const [mainTab, setMainTab] = useState<'portfolio' | 'saved'>('portfolio')
   const [contentTab, setContentTab] = useState<'works' | 'series'>('works')
+  const [favorites, setFavorites] = useState<TapTVItem[]>([])
+  const [favLoading, setFavLoading] = useState(false)
+
+  useEffect(() => {
+    if (mainTab !== 'saved' || !user) return
+    let cancelled = false
+    setFavLoading(true)
+    void listTapTVFavorites()
+      .then((list) => {
+        if (!cancelled) setFavorites(list)
+      })
+      .catch(() => {
+        if (!cancelled) setFavorites([])
+      })
+      .finally(() => {
+        if (!cancelled) setFavLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [mainTab, user])
+
+  const patchFavorite = (id: string, patch: Partial<TapTVItem>) => {
+    setFavorites((prev) => {
+      const next = prev.map((item) => (item.id === id ? { ...item, ...patch } : item))
+      if (patch.favoritedByMe === false) {
+        return next.filter((item) => item.id !== id)
+      }
+      return next
+    })
+  }
+
+  const handleFavoriteLike = async (item: TapTVItem) => {
+    if (!getToken()) {
+      navigate('/login')
+      return
+    }
+    try {
+      const res = await toggleTapTVLike(item.id)
+      patchFavorite(item.id, { likedByMe: res.liked, likes: res.likes })
+    } catch (err) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : p.savedEmpty })
+    }
+  }
+
+  const handleFavoriteToggle = async (item: TapTVItem) => {
+    if (!getToken()) {
+      navigate('/login')
+      return
+    }
+    try {
+      const res = await toggleTapTVFavorite(item.id)
+      patchFavorite(item.id, { favoritedByMe: res.favorited, favorites: res.favorites })
+    } catch (err) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : p.savedEmpty })
+    }
+  }
 
   const handleNewProject = async () => {
     if (!getToken()) {
@@ -189,17 +247,39 @@ export function ProfilePage() {
               </button>
               <button
                 type="button"
-                onClick={() => showToast({ type: 'info', message: p.savedLocked })}
-                className="profile-main-tab ui-clickable flex items-center gap-1.5 text-white/35"
+                onClick={() => setMainTab('saved')}
+                className={`profile-main-tab ui-clickable flex items-center gap-1.5 ${mainTab === 'saved' ? 'profile-main-tab--active' : ''}`}
               >
                 {p.tabSaved}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="5" y="11" width="14" height="10" rx="2" />
-                  <path d="M8 11V7a4 4 0 0 1 8 0v4" strokeLinecap="round" />
-                </svg>
               </button>
             </div>
 
+            {mainTab === 'saved' ? (
+              <section className="profile-saved mt-8">
+                {favLoading ? (
+                  <div className="profile-works-empty flex min-h-[200px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
+                    {t.taptv.detail.loading}
+                  </div>
+                ) : favorites.length === 0 ? (
+                  <div className="profile-works-empty flex min-h-[200px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
+                    {p.savedEmpty}
+                  </div>
+                ) : (
+                  <div className="taptv-explore-grid">
+                    {favorites.map((item) => (
+                      <TapTVCard
+                        key={item.id}
+                        item={item}
+                        onClick={() => navigate(`/taptv/${item.id}`)}
+                        onLike={() => void handleFavoriteLike(item)}
+                        onFavorite={() => void handleFavoriteToggle(item)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : (
+              <>
             <section className="profile-featured mt-8">
               <h2 className="text-sm font-medium text-white/70">{p.featuredWorks} (0/3)</h2>
               <div className="profile-featured-empty mt-4">
@@ -276,6 +356,8 @@ export function ProfilePage() {
                 </div>
               )}
             </section>
+              </>
+            )}
           </div>
         </div>
       </div>

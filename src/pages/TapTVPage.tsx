@@ -1,5 +1,5 @@
 /** TapTV 列表：排序 Tab、分类 Pills、搜索、发布弹窗 */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TabBar } from '../components/ui/TabBar'
 import { SearchInput } from '../components/ui/SearchInput'
@@ -7,7 +7,7 @@ import { FilterPills } from '../components/ui/FilterPills'
 import { TapTVCard } from '../components/taptv/TapTVCard'
 import { PublishModal } from '../components/taptv/PublishModal'
 import { TAPTV_CATEGORY_IDS, type TapTVCategory, type TapTVItem, type TapTVSort } from '../mock/data'
-import { getTapTV } from '../services/api'
+import { getTapTV, toggleTapTVFavorite, toggleTapTVLike } from '../services/api'
 import { useI18n } from '../store/langStore'
 import { useToastStore } from '../store/toastStore'
 import { getToken } from '../utils/auth'
@@ -65,6 +65,37 @@ export function TapTVPage() {
     label: tv.categories[id],
   }))
 
+  const patchItem = useCallback((id: string, patch: Partial<TapTVItem>) => {
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)))
+  }, [])
+
+  const requireLogin = () => {
+    if (getToken()) return true
+    showToast({ type: 'info', message: t.login.title })
+    navigate('/login')
+    return false
+  }
+
+  const handleLike = async (item: TapTVItem) => {
+    if (!requireLogin()) return
+    try {
+      const res = await toggleTapTVLike(item.id)
+      patchItem(item.id, { likedByMe: res.liked, likes: res.likes })
+    } catch (err: unknown) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : tv.detail.loading })
+    }
+  }
+
+  const handleFavorite = async (item: TapTVItem) => {
+    if (!requireLogin()) return
+    try {
+      const res = await toggleTapTVFavorite(item.id)
+      patchItem(item.id, { favoritedByMe: res.favorited, favorites: res.favorites })
+    } catch (err: unknown) {
+      showToast({ type: 'info', message: err instanceof Error ? err.message : tv.detail.loading })
+    }
+  }
+
   return (
     <main className="home-page flex-1 overflow-y-auto">
       <div className="home-section-pad py-6 md:py-8">
@@ -92,7 +123,13 @@ export function TapTVPage() {
         ) : (
           <div className="taptv-explore-grid">
             {items.map((item) => (
-              <TapTVCard key={item.id} item={item} onClick={() => navigate(`/taptv/${item.id}`)} />
+              <TapTVCard
+                key={item.id}
+                item={item}
+                onClick={() => navigate(`/taptv/${item.id}`)}
+                onLike={() => void handleLike(item)}
+                onFavorite={() => void handleFavorite(item)}
+              />
             ))}
           </div>
         )}
