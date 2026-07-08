@@ -57,13 +57,13 @@ export const ProjectGridCard = memo(function ProjectGridCard({
         </WorkspaceCoverThumb>
 
         {isHome ? (
-          <div className="p-3">
-            <h3 className="truncate text-sm font-medium text-white/90">{project.name}</h3>
-            <p className="mt-1 text-xs text-white/35">
+          <div className="home-project-card-footer">
+            <h3 className="home-project-card-title">{project.name}</h3>
+            <p className="home-project-card-meta">
               {editedAtLabel} {formatRelativeTime(project.updatedAt)}
             </p>
             {showTag && (
-              <span className="home-project-tag mt-3 inline-flex items-center gap-1">
+              <span className="home-project-tag mt-2.5 inline-flex items-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

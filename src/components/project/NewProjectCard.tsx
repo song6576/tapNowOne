@@ -27,8 +27,8 @@ export const NewProjectCard = memo(function NewProjectCard({
             </svg>
           </span>
         </div>
-        <div className="home-project-new-footer p-3">
-          <h3 className="truncate text-sm font-medium text-white/90">{label}</h3>
+        <div className="home-project-new-footer">
+          <h3 className="home-project-card-title">{label}</h3>
         </div>
       </button>
     )

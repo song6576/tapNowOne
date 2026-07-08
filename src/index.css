@@ -25,6 +25,15 @@
   --home-hero-w: 960px;
   --home-wide-w: min(1920px, max(1200px, calc(100vw - var(--home-side-pad) * 2)));
   --home-grid-gap: clamp(14px, 1vw, 20px);
+  /* 首页层级：背景 / 卡片 / 输入框，拉开与纯黑的对比 */
+  --home-bg: #0c0c11;
+  --home-surface: #1a1a20;
+  --home-surface-hover: #22222a;
+  --home-surface-footer: #16161c;
+  --home-surface-inset: #141418;
+  --home-border: rgba(255, 255, 255, 0.11);
+  --home-border-strong: rgba(255, 255, 255, 0.16);
+  --home-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 * { box-sizing: border-box; }
@@ -239,9 +248,22 @@ html, body, #root {
 
 /* ── Home page — TapNow style ── */
 .home-page {
-  background-color: #000;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-color: var(--home-bg);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.11) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+
+.home-hero-badge {
+  display: flex;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--home-border);
+  background: var(--home-surface);
+  box-shadow: var(--home-shadow);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .home-topnav-tab {
@@ -329,13 +351,17 @@ html, body, #root {
 
 .home-prompt-box {
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  transition: border-color 0.2s, background 0.2s;
+  border: 1px solid var(--home-border);
+  background: var(--home-surface);
+  box-shadow: var(--home-shadow);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 .home-prompt-box:focus-within {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--home-border-strong);
+  background: var(--home-surface-hover);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 .home-prompt-input {
@@ -349,7 +375,7 @@ html, body, #root {
   line-height: 1.5;
   outline: none;
 }
-.home-prompt-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+.home-prompt-input::placeholder { color: rgba(255, 255, 255, 0.42); }
 
 .home-prompt-toolbar {
   display: flex;
@@ -391,14 +417,17 @@ html, body, #root {
   width: 36px;
   align-items: center;
   justify-content: center;
-  border: none;
+  border: 1px solid var(--home-border);
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
-.home-prompt-submit:hover { background: rgba(255, 255, 255, 0.18); }
+.home-prompt-submit:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: var(--home-border-strong);
+}
 
 /* Model dropdown */
 .model-dropdown-trigger {
@@ -407,13 +436,13 @@ html, body, #root {
   gap: 8px;
   padding: 6px 12px 6px 8px;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--home-border);
+  background: var(--home-surface-inset);
+  color: rgba(255, 255, 255, 0.88);
 }
 .model-dropdown-trigger:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--home-border-strong);
+  background: rgba(255, 255, 255, 0.08);
 }
 .model-dropdown-trigger--compact {
   padding: 4px 10px 4px 6px;
@@ -705,15 +734,19 @@ html, body, #root {
 
 .home-project-card {
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: #131316;
+  border: 1px solid var(--home-border);
+  background: var(--home-surface);
+  box-shadow: var(--home-shadow);
   overflow: hidden;
-  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .home-project-card:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: var(--home-border-strong);
+  background: var(--home-surface-hover);
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 14px 36px rgba(0, 0, 0, 0.42);
 }
 .home-project-card > button,
 .home-project-card.home-project-card--new {
@@ -729,28 +762,29 @@ html, body, #root {
 .home-project-card.home-project-card--new {
   border-radius: 12px;
   overflow: hidden;
-  background: #131316;
+  background: var(--home-surface);
 }
 .home-project-card--new:hover {
-  background: #16161b;
+  background: var(--home-surface-hover);
 }
 
 /* ── New project card (home) ── */
 .home-project-new {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--home-surface);
 }
 .home-project-new:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--home-border-strong);
+  background: var(--home-surface-hover);
 }
 .home-project-new-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--home-surface-inset);
 }
 .home-project-new-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--home-surface-footer);
 }
 .home-project-new .home-project-new-icon {
   width: 52px;
@@ -771,7 +805,7 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   aspect-ratio: 1.65 / 1;
-  background: #1a1a1f;
+  background: var(--home-surface-inset);
 }
 .home-project-new-icon {
   display: flex;
@@ -796,7 +830,8 @@ html, body, #root {
 .home-project-card-footer {
   width: 100%;
   padding: 9px 11px 10px;
-  background: #131316;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--home-surface-footer);
 }
 .home-project-card-title {
   overflow: hidden;
@@ -805,13 +840,13 @@ html, body, #root {
   font-size: 12px;
   font-weight: 500;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.94);
 }
 .home-project-card-meta {
   margin-top: 2px;
   font-size: 10px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.36);
+  color: rgba(255, 255, 255, 0.48);
 }
 .home-project-card-meta-sep {
   margin: 0 5px;
@@ -830,7 +865,7 @@ html, body, #root {
   width: 100%;
   aspect-ratio: 1.65 / 1;
   overflow: hidden;
-  background: #101014;
+  background: var(--home-surface-inset);
   isolation: isolate;
 }
 .workspace-cover-thumb--list {
@@ -920,7 +955,7 @@ html, body, #root {
   width: 100%;
   aspect-ratio: 1.65 / 1;
   overflow: hidden;
-  background: #101014;
+  background: var(--home-surface-inset);
 }
 .folder-stack-preview__bg {
   position: absolute;
@@ -1002,11 +1037,11 @@ html, body, #root {
 
 .home-project-tag {
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
   padding: 4px 10px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.68);
 }
 
 /* ── Project card context menu ── */
