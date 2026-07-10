@@ -1,6 +1,6 @@
 /** 首页 AI 进入画布时的右侧 Agent 面板（可拖拽调宽） */
 import { AgentChat } from '../AgentChat'
-import { AI_MODEL_OPTIONS } from '../../config/agentModels'
+import { DEFAULT_AGENT_MODEL } from '../../types/aiModel'
 import { useI18n } from '../../store/langStore'
 import { usePanelResize } from '../../hooks/usePanelResize'
 
@@ -17,7 +17,7 @@ interface CanvasAgentPanelProps {
 export function CanvasAgentPanel({
   projectId,
   initialPrompt,
-  modelId = AI_MODEL_OPTIONS[0].id,
+  modelId = DEFAULT_AGENT_MODEL,
   autoModel = true,
   onModelChange,
   onAutoModelChange,

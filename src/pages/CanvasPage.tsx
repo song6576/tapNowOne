@@ -18,7 +18,7 @@ import { getProject as fetchCloudProject, uploadProjectAsset } from '../api/clie
 import { getToken } from '../utils/auth'
 import { useToastStore } from '../store/toastStore'
 import { nodePositionAtCursor } from '../utils/canvasLayout'
-import { AI_MODEL_OPTIONS } from '../config/agentModels'
+import { DEFAULT_AGENT_MODEL } from '../types/aiModel'
 import { useI18n } from '../store/langStore'
 
 type CanvasNavState = {
@@ -37,7 +37,7 @@ function readAgentNav(state: CanvasNavState) {
   return {
     open: !!(state?.openAgentPanel || state?.initialPrompt?.trim()),
     prompt: state?.initialPrompt?.trim() || undefined,
-    modelId: state?.modelId ?? AI_MODEL_OPTIONS[0].id,
+    modelId: state?.modelId ?? DEFAULT_AGENT_MODEL,
     autoModel: state?.autoModel ?? true,
   }
 }

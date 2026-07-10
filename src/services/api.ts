@@ -6,6 +6,7 @@ import { USE_MOCK } from '../config'
 import * as mock from '../mock/api'
 import * as real from '../api/client'
 import type { TapTVCategory, TapTVSort } from '../mock/data'
+import { FALLBACK_AI_MODELS } from '../types/aiModel'
 
 export const listProjects = USE_MOCK ? mock.mockListProjects : real.listProjects
 export const getFeatured = USE_MOCK ? mock.mockGetFeatured : real.listFeatured
@@ -116,3 +117,9 @@ export async function composeVideo(clips: real.ComposeClip[], audioUrl?: string)
 }
 
 export { USE_MOCK }
+
+/** AI 模型目录；Mock 模式返回内置回退数据 */
+export async function getAiModels(params?: { category?: string; node_type?: string }) {
+  if (USE_MOCK) return Promise.resolve(FALLBACK_AI_MODELS)
+  return real.fetchAiModels(params)
+}

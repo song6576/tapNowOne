@@ -1,6 +1,6 @@
 /** 节点下方小型生成对话框：百炼 Agent 模型 + Auto，与首页一致 */
 import { useEffect, useState } from 'react'
-import { AI_MODEL_OPTIONS } from '../../config/agentModels'
+import { DEFAULT_AGENT_MODEL } from '../../types/aiModel'
 import { useCanvasStore } from '../../store/canvasStore'
 import { useI18n } from '../../store/langStore'
 import { ModelDropdown } from '../ui/ModelDropdown'
@@ -20,7 +20,7 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
   const [generating, setGenerating] = useState(false)
   const [prompt, setPrompt] = useState(data.prompt || '')
 
-  const modelId = data.model ?? AI_MODEL_OPTIONS[0].id
+  const modelId = data.model ?? DEFAULT_AGENT_MODEL
   const autoModel = data.autoModel !== false
   const isGenerative = type === 'image' || type === 'video' || type === 'audio'
   const showModelPicker = type !== 'group'
@@ -85,6 +85,9 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
               onChange={(id) => updateNodeData(nodeId, { model: id })}
               auto={autoModel}
               onAutoChange={(next) => updateNodeData(nodeId, { autoModel: next })}
+              nodeType={type}
+              category={type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'text'}
+              align="right"
             />
           ) : (
             <span className="node-inline-editor-model">Group</span>

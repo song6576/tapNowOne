@@ -1,7 +1,7 @@
 /** 节点属性面板：prompt/模型编辑、单节点生成 */
 import { useState } from 'react'
 import { useCanvasStore } from '../store/canvasStore'
-import { AI_MODEL_OPTIONS } from '../config/agentModels'
+import { DEFAULT_AGENT_MODEL } from '../types/aiModel'
 import { ModelDropdown } from './ui/ModelDropdown'
 import { NODE_META, type NodeType } from '../types'
 
@@ -41,7 +41,7 @@ export function PropertyPanel({ embedded }: PropertyPanelProps) {
   const data = selectedNode.data
   const canGenerate = type !== 'text' && type !== 'group'
   const showModelPicker = type !== 'group'
-  const modelId = data.model ?? AI_MODEL_OPTIONS[0].id
+  const modelId = data.model ?? DEFAULT_AGENT_MODEL
   const autoModel = data.autoModel !== false
   const isGenerating = data.status === 'generating' || generating
   const upstreamCount = edges.filter((e) => e.target === selectedNode.id).length
@@ -96,6 +96,9 @@ export function PropertyPanel({ embedded }: PropertyPanelProps) {
               onChange={(id) => updateNodeData(selectedNode.id, { model: id })}
               auto={autoModel}
               onAutoChange={(next) => updateNodeData(selectedNode.id, { autoModel: next })}
+              nodeType={type}
+              category={type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'text'}
+              align="right"
             />
           </div>
         )}

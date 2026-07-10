@@ -5,6 +5,7 @@
 import { authHeaders } from '../utils/auth'
 import type { User } from '../utils/auth'
 import type { CanvasProject } from '../types'
+import type { AiModelsResponse } from '../types/aiModel'
 import type { FeaturedItem, TapTVCategory, TapTVItem, TapTVSort } from '../mock/data'
 
 export type GeneratePayload = {
@@ -717,6 +718,20 @@ function buildTapTVQuery(params?: TapTVListParams) {
   if (params?.page) q.set('page', String(params.page))
   const s = q.toString()
   return s ? `?${s}` : ''
+}
+
+/** GET /api/models — AI 模型目录（按分类 / 节点类型过滤） */
+export async function fetchAiModels(params?: {
+  category?: string
+  node_type?: string
+}): Promise<AiModelsResponse> {
+  const q = new URLSearchParams()
+  if (params?.category) q.set('category', params.category)
+  if (params?.node_type) q.set('node_type', params.node_type)
+  const qs = q.toString()
+  const res = await fetch(`${API_BASE}/models${qs ? `?${qs}` : ''}`)
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
 }
 
 /** GET /api/home/featured — 首页精选轮播 */

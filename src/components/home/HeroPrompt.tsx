@@ -1,14 +1,14 @@
 /** 首页 Hero：输入 prompt + 选模型，创建项目并带 initialPrompt 跳转画布 */
 import { memo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AI_MODEL_OPTIONS } from '../../config/agentModels'
+import { DEFAULT_AGENT_MODEL } from '../../types/aiModel'
 import { ModelDropdown } from '../ui/ModelDropdown'
 import { useI18n } from '../../store/langStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 
 export const HeroPrompt = memo(function HeroPrompt() {
   const [prompt, setPrompt] = useState('')
-  const [modelId, setModelId] = useState(AI_MODEL_OPTIONS[0].id)
+  const [modelId, setModelId] = useState(DEFAULT_AGENT_MODEL)
   const [autoModel, setAutoModel] = useState(true)
   const navigate = useNavigate()
   const { t } = useI18n()
@@ -57,13 +57,15 @@ export const HeroPrompt = memo(function HeroPrompt() {
           className="home-prompt-input"
         />
         <div className="home-prompt-toolbar">
-          <ModelDropdown
-            value={modelId}
-            onChange={setModelId}
-            auto={autoModel}
-            onAutoChange={setAutoModel}
-          />
+          <div className="home-prompt-toolbar-spacer" aria-hidden />
           <div className="home-prompt-actions">
+            <ModelDropdown
+              value={modelId}
+              onChange={setModelId}
+              auto={autoModel}
+              onAutoChange={setAutoModel}
+              align="right"
+            />
             <button
               type="button"
               className="home-prompt-icon-btn"

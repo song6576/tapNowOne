@@ -1,4 +1,5 @@
-/** Google 登录：透明 overlay 覆盖官方按钮样式 */
+/** Google 登录：自定义外观 + 透明官方按钮覆盖层接收点击 */
+import { useEffect, useRef, useState } from 'react'
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 
 type Props = {
@@ -20,6 +21,36 @@ function GoogleIcon() {
 }
 
 export function GoogleSignInButton({ label, disabled, onSuccess, onError }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [buttonWidth, setButtonWidth] = useState(320)
+  const reportedLoadError = useRef(false)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const syncWidth = () => setButtonWidth(Math.max(Math.floor(el.offsetWidth), 200))
+    syncWidth()
+
+    const observer = new ResizeObserver(syncWidth)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (disabled) return
+
+    const timer = window.setTimeout(() => {
+      const iframe = containerRef.current?.querySelector('iframe')
+      if (!iframe && !reportedLoadError.current) {
+        reportedLoadError.current = true
+        onError('无法加载 Google 登录服务，请检查网络或开启 VPN 后刷新页面')
+      }
+    }, 6000)
+
+    return () => window.clearTimeout(timer)
+  }, [disabled, onError])
+
   const handleSuccess = (response: CredentialResponse) => {
     if (!response.credential) {
       onError('Google 登录失败，未获取到凭证')
@@ -29,23 +60,26 @@ export function GoogleSignInButton({ label, disabled, onSuccess, onError }: Prop
   }
 
   return (
-    <div className={`relative w-full ${disabled ? 'pointer-events-none opacity-50' : ''}`}>
+    <div
+      ref={containerRef}
+      className={`relative h-[52px] w-full ${disabled ? 'pointer-events-none opacity-50' : ''}`}
+    >
       <div
         aria-hidden
-        className="flex h-[52px] w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[15px] text-white"
+        className="pointer-events-none flex h-full w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[15px] text-white"
       >
         <GoogleIcon />
         {label}
       </div>
-      <div className="absolute inset-0 overflow-hidden rounded-full opacity-[0.011]">
+      <div className="absolute inset-0 z-10 overflow-hidden rounded-full opacity-0">
         <GoogleLogin
           onSuccess={handleSuccess}
-          onError={() => onError('Google 登录失败')}
+          onError={() => onError('Google 登录失败，请确认已勾选协议且网络可访问 Google')}
           useOneTap={false}
           theme="outline"
           size="large"
           shape="pill"
-          width="400"
+          width={String(buttonWidth)}
           text="continue_with"
         />
       </div>

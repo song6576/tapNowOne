@@ -1,7 +1,7 @@
 /** Agent 对话面板：普通聊天、分镜指令、Run Workflow */
 import { useCanvasStore } from '../store/canvasStore'
 import { agentChat, agentStoryboard } from '../services/api'
-import { AI_MODEL_OPTIONS } from '../config/agentModels'
+import { DEFAULT_AGENT_MODEL } from '../types/aiModel'
 import { buildCanvasContext } from '../utils/workflow'
 import { ModelDropdown } from './ui/ModelDropdown'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -13,7 +13,7 @@ export function AgentChat({
   variant = 'default',
   projectId,
   initialPrompt,
-  modelId = AI_MODEL_OPTIONS[0].id,
+  modelId = DEFAULT_AGENT_MODEL,
   autoModel = true,
   onModelChange,
   onAutoModelChange,

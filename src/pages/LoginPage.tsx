@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { TapNowLogo } from '../components/auth/TapNowLogo'
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton'
 import { LanguageDropdown } from '../components/ui/LanguageDropdown'
+import { GOOGLE_CLIENT_ID } from '../config'
 import { useAuthStore } from '../store/authStore'
 import { useI18n } from '../store/langStore'
 import { useToastStore } from '../store/toastStore'
@@ -78,6 +80,7 @@ export function LoginPage() {
 
   const login = useAuthStore((s) => s.login)
   const register = useAuthStore((s) => s.register)
+  const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
   const loading = useAuthStore((s) => s.loading)
   const showToast = useToastStore((s) => s.showToast)
   const navigate = useNavigate()
@@ -100,6 +103,22 @@ export function LoginPage() {
   const requireTerms = () => {
     showToast({ type: 'warning', message: t.agreeTerms })
     return false
+  }
+
+  const handleGoogleSuccess = async (credential: string) => {
+    if (!agreed) {
+      requireTerms()
+      return
+    }
+    try {
+      await loginWithGoogle(credential)
+      successAndRedirect(t.loginSuccess)
+    } catch (err) {
+      showToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : t.googleFailed,
+      })
+    }
   }
 
   const handleEmailContinue = (e: React.FormEvent) => {
@@ -181,14 +200,23 @@ export function LoginPage() {
 
           {step === 'main' && (
             <div className="mt-10 space-y-3">
-              <button
-                type="button"
-                className={`${outlineBtn} opacity-60`}
-                onClick={() => showToast({ type: 'info', message: t.comingSoon })}
-              >
-                <GoogleIcon />
-                {t.google}
-              </button>
+              {GOOGLE_CLIENT_ID ? (
+                <GoogleSignInButton
+                  label={t.google}
+                  disabled={loading}
+                  onSuccess={handleGoogleSuccess}
+                  onError={(message) => showToast({ type: 'error', message: message || t.googleFailed })}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={outlineBtn}
+                  onClick={() => showToast({ type: 'info', message: t.comingSoon })}
+                >
+                  <GoogleIcon />
+                  {t.google}
+                </button>
+              )}
 
               {loginMethod === 'email' ? (
                 <button type="button" className={outlineBtn} onClick={switchToPhone}>

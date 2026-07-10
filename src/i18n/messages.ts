@@ -59,6 +59,12 @@ export type Messages = {
       subscribe: string
       comingSoon: string
       howToChoose: string
+      categoryText: string
+      categoryVideo: string
+      categoryAudio: string
+      tierHigh: string
+      tierMedium: string
+      premiumHint: string
     }
   }
   workspace: {
@@ -563,6 +569,12 @@ const zh: Messages = {
       subscribe: '订阅解锁',
       comingSoon: '即将上线',
       howToChoose: '如何选择模型？',
+      categoryText: '文本模型',
+      categoryVideo: '视频模型',
+      categoryAudio: '语音模型',
+      tierHigh: '高',
+      tierMedium: '中',
+      premiumHint: '使用该模型可能会产生较高消耗。',
     },
   },
   workspace: {
@@ -1089,6 +1101,12 @@ const en: Messages = {
       subscribe: 'Subscribe to unlock',
       comingSoon: 'Coming soon',
       howToChoose: 'How to choose a model?',
+      categoryText: 'Text models',
+      categoryVideo: 'Video models',
+      categoryAudio: 'Audio models',
+      tierHigh: 'High',
+      tierMedium: 'Med',
+      premiumHint: 'This model may consume more Tapies.',
     },
   },
   workspace: {
