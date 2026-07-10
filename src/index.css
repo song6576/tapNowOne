@@ -162,6 +162,21 @@ html, body, #root {
 .login-page .login-primary-btn:hover:not(:disabled) { background: #4a7280; }
 .login-page .login-primary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+/* Google 登录：拉伸官方 iframe 至整行可点区域（避免仅 40px 高导致难点中） */
+.google-signin-overlay > div {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.google-signin-overlay iframe {
+  width: 100% !important;
+  min-height: 52px !important;
+  height: 52px !important;
+  cursor: pointer;
+}
+
 /* iOS-style terms checkbox */
 .login-terms-checkbox {
   display: flex;

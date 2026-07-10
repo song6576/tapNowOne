@@ -106,10 +106,6 @@ export function LoginPage() {
   }
 
   const handleGoogleSuccess = async (credential: string) => {
-    if (!agreed) {
-      requireTerms()
-      return
-    }
     try {
       await loginWithGoogle(credential)
       successAndRedirect(t.loginSuccess)
@@ -204,6 +200,8 @@ export function LoginPage() {
                 <GoogleSignInButton
                   label={t.google}
                   disabled={loading}
+                  blockInteraction={!agreed}
+                  onBlockInteraction={requireTerms}
                   onSuccess={handleGoogleSuccess}
                   onError={(message) => showToast({ type: 'error', message: message || t.googleFailed })}
                 />

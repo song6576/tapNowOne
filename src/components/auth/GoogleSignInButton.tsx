@@ -5,6 +5,9 @@ import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 type Props = {
   label: string
   disabled?: boolean
+  /** 为 true 时拦截点击（例如未勾选协议） */
+  blockInteraction?: boolean
+  onBlockInteraction?: () => void
   onSuccess: (credential: string) => void
   onError: (message: string) => void
 }
@@ -20,7 +23,14 @@ function GoogleIcon() {
   )
 }
 
-export function GoogleSignInButton({ label, disabled, onSuccess, onError }: Props) {
+export function GoogleSignInButton({
+  label,
+  disabled,
+  blockInteraction,
+  onBlockInteraction,
+  onSuccess,
+  onError,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [buttonWidth, setButtonWidth] = useState(320)
   const reportedLoadError = useRef(false)
@@ -66,23 +76,35 @@ export function GoogleSignInButton({ label, disabled, onSuccess, onError }: Prop
     >
       <div
         aria-hidden
-        className="pointer-events-none flex h-full w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[15px] text-white"
+        className="pointer-events-none flex h-full w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[15px] text-white transition hover:border-white/35 hover:bg-white/[0.03]"
       >
         <GoogleIcon />
         {label}
       </div>
-      <div className="absolute inset-0 z-10 overflow-hidden rounded-full opacity-0">
+      <div className="google-signin-overlay absolute inset-0 z-10 overflow-hidden rounded-full opacity-[0.01]">
         <GoogleLogin
           onSuccess={handleSuccess}
-          onError={() => onError('Google 登录失败，请确认已勾选协议且网络可访问 Google')}
+          onError={() => onError('Google 登录失败，请确认网络可访问 Google')}
           useOneTap={false}
           theme="outline"
           size="large"
           shape="pill"
           width={String(buttonWidth)}
           text="continue_with"
+          containerProps={{
+            className: 'flex h-full w-full items-center justify-center',
+            style: { height: '100%', width: '100%' },
+          }}
         />
       </div>
+      {blockInteraction && !disabled && (
+        <button
+          type="button"
+          aria-label={label}
+          className="absolute inset-0 z-20 cursor-pointer rounded-full border-0 bg-transparent p-0"
+          onClick={onBlockInteraction}
+        />
+      )}
     </div>
   )
 }
