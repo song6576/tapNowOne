@@ -3134,6 +3134,62 @@ html, body, #root {
   font-size: 13px;
   font-weight: 500;
 }
+
+/* 企业版 Custom 套餐 + Logo 跑马灯 */
+.enterprise-plan-card {
+  display: grid;
+  gap: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+@media (min-width: 900px) {
+  .enterprise-plan-card {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.enterprise-plan-left {
+  padding: 32px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+}
+.enterprise-plan-right {
+  padding: 32px 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+@media (min-width: 900px) {
+  .enterprise-plan-right {
+    border-top: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+.enterprise-marquee {
+  margin-top: auto;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  padding: 16px 0 4px;
+}
+.enterprise-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 32px;
+  animation: enterprise-marquee-scroll 28s linear infinite;
+}
+.enterprise-marquee-item {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+@keyframes enterprise-marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 .recharge-card {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);

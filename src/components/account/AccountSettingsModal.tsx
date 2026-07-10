@@ -7,15 +7,17 @@ import {
   AccountPlaceholderView,
   AgentTutorialsView,
   BillingView,
-  ModelMarketView,
   PersonalSettingsView,
+  TeamSettingsView,
+  UsageView,
+} from './AccountViews'
+import {
+  ModelMarketView,
   RechargeView,
   RewardsView,
   SubscriptionView,
   TeamBenefitsView,
-  TeamSettingsView,
-  UsageView,
-} from './AccountViews'
+} from './AccountBillingViews'
 import { useAuthStore } from '../../store/authStore'
 import { useProfileStore, type AccountNavId } from '../../store/profileStore'
 import { useTeamStore, PERSONAL_TEAM_ID } from '../../store/teamStore'
@@ -121,7 +123,7 @@ export function AccountSettingsModal() {
       case 'recharge':
         return <RechargeView user={user} balance={tapiesBalance} />
       case 'teamBenefits':
-        return <TeamBenefitsView team={activeTeam} balance={tapiesBalance} />
+        return <TeamBenefitsView balance={tapiesBalance} onNavigate={setAccountNav} />
       case 'rewards':
         return <RewardsView />
       case 'billing':

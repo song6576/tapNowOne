@@ -865,3 +865,200 @@ export async function publishTapTV(payload: PublishTapTVPayload): Promise<{ id: 
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
 }
+
+// ── Billing 计费 ──
+// 接口说明见 backend-nest/docs/API.md
+
+export type BillingCycle = 'monthly' | 'yearly' | 'enterprise'
+
+export type ProTierMeta = {
+  tapies: number
+  label: string
+  price_cny: number
+  original_cny: number
+}
+
+export type PlanMeta = {
+  slug: string
+  name: string
+  tagline: string
+  price_cny: number
+  original_cny: number
+  billing_note: string
+  monthly_tapies: number
+  recharge_rate: string
+  recharge_bonus_pct: number
+  badge?: string
+  highlight?: boolean
+  pro_tiers?: ProTierMeta[]
+}
+
+export type EnterprisePlanMeta = {
+  slug: string
+  name: string
+  headline: string
+  subtitle: string
+  features: string[]
+  partner_logos: { name: string; label: string }[]
+  contact_cta: string
+}
+
+export type GiftPackMeta = {
+  id: string
+  model_name: string
+  tier: string
+  price_usd: number
+  price_display: string
+  tapies_amount: number
+  tapies_label: string
+  bg_gradient: string
+  stock_total: number
+  stock_remaining: number
+}
+
+export type TeamBenefitsMeta = {
+  scope: 'personal' | 'team'
+  team_id: string | null
+  public_id: string | null
+  name: string
+  tapies_balance: number
+  plan_slug: string
+  plan_name: string
+  cycle: string | null
+  pro_tapies: number | null
+  quotas: {
+    user_id: number
+    name: string
+    email: string
+    role: string
+    quota_used: number
+    quota_limit: number | null
+    unlimited: boolean
+  }[]
+}
+
+export type RedemptionRecordMeta = {
+  code: string
+  activity: string
+  time: string
+  points: number
+}
+
+export type TransactionMeta = {
+  id: string
+  time: string
+  type: string
+  desc: string
+  operator: string
+  amount: string
+  status: string
+}
+
+/** GET /api/billing/plans?cycle= */
+export async function listBillingPlans(cycle: BillingCycle) {
+  const res = await fetch(`${API_BASE}/billing/plans?cycle=${cycle}`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json() as Promise<{
+    cycle: BillingCycle
+    plans: PlanMeta[]
+    enterprise: EnterprisePlanMeta | null
+  }>
+}
+
+/** GET /api/billing/gift-packs */
+export async function listGiftPacks(): Promise<GiftPackMeta[]> {
+  const res = await fetch(`${API_BASE}/billing/gift-packs`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** GET /api/billing/team-benefits?team_id= */
+export async function getTeamBenefits(teamId?: string | null): Promise<TeamBenefitsMeta> {
+  const q = teamId ? `?team_id=${encodeURIComponent(teamId)}` : ''
+  const res = await fetch(`${API_BASE}/billing/team-benefits${q}`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** POST /api/billing/subscribe */
+export async function subscribePlan(payload: {
+  plan_slug: string
+  cycle: BillingCycle
+  pro_tapies?: number
+  team_id?: string
+}) {
+  const res = await fetch(`${API_BASE}/billing/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** POST /api/billing/recharge */
+export async function rechargeTapies(payload: { tapies_amount: number; team_id?: string }) {
+  const res = await fetch(`${API_BASE}/billing/recharge`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** POST /api/billing/gift-packs/:id/purchase */
+export async function purchaseGiftPack(id: string, teamId?: string) {
+  const res = await fetch(`${API_BASE}/billing/gift-packs/${id}/purchase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ team_id: teamId }),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** GET /api/billing/rewards/history */
+export async function listRedemptionHistory(): Promise<RedemptionRecordMeta[]> {
+  const res = await fetch(`${API_BASE}/billing/rewards/history`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** POST /api/billing/rewards/redeem */
+export async function redeemCode(payload: { code: string; team_id?: string }) {
+  const res = await fetch(`${API_BASE}/billing/rewards/redeem`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** POST /api/billing/rewards/generate — 临时生成兑换码（验证用） */
+export async function generateRedemptionCode(payload: {
+  activity_name: string
+  tapies_amount: number
+  max_uses?: number
+  expires_days?: number
+}) {
+  const res = await fetch(`${API_BASE}/billing/rewards/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** GET /api/billing/transactions */
+export async function listBillingTransactions(params?: { page?: number; team_id?: string }) {
+  const q = new URLSearchParams()
+  if (params?.page) q.set('page', String(params.page))
+  if (params?.team_id) q.set('team_id', params.team_id)
+  const s = q.toString()
+  const res = await fetch(`${API_BASE}/billing/transactions${s ? `?${s}` : ''}`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json() as Promise<{ total: number; page: number; items: TransactionMeta[] }>
+}
