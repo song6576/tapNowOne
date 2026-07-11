@@ -13,6 +13,7 @@ import { useWorkspaceStore } from '../store/workspaceStore'
 import { useI18n } from '../store/langStore'
 import { useToastStore } from '../store/toastStore'
 import { getToken } from '../utils/auth'
+import type { AppLang } from '../utils/lang'
 
 function ProfileAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
   if (avatarUrl) {
@@ -28,6 +29,19 @@ function ProfileAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string |
 
 const DEFAULT_BANNER = 'linear-gradient(135deg, #1a1a1e 0%, #2d2d35 50%, #1a1a1e 100%)'
 
+function formatJoinDate(value: string, lang: AppLang, label: string): string | null {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  const locale = lang === 'zh' ? 'zh-CN' : lang
+  const formatted = new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'long',
+  }).format(date)
+
+  return lang === 'zh' ? `${formatted}${label}` : `${label} ${formatted}`
+}
+
 export function ProfilePage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
@@ -39,7 +53,7 @@ export function ProfilePage() {
   const projects = useWorkspaceStore((s) => s.projects)
   const wsLoading = useWorkspaceStore((s) => s.loading)
   const createProject = useWorkspaceStore((s) => s.createProject)
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const p = t.profile
   const showToast = useToastStore((s) => s.showToast)
 
@@ -122,6 +136,11 @@ export function ProfilePage() {
   }
 
   if (!user) return null
+
+  const joinDate =
+    (user.show_join_date ?? profile.showJoinDate)
+      ? formatJoinDate(user.created_at, lang, p.joinedAt)
+      : null
 
   const pickBannerImage = () => {
     if (!getToken()) {
@@ -207,6 +226,11 @@ export function ProfilePage() {
               <p className="mt-2 text-center text-sm leading-relaxed text-white/45">
                 {user.bio || profile.bio || 'I am turning imagination into reality.'}
               </p>
+              {joinDate && (
+                <p className="mt-3 text-center text-xs text-white/35">
+                  {joinDate}
+                </p>
+              )}
 
               <div className="profile-stats mt-6 grid grid-cols-3 gap-2 text-center">
                 <div>

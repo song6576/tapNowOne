@@ -315,6 +315,7 @@ export type Messages = {
     following: string
     followers: string
     favorites: string
+    joinedAt: string
     share: string
     tabPortfolio: string
     tabSaved: string
@@ -825,6 +826,7 @@ const zh: Messages = {
     following: '已关注',
     followers: '粉丝',
     favorites: '收藏',
+    joinedAt: '入驻',
     share: '分享',
     tabPortfolio: '我的作品集',
     tabSaved: '我的收藏',
@@ -1357,6 +1359,7 @@ const en: Messages = {
     following: 'Following',
     followers: 'Followers',
     favorites: 'Favorites',
+    joinedAt: 'Joined',
     share: 'Share',
     tabPortfolio: 'My portfolio',
     tabSaved: 'My favorites',
