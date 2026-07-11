@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   ReactFlow,
   Background,
-  Controls,
   MiniMap,
   BackgroundVariant,
   useReactFlow,
@@ -57,7 +56,6 @@ function PaneInteractionHandlers({
 }
 
 export function FlowCanvas({
-  hideChrome = false,
   showMinimap = false,
   onPaneDoubleClick,
   onPaneContextMenu,
@@ -137,7 +135,7 @@ export function FlowCanvas({
           />
         )}
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#ffffff4d" />
-        {!hideChrome && <Controls showInteractive={false} position="bottom-left" />}
+        {/* {!hideChrome && <Controls showInteractive={false} position="bottom-left" />} */}
         {showMinimap && (
           <MiniMap
             nodeColor={(n) => {

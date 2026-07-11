@@ -324,10 +324,9 @@ export function CanvasPage() {
               </div>
             )}
             <CanvasBottomBar
-              zoom={project.viewport.zoom}
-              onZoomChange={(zoom) => setViewport({ ...project.viewport, zoom })}
               showMinimap={showMinimap}
               onToggleMinimap={() => setShowMinimap((v) => !v)}
+              onViewportPersist={setViewport}
             />
           </div>
           {showAgentPanel && (

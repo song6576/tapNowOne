@@ -1,5 +1,5 @@
-/** 节点通用外壳：图3 风格卡片 + 选中时内联对话框 */
-import { Handle, NodeToolbar, Position, type NodeProps } from '@xyflow/react'
+/** 节点通用外壳：图3 风格卡片 + 选中时内联对话框（随画布缩放） */
+import { Handle, NodeToolbar, Position, useViewport, type NodeProps } from '@xyflow/react'
 import type { NodeData, NodeType } from '../../types'
 import { NODE_META } from '../../types'
 import { useI18n } from '../../store/langStore'
@@ -26,6 +26,7 @@ export function BaseNode({
   const nodeData = data as NodeData
   const generating = nodeData.status === 'generating'
   const { t } = useI18n()
+  const { zoom } = useViewport()
 
   return (
     <div className={`canvas-node canvas-node--${type} ${selected ? 'canvas-node--selected' : ''} ${generating ? 'canvas-node--generating' : ''}`}>
@@ -66,8 +67,16 @@ export function BaseNode({
         </div>
       )}
 
-      <NodeToolbar position={Position.Bottom} offset={12} isVisible={!!selected}>
-        <NodeInlineEditor nodeId={id} type={type} data={nodeData} />
+      <NodeToolbar position={Position.Bottom} offset={12 * zoom} isVisible={!!selected}>
+        <div
+          className="node-inline-editor-scale"
+          style={{
+            transform: `scale(${zoom})`,
+            transformOrigin: 'top center',
+          }}
+        >
+          <NodeInlineEditor nodeId={id} type={type} data={nodeData} />
+        </div>
       </NodeToolbar>
     </div>
   )

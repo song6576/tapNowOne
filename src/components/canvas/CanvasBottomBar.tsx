@@ -1,17 +1,38 @@
-/** 空画布底部：缩放控制、小地图开关等 */
+/** 空画布底部：缩放控制（同步 React Flow + 小地图）、小地图开关等 */
+import { useReactFlow, useViewport } from '@xyflow/react'
 import { Tooltip } from '../ui/Tooltip'
 import { useI18n } from '../../store/langStore'
 
 interface CanvasBottomBarProps {
-  zoom: number
-  onZoomChange: (zoom: number) => void
   showMinimap: boolean
   onToggleMinimap: () => void
+  /** 缩放变化时回写到项目 viewport（可选） */
+  onViewportPersist?: (viewport: { x: number; y: number; zoom: number }) => void
 }
 
-export function CanvasBottomBar({ zoom, onZoomChange, showMinimap, onToggleMinimap }: CanvasBottomBarProps) {
+export function CanvasBottomBar({
+  showMinimap,
+  onToggleMinimap,
+  onViewportPersist,
+}: CanvasBottomBarProps) {
   const { t } = useI18n()
   const tips = t.canvas.tooltips
+  const { setViewport, fitView, getViewport } = useReactFlow()
+  const { x, y, zoom } = useViewport()
+
+  const applyZoom = (nextZoom: number) => {
+    const clamped = Math.min(2, Math.max(0.1, nextZoom))
+    const next = { x, y, zoom: clamped }
+    void setViewport(next)
+    onViewportPersist?.(next)
+  }
+
+  const handleFitView = () => {
+    void fitView({ padding: 0.18, duration: 280 })
+    window.setTimeout(() => {
+      onViewportPersist?.(getViewport())
+    }, 300)
+  }
 
   return (
     <div className="canvas-bottom-bar pointer-events-auto">
@@ -41,7 +62,7 @@ export function CanvasBottomBar({ zoom, onZoomChange, showMinimap, onToggleMinim
       </Tooltip>
 
       <Tooltip label={tips.fitView}>
-        <button type="button" className="canvas-bottom-icon ui-clickable">
+        <button type="button" onClick={handleFitView} className="canvas-bottom-icon ui-clickable">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" strokeLinecap="round" />
           </svg>
@@ -55,7 +76,7 @@ export function CanvasBottomBar({ zoom, onZoomChange, showMinimap, onToggleMinim
             min={10}
             max={200}
             value={Math.round(zoom * 100)}
-            onChange={(e) => onZoomChange(Number(e.target.value) / 100)}
+            onChange={(e) => applyZoom(Number(e.target.value) / 100)}
             className="canvas-zoom-input"
             aria-label={tips.zoom}
           />

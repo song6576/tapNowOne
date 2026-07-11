@@ -2168,6 +2168,9 @@ html, body, #root {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(16px);
 }
+.node-inline-editor-scale {
+  will-change: transform;
+}
 .node-inline-editor-toolbar {
   display: flex;
   gap: 4px;
