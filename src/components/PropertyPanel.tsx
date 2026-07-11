@@ -39,7 +39,7 @@ export function PropertyPanel({ embedded }: PropertyPanelProps) {
   const type = selectedNode.type as NodeType
   const meta = NODE_META[type]
   const data = selectedNode.data
-  const canGenerate = type !== 'text' && type !== 'group'
+  const canGenerate = type !== 'group'
   const showModelPicker = type !== 'group'
   const modelId = data.model ?? DEFAULT_AGENT_MODEL
   const autoModel = data.autoModel !== false

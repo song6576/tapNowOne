@@ -13,14 +13,39 @@ import { createDefaultNodeData, NODE_META } from '../types'
 import { loadProject, saveProject, createEmptyProject } from '../utils/storage'
 import { generateUUID } from '../utils/uuid'
 import { buildEffectivePrompt, getUpstreamInputs } from '../utils/upstream'
-import { getWorkflowOrder } from '../utils/workflow'
-import { generateNode as apiGenerate, composeVideo } from '../services/api'
+import { generateNode as apiGenerate, composeVideo, agentChat } from '../services/api'
 import { resolveAgentModel } from '../config/agentModels'
+import { getWorkflowOrder, buildCanvasContext } from '../utils/workflow'
 import { patchProject, getProject as fetchCloudProject } from '../api/client'
 import { getToken } from '../utils/auth'
 import { collectComposeClips } from '../utils/compose'
 import { nextToolbarNodePosition } from '../utils/canvasLayout'
 import type { StoryboardScene } from '../api/client'
+
+const TEXT_NODE_DEFAULT_WIDTH = 280
+const TEXT_NODE_DEFAULT_HEIGHT = 180
+
+function parseStyleSize(value: unknown, fallback: number): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const n = Number.parseFloat(value)
+    if (Number.isFinite(n)) return n
+  }
+  return fallback
+}
+
+/** 确保 text 节点有固定宽高，便于四角等比缩放且长文案不撑开 */
+function normalizeCanvasNodes(nodes: CanvasNode[]): CanvasNode[] {
+  return nodes.map((node) => {
+    if (node.type !== 'text') return node
+    const width = parseStyleSize(node.style?.width, TEXT_NODE_DEFAULT_WIDTH)
+    const height = parseStyleSize(node.style?.height, TEXT_NODE_DEFAULT_HEIGHT)
+    return {
+      ...node,
+      style: { ...node.style, width, height },
+    }
+  })
+}
 
 interface CanvasStore {
   project: CanvasProject
@@ -77,7 +102,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     if (saved) {
       set({
         project: saved,
-        nodes: saved.nodes,
+        nodes: normalizeCanvasNodes(saved.nodes),
         edges: saved.edges,
       })
     }
@@ -99,7 +124,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     get().schedulePersist()
   },
 
-  setNodes: (nodes) => set({ nodes }),
+  setNodes: (nodes) => set({ nodes: normalizeCanvasNodes(nodes) }),
 
   setEdges: (edges) => set({ edges }),
 
@@ -144,13 +169,22 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             zIndex: -1,
             selected: true,
           }
-        : {
-            id,
-            type,
-            position: pos,
-            data: createDefaultNodeData(type),
-            selected: true,
-          }
+        : type === 'text'
+          ? {
+              id,
+              type: 'text',
+              position: pos,
+              style: { width: TEXT_NODE_DEFAULT_WIDTH, height: TEXT_NODE_DEFAULT_HEIGHT },
+              data: createDefaultNodeData(type),
+              selected: true,
+            }
+          : {
+              id,
+              type,
+              position: pos,
+              data: createDefaultNodeData(type),
+              selected: true,
+            }
     set((s) => ({
       nodes: [...s.nodes.map((n) => ({ ...n, selected: false })), newNode],
       selectedNodeId: id,
@@ -221,7 +255,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   loadProject: (project) => {
     set({
       project,
-      nodes: project.nodes,
+      nodes: normalizeCanvasNodes(project.nodes),
       edges: project.edges,
       selectedNodeId: null,
       cloudId: project.id,
@@ -249,20 +283,48 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     return nodes.find((n) => n.id === selectedNodeId)
   },
 
-  /** 单节点 AI 生成：合并上游 prompt/图片，调用 services/api.generateNode */
+  /** 单节点 AI 生成：text 走 Agent 回填文案；image/video/audio 走媒体生成 */
   generateNode: async (nodeId) => {
-    const { nodes, edges, updateNodeData } = get()
+    const { nodes, edges, updateNodeData, cloudId } = get()
     const node = nodes.find((n) => n.id === nodeId)
-    if (!node?.type || node.type === 'text') return false
+    if (!node?.type || node.type === 'group') return false
+
+    const autoModel = node.data.autoModel !== false
+    const resolvedModel = resolveAgentModel(node.data.model, autoModel)
+
+    if (node.type === 'text') {
+      const userPrompt = (node.data.prompt || '').trim()
+      if (!userPrompt) return false
+
+      updateNodeData(nodeId, { status: 'generating', errorMessage: undefined })
+      try {
+        const context = buildCanvasContext(nodes, edges)
+        const { reply } = await agentChat(
+          `请根据以下需求直接生成文案内容，只输出最终文案正文，不要解释或添加前后缀：\n${userPrompt}`,
+          context,
+          undefined,
+          cloudId ?? undefined,
+          resolvedModel,
+          autoModel,
+        )
+        const text = reply.trim()
+        if (!text) throw new Error('未生成有效文案')
+        updateNodeData(nodeId, { status: 'done', outputText: text })
+        return true
+      } catch (err) {
+        updateNodeData(nodeId, {
+          status: 'error',
+          errorMessage: err instanceof Error ? err.message : '生成失败',
+        })
+        return false
+      }
+    }
 
     const nodeType = node.type as 'image' | 'video' | 'audio'
     updateNodeData(nodeId, { status: 'generating', errorMessage: undefined })
 
     const { upstreamText, upstreamImageUrl } = getUpstreamInputs(nodeId, nodes, edges)
     const effectivePrompt = buildEffectivePrompt(node, nodes, edges)
-
-    const autoModel = node.data.autoModel !== false
-    const resolvedModel = resolveAgentModel(node.data.model, autoModel)
 
     try {
       const resultUrl = await apiGenerate({
@@ -315,6 +377,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       id: textId,
       type: 'text',
       position: { x: 80, y: 200 },
+      style: { width: TEXT_NODE_DEFAULT_WIDTH, height: TEXT_NODE_DEFAULT_HEIGHT },
       data: {
         label: '脚本',
         prompt: script,

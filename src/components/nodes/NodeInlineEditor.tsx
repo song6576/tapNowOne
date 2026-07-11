@@ -22,16 +22,18 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
 
   const modelId = data.model ?? DEFAULT_AGENT_MODEL
   const autoModel = data.autoModel !== false
-  const isGenerative = type === 'image' || type === 'video' || type === 'audio'
+  const canGenerate = type === 'text' || type === 'image' || type === 'video' || type === 'audio'
   const showModelPicker = type !== 'group'
+  const canSubmit = canGenerate && prompt.trim().length > 0
 
   useEffect(() => {
     setPrompt(data.prompt || '')
   }, [data.prompt])
 
   const handleGenerate = async () => {
-    if (prompt.trim()) updateNodeData(nodeId, { prompt: prompt.trim() })
-    if (!isGenerative) return
+    const trimmed = prompt.trim()
+    if (!trimmed || !canGenerate) return
+    updateNodeData(nodeId, { prompt: trimmed })
     setGenerating(true)
     try {
       await generateNode(nodeId)
@@ -66,7 +68,7 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey && isGenerative) {
+          if (e.key === 'Enter' && !e.shiftKey && canSubmit && !busy) {
             e.preventDefault()
             void handleGenerate()
           }
@@ -74,6 +76,7 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
         placeholder={n.placeholder}
         rows={2}
         className="node-inline-editor-input"
+        disabled={busy}
       />
 
       <div className="node-inline-editor-footer">
@@ -94,20 +97,28 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
           )}
           {type === 'video' && <span className="text-white/30">· 16:9 · 480p · 5s</span>}
         </div>
-        {isGenerative && (
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={busy}
-            className="node-inline-editor-submit ui-clickable"
-            aria-label={n.generate}
-          >
-            {busy ? '…' : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+        {canGenerate && (
+          <div className="node-inline-editor-actions">
+            {busy && (
+              <span className="node-inline-editor-thinking">{n.thinking}</span>
             )}
-          </button>
+            <button
+              type="button"
+              onClick={() => void handleGenerate()}
+              disabled={busy || !canSubmit}
+              className="node-inline-editor-submit ui-clickable"
+              aria-label={n.generate}
+              title={n.generate}
+            >
+              {busy ? (
+                <span className="node-inline-editor-submit-spin" aria-hidden />
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+          </div>
         )}
       </div>
     </div>

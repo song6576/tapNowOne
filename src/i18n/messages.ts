@@ -263,6 +263,7 @@ export type Messages = {
       placeholder: string
       textPlaceholder: string
       waitingImage: string
+      thinking: string
       magic: string
       add: string
       swap: string
@@ -774,6 +775,7 @@ const zh: Messages = {
       placeholder: '描述任何你想要生成的内容',
       textPlaceholder: '双击开始编辑...',
       waitingImage: '等待生成图片...',
+      thinking: '思考中...',
       magic: 'AI 增强',
       add: '添加',
       swap: '切换',
@@ -1307,6 +1309,7 @@ const en: Messages = {
       placeholder: 'Describe what you want to generate',
       textPlaceholder: 'Double-click to edit...',
       waitingImage: 'Waiting for image...',
+      thinking: 'Thinking...',
       magic: 'Enhance',
       add: 'Add',
       swap: 'Swap',

@@ -2,6 +2,7 @@
 import { Handle, NodeToolbar, Position, type NodeProps } from '@xyflow/react'
 import type { NodeData, NodeType } from '../../types'
 import { NODE_META } from '../../types'
+import { useI18n } from '../../store/langStore'
 import { NodeHeaderIcon } from './NodeTypeIcon'
 import { NodeInlineEditor } from './NodeInlineEditor'
 
@@ -24,9 +25,10 @@ export function BaseNode({
   const meta = NODE_META[type]
   const nodeData = data as NodeData
   const generating = nodeData.status === 'generating'
+  const { t } = useI18n()
 
   return (
-    <div className={`canvas-node ${selected ? 'canvas-node--selected' : ''}`}>
+    <div className={`canvas-node canvas-node--${type} ${selected ? 'canvas-node--selected' : ''} ${generating ? 'canvas-node--generating' : ''}`}>
       {hasInput && (
         <Handle
           type="target"
@@ -52,8 +54,15 @@ export function BaseNode({
       )}
 
       {generating && (
-        <div className="canvas-node-loading">
-          <span className="canvas-node-loading-dot" />
+        <div className="canvas-node-loading" aria-live="polite">
+          <div className="canvas-node-thinking">
+            <span className="canvas-node-thinking-dots" aria-hidden>
+              <i />
+              <i />
+              <i />
+            </span>
+            <span className="canvas-node-thinking-label">{t.canvas.nodeEditor.thinking}</span>
+          </div>
         </div>
       )}
 
