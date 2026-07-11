@@ -1,5 +1,5 @@
-/** AI 模型选择：分类列表、悬浮说明侧栏、即将上线 */
-import { useEffect, useMemo, useRef, useState } from 'react'
+/** AI 模型选择：分类列表、悬浮说明侧栏（左侧动态定位）、即将上线 */
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useAiModels } from '../../hooks/useAiModels'
 import { useI18n } from '../../store/langStore'
 import type { AiModel, AiModelCategory } from '../../types/aiModel'
@@ -14,7 +14,7 @@ interface ModelDropdownProps {
   category?: AiModelCategory
   /** 按画布节点类型过滤，如 video / audio */
   nodeType?: string
-  /** 下拉面板对齐：hero 区放右侧 */
+  /** 下拉面板对齐：hero 区放右侧，与触发按钮正对 */
   align?: 'left' | 'right'
 }
 
@@ -88,15 +88,15 @@ function ModelRow({
   disabled?: boolean
   tierLabel?: string
   comingSoonLabel?: string
-  onHover: () => void
+  onHover: (el: HTMLElement) => void
   onSelect?: () => void
 }) {
   return (
     <button
       type="button"
       disabled={disabled}
-      onMouseEnter={onHover}
-      onFocus={onHover}
+      onMouseEnter={(e) => onHover(e.currentTarget)}
+      onFocus={(e) => onHover(e.currentTarget)}
       onClick={onSelect}
       className={`model-dropdown-item ui-clickable ${selected ? 'model-dropdown-item--active' : ''} ${disabled ? 'model-dropdown-item--disabled' : ''}`}
     >
@@ -127,15 +127,27 @@ export function ModelDropdown({
   const { t } = useI18n()
   const m = t.home.model
   const rootRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const detailRef = useRef<HTMLDivElement>(null)
+  const hoveredRowRef = useRef<HTMLElement | null>(null)
   const [open, setOpen] = useState(false)
   const [autoEnabled, setAutoEnabled] = useState(auto)
   const [hovered, setHovered] = useState<AiModel | null>(null)
+  const [detailTop, setDetailTop] = useState(0)
 
   const { data } = useAiModels({ category, nodeType })
 
   useEffect(() => {
     setAutoEnabled(auto)
   }, [auto])
+
+  useEffect(() => {
+    if (!open) {
+      setHovered(null)
+      setDetailTop(0)
+      hoveredRowRef.current = null
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -155,11 +167,34 @@ export function ModelDropdown({
     }
   }, [open])
 
-  const categoryLabels: Record<AiModelCategory, string> = {
-    text: m.categoryText,
-    video: m.categoryVideo,
-    audio: m.categoryAudio,
-  }
+  /** 说明浮窗贴在列表左侧，垂直对齐当前悬停行，并夹在面板可视区内 */
+  const syncDetailPosition = useCallback((rowEl: HTMLElement) => {
+    const panel = panelRef.current
+    if (!panel) return
+
+    const panelRect = panel.getBoundingClientRect()
+    const rowRect = rowEl.getBoundingClientRect()
+    let top = rowRect.top - panelRect.top
+
+    const detailH = detailRef.current?.offsetHeight ?? 120
+    const maxTop = Math.max(0, panel.offsetHeight - detailH)
+    top = Math.min(Math.max(0, top), maxTop)
+    setDetailTop(top)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!hovered || !hoveredRowRef.current) return
+    syncDetailPosition(hoveredRowRef.current)
+  }, [hovered, syncDetailPosition])
+
+  const categoryLabels: Record<AiModelCategory, string> = useMemo(
+    () => ({
+      text: m.categoryText,
+      video: m.categoryVideo,
+      audio: m.categoryAudio,
+    }),
+    [m.categoryText, m.categoryVideo, m.categoryAudio],
+  )
 
   const tierLabels = {
     high: m.tierHigh,
@@ -197,10 +232,16 @@ export function ModelDropdown({
     setOpen(false)
   }
 
-  const displayModel = hovered ?? current ?? null
+  const handleHover = (model: AiModel, el: HTMLElement) => {
+    hoveredRowRef.current = el
+    setHovered(model)
+    syncDetailPosition(el)
+  }
+
+  const detailStyle: CSSProperties = { top: detailTop }
 
   return (
-    <div ref={rootRef} className={`model-dropdown-root ${align === 'right' ? 'model-dropdown-root--right' : ''}`}>
+    <div ref={rootRef} className={`model-dropdown-root model-dropdown-root--${align}`}>
       <button
         type="button"
         className={`model-dropdown-trigger ui-clickable ${compact ? 'model-dropdown-trigger--compact' : ''}`}
@@ -216,11 +257,7 @@ export function ModelDropdown({
 
       {open && (
         <div className={`model-dropdown-popover model-dropdown-popover--${align}`}>
-          {displayModel && (
-            <ModelDetailPanel model={displayModel} premiumHint={m.premiumHint} />
-          )}
-
-          <div className="model-dropdown-panel ui-glass-panel">
+          <div ref={panelRef} className="model-dropdown-panel ui-glass-panel">
             <div className="model-dropdown-auto-row">
               <span className="text-sm text-white/85">{m.auto}</span>
               <button
@@ -244,7 +281,7 @@ export function ModelDropdown({
                     selected={!autoEnabled && value === model.slug}
                     tierLabel={model.tier ? tierLabels[model.tier as keyof typeof tierLabels] : undefined}
                     comingSoonLabel={m.comingSoon}
-                    onHover={() => setHovered(model)}
+                    onHover={(el) => handleHover(model, el)}
                     onSelect={() => selectModel(model.slug)}
                   />
                 ))}
@@ -260,7 +297,7 @@ export function ModelDropdown({
                     model={model}
                     disabled
                     comingSoonLabel={m.comingSoon}
-                    onHover={() => setHovered(model)}
+                    onHover={(el) => handleHover(model, el)}
                   />
                 ))}
               </div>
@@ -276,6 +313,12 @@ export function ModelDropdown({
               </button>
             </div>
           </div>
+
+          {hovered && (
+            <div ref={detailRef} className="model-dropdown-detail-anchor" style={detailStyle}>
+              <ModelDetailPanel model={hovered} premiumHint={m.premiumHint} />
+            </div>
+          )}
         </div>
       )}
     </div>
