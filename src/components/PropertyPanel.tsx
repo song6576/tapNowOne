@@ -97,7 +97,7 @@ export function PropertyPanel({ embedded }: PropertyPanelProps) {
               auto={autoModel}
               onAutoChange={(next) => updateNodeData(selectedNode.id, { autoModel: next })}
               nodeType={type}
-              category={type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'text'}
+              category={type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'text'}
               align="right"
             />
           </div>

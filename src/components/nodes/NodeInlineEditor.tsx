@@ -89,7 +89,7 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
               auto={autoModel}
               onAutoChange={(next) => updateNodeData(nodeId, { autoModel: next })}
               nodeType={type}
-              category={type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'text'}
+              category={type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'audio' ? 'audio' : 'text'}
               align="right"
             />
           ) : (

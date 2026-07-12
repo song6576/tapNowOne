@@ -18,7 +18,7 @@ interface ModelDropdownProps {
   align?: 'left' | 'right'
 }
 
-const CATEGORY_ORDER: AiModelCategory[] = ['text', 'video', 'audio']
+const CATEGORY_ORDER: AiModelCategory[] = ['text', 'image', 'video', 'audio']
 
 function ChevronDown() {
   return (
@@ -190,10 +190,11 @@ export function ModelDropdown({
   const categoryLabels: Record<AiModelCategory, string> = useMemo(
     () => ({
       text: m.categoryText,
+      image: m.categoryImage,
       video: m.categoryVideo,
       audio: m.categoryAudio,
     }),
-    [m.categoryText, m.categoryVideo, m.categoryAudio],
+    [m.categoryText, m.categoryImage, m.categoryVideo, m.categoryAudio],
   )
 
   const tierLabels = {

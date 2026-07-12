@@ -14,7 +14,7 @@ import { loadProject, saveProject, createEmptyProject } from '../utils/storage'
 import { generateUUID } from '../utils/uuid'
 import { buildEffectivePrompt, getUpstreamInputs } from '../utils/upstream'
 import { generateNode as apiGenerate, composeVideo, agentChat } from '../services/api'
-import { resolveAgentModel } from '../config/agentModels'
+import { resolveAgentModel, resolveImageModel } from '../config/agentModels'
 import { getWorkflowOrder, buildCanvasContext } from '../utils/workflow'
 import { patchProject, getProject as fetchCloudProject } from '../api/client'
 import { getToken } from '../utils/auth'
@@ -321,7 +321,10 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     if (!node?.type || node.type === 'group') return false
 
     const autoModel = node.data.autoModel !== false
-    const resolvedModel = resolveAgentModel(node.data.model, autoModel)
+    const resolvedModel =
+      node.type === 'image'
+        ? resolveImageModel(node.data.model, autoModel)
+        : resolveAgentModel(node.data.model, autoModel)
 
     if (node.type === 'text') {
       const userPrompt = (node.data.prompt || '').trim()

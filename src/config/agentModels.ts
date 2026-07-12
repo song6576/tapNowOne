@@ -1,7 +1,9 @@
 /** @deprecated 使用 types/aiModel 与 useAiModels */
 export {
   DEFAULT_AGENT_MODEL,
+  DEFAULT_IMAGE_MODEL,
   resolveAgentModel,
+  resolveImageModel,
   FALLBACK_AI_MODELS,
   type AiModel,
 } from '../types/aiModel'

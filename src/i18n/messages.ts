@@ -60,6 +60,7 @@ export type Messages = {
       comingSoon: string
       howToChoose: string
       categoryText: string
+      categoryImage: string
       categoryVideo: string
       categoryAudio: string
       tierHigh: string
@@ -572,6 +573,7 @@ const zh: Messages = {
       comingSoon: '即将上线',
       howToChoose: '如何选择模型？',
       categoryText: '文本模型',
+      categoryImage: '图片模型',
       categoryVideo: '视频模型',
       categoryAudio: '语音模型',
       tierHigh: '高',
@@ -1106,6 +1108,7 @@ const en: Messages = {
       comingSoon: 'Coming soon',
       howToChoose: 'How to choose a model?',
       categoryText: 'Text models',
+      categoryImage: 'Image models',
       categoryVideo: 'Video models',
       categoryAudio: 'Audio models',
       tierHigh: 'High',
