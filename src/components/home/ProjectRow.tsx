@@ -19,7 +19,7 @@ export const ProjectRow = memo(function ProjectRow() {
 
   const handleNewProject = async () => {
     const proj = await createProject(null)
-    navigate(`/canvas/${proj.id}`)
+    navigate(`/canvas/${proj.id}`, { state: { isNew: true, openAgentPanel: true } })
   }
 
   return (

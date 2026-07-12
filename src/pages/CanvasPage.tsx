@@ -35,7 +35,12 @@ type CanvasNavState = {
 
 function readAgentNav(state: CanvasNavState) {
   return {
-    open: !!(state?.openAgentPanel || state?.initialPrompt?.trim()),
+    open: !!(
+      state?.openAgentPanel ||
+      state?.initialPrompt?.trim() ||
+      state?.isNew ||
+      state?.newProject
+    ),
     prompt: state?.initialPrompt?.trim() || undefined,
     modelId: state?.modelId ?? DEFAULT_AGENT_MODEL,
     autoModel: state?.autoModel ?? true,
@@ -190,7 +195,7 @@ export function CanvasPage() {
     const wp = projectId ? getProject(projectId) : null
     const folderId = wp?.folderId ?? (location.state as { folderId?: string | null } | null)?.folderId ?? null
     const proj = await createProject(folderId)
-    navigate(`/canvas/${proj.id}`, { state: { folderId, isNew: true } })
+    navigate(`/canvas/${proj.id}`, { state: { folderId, isNew: true, openAgentPanel: true } })
   }, [projectId, getProject, createProject, navigate, location.state])
 
   const handleAddNode = useCallback((type: NodeType | 'group', position?: { x: number; y: number }) => {

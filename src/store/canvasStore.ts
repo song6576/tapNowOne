@@ -78,7 +78,7 @@ interface CanvasStore {
   onNodesChange: (changes: NodeChange<CanvasNode>[]) => void
   onEdgesChange: (changes: EdgeChange<CanvasEdge>[]) => void
   onConnect: (connection: Connection) => void
-  addNode: (type: NodeType, position?: { x: number; y: number }) => string
+  addNode: (type: NodeType, position?: { x: number; y: number }, dataPatch?: Partial<NodeData>) => string
   addUploadedAsset: (url: string, mimeType: string, filename: string, position?: { x: number; y: number }) => void
   connectNodes: (
     source: string,
@@ -174,10 +174,11 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     get().schedulePersist()
   },
 
-  addNode: (type, position) => {
+  addNode: (type, position, dataPatch) => {
     const { nodes } = get()
     const pos = position ?? nextToolbarNodePosition(nodes.length)
     const id = generateUUID()
+    const baseData = { ...createDefaultNodeData(type), ...dataPatch }
     const newNode: CanvasNode =
       type === 'group'
         ? {
@@ -185,7 +186,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             type: 'group',
             position: pos,
             style: { width: 320, height: 240 },
-            data: createDefaultNodeData(type),
+            data: baseData,
             zIndex: -1,
             selected: true,
           }
@@ -195,14 +196,14 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
               type: 'text',
               position: pos,
               style: { width: TEXT_NODE_DEFAULT_WIDTH, height: TEXT_NODE_DEFAULT_HEIGHT },
-              data: createDefaultNodeData(type),
+              data: baseData,
               selected: true,
             }
           : {
               id,
               type,
               position: pos,
-              data: createDefaultNodeData(type),
+              data: baseData,
               selected: true,
             }
     set((s) => ({

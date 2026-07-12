@@ -1,8 +1,14 @@
-/** Agent 对话面板：普通聊天、分镜指令、Run Workflow */
+/** Agent 对话面板：普通聊天、分镜指令、Run Workflow、Chat 建节点 */
 import { useCanvasStore } from '../store/canvasStore'
 import { agentChat, agentStoryboard } from '../services/api'
 import { DEFAULT_AGENT_MODEL } from '../types/aiModel'
 import { buildCanvasContext } from '../utils/workflow'
+import {
+  defaultModelForNode,
+  parseLocalCreateIntent,
+  summarizeActions,
+  type CanvasAction,
+} from '../utils/canvasActions'
 import { ModelDropdown } from './ui/ModelDropdown'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useI18n } from '../store/langStore'
@@ -60,6 +66,7 @@ export function AgentChat({
 
   const nodes = useCanvasStore((s) => s.nodes)
   const edges = useCanvasStore((s) => s.edges)
+  const addNode = useCanvasStore((s) => s.addNode)
   const applyStoryboard = useCanvasStore((s) => s.applyStoryboard)
   const runWorkflow = useCanvasStore((s) => s.runWorkflow)
   const workflowRunning = useCanvasStore((s) => s.workflowRunning)
@@ -69,6 +76,29 @@ export function AgentChat({
     if (!el) return
     el.scrollTop = el.scrollHeight
   }, [messages, loading])
+
+  const applyActions = useCallback(
+    (actions: CanvasAction[]) => {
+      let created = 0
+      for (const action of actions) {
+        if (action.type !== 'add_node') continue
+        const count = Math.min(6, Math.max(1, action.count ?? 1))
+        for (let i = 0; i < count; i++) {
+          const model = defaultModelForNode(action.node_type)
+          addNode(action.node_type, undefined, {
+            ...(action.label
+              ? { label: count > 1 ? `${action.label} ${i + 1}` : action.label }
+              : {}),
+            ...(action.prompt ? { prompt: action.prompt } : {}),
+            ...(model ? { model, autoModel: true } : {}),
+          })
+          created += 1
+        }
+      }
+      return created
+    },
+    [addNode],
+  )
 
   const sendText = useCallback(async (text: string, options?: { appendUser?: boolean }) => {
     const trimmed = text.trim()
@@ -90,8 +120,17 @@ export function AgentChat({
           { role: 'assistant', content: `已创建 ${count} 个分镜节点，可在画布中继续编辑或生成。` },
         ])
       } else {
+        const localActions = parseLocalCreateIntent(trimmed)
+        if (localActions.length) {
+          applyActions(localActions)
+          setMessages((m) => [
+            ...m,
+            { role: 'assistant', content: summarizeActions(localActions) },
+          ])
+        }
+
         const context = buildCanvasContext(nodes, edges)
-        const { reply, conversationId: nextConversationId } = await agentChat(
+        const { reply, conversationId: nextConversationId, actions } = await agentChat(
           trimmed,
           context,
           conversationId,
@@ -100,7 +139,19 @@ export function AgentChat({
           selectedAuto,
         )
         if (nextConversationId) setConversationId(nextConversationId)
-        setMessages((m) => [...m, { role: 'assistant', content: reply }])
+
+        if (!localActions.length && actions?.length) {
+          applyActions(actions)
+          const summary = summarizeActions(actions)
+          setMessages((m) => [
+            ...m,
+            { role: 'assistant', content: summary ? `${reply}\n\n${summary}` : reply },
+          ])
+        } else if (!localActions.length) {
+          setMessages((m) => [...m, { role: 'assistant', content: reply }])
+        } else if (reply && !reply.includes('已在画布上创建')) {
+          setMessages((m) => [...m, { role: 'assistant', content: reply }])
+        }
       }
     } catch (err) {
       setMessages((m) => [
@@ -111,7 +162,7 @@ export function AgentChat({
       setLoading(false)
       sendingRef.current = false
     }
-  }, [nodes, edges, applyStoryboard, conversationId, projectId, selectedModelId, selectedAuto])
+  }, [nodes, edges, applyActions, applyStoryboard, conversationId, projectId, selectedModelId, selectedAuto])
 
   const send = () => {
     const text = input.trim()

@@ -67,9 +67,17 @@ export async function agentChat(
   projectId?: string,
   model?: string,
   auto = true,
-): Promise<{ reply: string; conversationId?: string }> {
+): Promise<import('../api/client').AgentChatResult> {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 600))
+    const { parseLocalCreateIntent, summarizeActions } = await import('../utils/canvasActions')
+    const actions = parseLocalCreateIntent(message)
+    if (actions.length) {
+      return {
+        reply: summarizeActions(actions) || '已按你的要求创建节点。',
+        actions,
+      }
+    }
     return {
       reply: `（Mock Agent）收到你的消息。当前画布上下文：\n${context?.slice(0, 200) ?? '空画布'}\n\n配置 VITE_USE_MOCK=false 并启动后端后可使用真实百炼对话。`,
     }

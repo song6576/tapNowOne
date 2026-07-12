@@ -2,7 +2,7 @@
  * 画布领域类型：节点/边/项目结构，以及各节点类型的默认元数据。
  */
 import type { Node, Edge, Viewport } from '@xyflow/react'
-import { DEFAULT_AGENT_MODEL } from './aiModel'
+import { DEFAULT_AGENT_MODEL, DEFAULT_IMAGE_MODEL } from './aiModel'
 
 /** 画布支持的节点种类 */
 export type NodeType = 'text' | 'image' | 'video' | 'audio' | 'group'
@@ -45,12 +45,16 @@ export const NODE_META: Record<NodeType, { label: string; icon: string; color: s
 /** 新建节点时的默认 data 字段（含各类型默认模型） */
 export function createDefaultNodeData(type: NodeType): NodeData {
   const meta = NODE_META[type]
+  const model =
+    type === 'image'
+      ? DEFAULT_IMAGE_MODEL
+      : type === 'text' || type === 'video' || type === 'audio'
+        ? DEFAULT_AGENT_MODEL
+        : undefined
   return {
     label: meta.label,
     prompt: '',
     status: 'idle',
-    ...(type !== 'group'
-      ? { model: DEFAULT_AGENT_MODEL, autoModel: true }
-      : {}),
+    ...(model ? { model, autoModel: true } : {}),
   }
 }

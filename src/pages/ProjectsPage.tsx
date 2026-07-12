@@ -108,7 +108,7 @@ export function ProjectsPage() {
 
   const handleNewProject = async () => {
     const proj = await createProject(folderId)
-    navigate(`/canvas/${proj.id}`, { state: { folderId, isNew: true } })
+    navigate(`/canvas/${proj.id}`, { state: { folderId, isNew: true, openAgentPanel: true } })
   }
 
   const handleCreateFolder = async (name: string) => {

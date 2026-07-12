@@ -101,6 +101,13 @@ export type StoryboardScene = {
 export type AgentChatResult = {
   reply: string
   conversationId?: string
+  actions?: Array<{
+    type: 'add_node'
+    node_type: 'text' | 'image' | 'video' | 'audio'
+    label?: string
+    prompt?: string
+    count?: number
+  }>
 }
 
 export type UploadResult = {

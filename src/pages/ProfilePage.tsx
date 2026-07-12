@@ -132,7 +132,7 @@ export function ProfilePage() {
       return
     }
     const proj = await createProject(null)
-    navigate(`/canvas/${proj.id}`)
+    navigate(`/canvas/${proj.id}`, { state: { isNew: true, openAgentPanel: true } })
   }
 
   if (!user) return null
