@@ -540,7 +540,7 @@ export async function deleteProjectCloud(id: string): Promise<void> {
 export async function submitGenerate(payload: GeneratePayload): Promise<TaskResult> {
   const res = await fetch(`${API_BASE}/generate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(await parseError(res))
@@ -550,7 +550,7 @@ export async function submitGenerate(payload: GeneratePayload): Promise<TaskResu
 export async function submitCompose(clips: ComposeClip[], audioUrl?: string): Promise<TaskResult> {
   const res = await fetch(`${API_BASE}/compose`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ clips, audio_url: audioUrl }),
   })
   if (!res.ok) throw new Error(await parseError(res))
@@ -558,7 +558,9 @@ export async function submitCompose(clips: ComposeClip[], audioUrl?: string): Pr
 }
 
 export async function getTask(taskId: string): Promise<TaskResult> {
-  const res = await fetch(`${API_BASE}/tasks/${taskId}`)
+  const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+    headers: { ...authHeaders() },
+  })
   if (!res.ok) throw new Error('查询任务失败')
   return res.json()
 }
