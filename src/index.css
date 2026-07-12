@@ -49,6 +49,16 @@ html, body, #root {
 }
 
 .react-flow__background { background-color: #141416 !important; }
+.react-flow__edge-path {
+  stroke: rgba(255, 255, 255, 0.35) !important;
+  stroke-width: 1.5 !important;
+  stroke-dasharray: none !important;
+}
+.react-flow__connection-path {
+  stroke: rgba(255, 255, 255, 0.45) !important;
+  stroke-width: 1.5 !important;
+  stroke-dasharray: none !important;
+}
 .react-flow__minimap {
   background: rgba(36, 36, 40, 0.95) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;

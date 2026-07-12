@@ -1,4 +1,4 @@
-/** ReactFlow 画布：节点交互、viewport 同步、Delete 删节点 */
+/** ReactFlow 画布：节点交互、viewport 同步、拉线松手选节点、Delete 删节点 */
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   ReactFlow,
@@ -6,11 +6,20 @@ import {
   MiniMap,
   BackgroundVariant,
   useReactFlow,
+  type FinalConnectionState,
   type NodeMouseHandler,
+  type OnConnectEnd,
   type OnMove,
 } from '@xyflow/react'
 import { useCanvasStore } from '../store/canvasStore'
 import { nodeTypes } from './nodes'
+
+export type ConnectDropPayload = {
+  nodeId: string
+  handleId?: string | null
+  /** source=从输出点拉出；target=从输入点拉出 */
+  handleType: 'source' | 'target'
+}
 
 function PaneInteractionHandlers({
   containerRef,
@@ -59,11 +68,19 @@ export function FlowCanvas({
   showMinimap = false,
   onPaneDoubleClick,
   onPaneContextMenu,
+  onConnectDrop,
 }: {
   hideChrome?: boolean
   showMinimap?: boolean
   onPaneDoubleClick?: (event: MouseEvent, flowPosition: { x: number; y: number }) => void
   onPaneContextMenu?: (event: MouseEvent, flowPosition: { x: number; y: number }) => void
+  /** 从节点手柄拉线后松在空白处：弹出选节点菜单 */
+  onConnectDrop?: (
+    clientX: number,
+    clientY: number,
+    flowPosition: { x: number; y: number },
+    from: ConnectDropPayload,
+  ) => void
 }) {
   const nodes = useCanvasStore((s) => s.nodes)
   const edges = useCanvasStore((s) => s.edges)
@@ -75,6 +92,7 @@ export function FlowCanvas({
   const selectNode = useCanvasStore((s) => s.selectNode)
   const deleteSelected = useCanvasStore((s) => s.deleteSelected)
   const setViewport = useCanvasStore((s) => s.setViewport)
+  const { screenToFlowPosition } = useReactFlow()
 
   const flowNodes = useMemo(
     () => nodes.map((n) => ({ ...n, selected: n.id === selectedNodeId })),
@@ -91,6 +109,40 @@ export function FlowCanvas({
   const onMoveEnd: OnMove = useCallback(
     (_event, viewport) => setViewport(viewport),
     [setViewport],
+  )
+
+  const handleConnectEnd: OnConnectEnd = useCallback(
+    (event, connectionState: FinalConnectionState) => {
+      if (!onConnectDrop) return
+      // 已接到别的节点，或没有起点 → 不弹菜单
+      if (!connectionState.fromNode || connectionState.toNode) return
+
+      const clientX =
+        'changedTouches' in event
+          ? event.changedTouches[0]?.clientX
+          : (event as MouseEvent).clientX
+      const clientY =
+        'changedTouches' in event
+          ? event.changedTouches[0]?.clientY
+          : (event as MouseEvent).clientY
+      if (clientX == null || clientY == null) return
+
+      const target = (event.target as Element | null)?.closest?.(
+        '.react-flow__node, .react-flow__handle, .canvas-add-menu, .canvas-bottom-bar, .canvas-float-toolbar',
+      )
+      // 松在节点/手柄/已有 UI 上时不弹（避免误触）
+      if (target?.classList.contains('react-flow__handle')) return
+      if (target?.classList.contains('react-flow__node')) return
+
+      const handleType = connectionState.fromHandle?.type === 'target' ? 'target' : 'source'
+      const flowPosition = screenToFlowPosition({ x: clientX, y: clientY })
+      onConnectDrop(clientX, clientY, flowPosition, {
+        nodeId: connectionState.fromNode.id,
+        handleId: connectionState.fromHandle?.id ?? null,
+        handleType,
+      })
+    },
+    [onConnectDrop, screenToFlowPosition],
   )
 
   useEffect(() => {
@@ -115,10 +167,15 @@ export function FlowCanvas({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectEnd={handleConnectEnd}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         onMoveEnd={onMoveEnd}
         nodeTypes={nodeTypes}
+        defaultEdgeOptions={{
+          animated: false,
+          style: { stroke: 'rgba(255, 255, 255, 0.35)', strokeWidth: 1.5 },
+        }}
         defaultViewport={project.viewport}
         fitView={nodes.length === 0}
         minZoom={0.1}
@@ -135,7 +192,6 @@ export function FlowCanvas({
           />
         )}
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#ffffff4d" />
-        {/* {!hideChrome && <Controls showInteractive={false} position="bottom-left" />} */}
         {showMinimap && (
           <MiniMap
             nodeColor={(n) => {

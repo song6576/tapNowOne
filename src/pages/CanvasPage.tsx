@@ -5,7 +5,7 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { CanvasTopBar } from '../components/shell/CanvasTopBar'
 import { CanvasToolbar } from '../components/shell/CanvasToolbar'
 import { CanvasContextMenu, type CanvasAddAction } from '../components/shell/CanvasContextMenu'
-import { FlowCanvas } from '../components/FlowCanvas'
+import { FlowCanvas, type ConnectDropPayload } from '../components/FlowCanvas'
 import { CanvasAgentPanel } from '../components/canvas/CanvasAgentPanel'
 import { CanvasQuickActions } from '../components/canvas/CanvasQuickActions'
 import { CanvasBottomBar } from '../components/canvas/CanvasBottomBar'
@@ -56,6 +56,7 @@ export function CanvasPage() {
   const resetCanvas = useCanvasStore((s) => s.resetCanvas)
   const loadProject = useCanvasStore((s) => s.loadProject)
   const addNode = useCanvasStore((s) => s.addNode)
+  const connectNodes = useCanvasStore((s) => s.connectNodes)
   const addUploadedAsset = useCanvasStore((s) => s.addUploadedAsset)
   const applyStoryboard = useCanvasStore((s) => s.applyStoryboard)
 
@@ -68,6 +69,8 @@ export function CanvasPage() {
     x: number
     y: number
     flowPosition?: { x: number; y: number }
+    /** 从节点手柄拉线松手后，选类型并自动连线 */
+    connectFrom?: ConnectDropPayload
   } | null>(null)
 
   // 首页跳转参数必须在首屏同步读取，不能等 useEffect（replaceState 后会丢失）
@@ -191,11 +194,16 @@ export function CanvasPage() {
   }, [projectId, getProject, createProject, navigate, location.state])
 
   const handleAddNode = useCallback((type: NodeType | 'group', position?: { x: number; y: number }) => {
-    addNode(type, position)
+    return addNode(type, position)
   }, [addNode])
 
-  const openAddMenu = useCallback((x: number, y: number, flowPosition?: { x: number; y: number }) => {
-    setAddMenu({ x, y, flowPosition })
+  const openAddMenu = useCallback((
+    x: number,
+    y: number,
+    flowPosition?: { x: number; y: number },
+    connectFrom?: ConnectDropPayload,
+  ) => {
+    setAddMenu({ x, y, flowPosition, connectFrom })
   }, [])
 
   const handleAddFromMenu = useCallback((type: CanvasAddAction) => {
@@ -210,13 +218,32 @@ export function CanvasPage() {
       return
     }
     if (type === 'playlist' || type === 'world3d') return
-    if (addMenu?.flowPosition) {
-      handleAddNode(type, nodePositionAtCursor(addMenu.flowPosition))
-    } else {
-      handleAddNode(type)
+
+    const position = addMenu?.flowPosition
+      ? nodePositionAtCursor(addMenu.flowPosition)
+      : undefined
+    const newId = handleAddNode(type, position)
+    const from = addMenu?.connectFrom
+    if (from && newId) {
+      if (from.handleType === 'target') {
+        // 从输入点拉出：新节点 → 原节点
+        connectNodes(newId, from.nodeId, null, from.handleId)
+      } else {
+        // 从输出点拉出：原节点 → 新节点
+        connectNodes(from.nodeId, newId, from.handleId, null)
+      }
     }
     setAddMenu(null)
-  }, [addMenu, handleAddNode, navigate])
+  }, [addMenu, handleAddNode, connectNodes, navigate])
+
+  const handleConnectDrop = useCallback((
+    clientX: number,
+    clientY: number,
+    flowPosition: { x: number; y: number },
+    from: ConnectDropPayload,
+  ) => {
+    openAddMenu(clientX, clientY, flowPosition, from)
+  }, [openAddMenu])
 
   const handleUploadFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -306,6 +333,7 @@ export function CanvasPage() {
               showMinimap={showMinimap}
               onPaneDoubleClick={handlePaneDoubleClick}
               onPaneContextMenu={handlePaneContextMenu}
+              onConnectDrop={handleConnectDrop}
             />
             <CanvasToolbar
               onAddNode={handleAddNode}

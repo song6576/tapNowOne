@@ -47,6 +47,20 @@ function normalizeCanvasNodes(nodes: CanvasNode[]): CanvasNode[] {
   })
 }
 
+/** 连接线统一为实线样式 */
+function normalizeCanvasEdges(edges: CanvasEdge[]): CanvasEdge[] {
+  return edges.map((edge) => ({
+    ...edge,
+    animated: false,
+    style: {
+      stroke: 'rgba(255, 255, 255, 0.35)',
+      strokeWidth: 1.5,
+      ...edge.style,
+      strokeDasharray: undefined,
+    },
+  }))
+}
+
 interface CanvasStore {
   project: CanvasProject
   nodes: CanvasNode[]
@@ -64,8 +78,14 @@ interface CanvasStore {
   onNodesChange: (changes: NodeChange<CanvasNode>[]) => void
   onEdgesChange: (changes: EdgeChange<CanvasEdge>[]) => void
   onConnect: (connection: Connection) => void
-  addNode: (type: NodeType, position?: { x: number; y: number }) => void
+  addNode: (type: NodeType, position?: { x: number; y: number }) => string
   addUploadedAsset: (url: string, mimeType: string, filename: string, position?: { x: number; y: number }) => void
+  connectNodes: (
+    source: string,
+    target: string,
+    sourceHandle?: string | null,
+    targetHandle?: string | null,
+  ) => void
   updateNodeData: (id: string, data: Partial<NodeData>) => void
   selectNode: (id: string | null) => void
   deleteSelected: () => void
@@ -103,7 +123,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       set({
         project: saved,
         nodes: normalizeCanvasNodes(saved.nodes),
-        edges: saved.edges,
+        edges: normalizeCanvasEdges(saved.edges),
       })
     }
   },
@@ -126,7 +146,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   setNodes: (nodes) => set({ nodes: normalizeCanvasNodes(nodes) }),
 
-  setEdges: (edges) => set({ edges }),
+  setEdges: (edges) => set({ edges: normalizeCanvasEdges(edges) }),
 
   onNodesChange: (changes) => {
     set((s) => ({ nodes: applyNodeChanges(changes, s.nodes) }))
@@ -145,8 +165,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         {
           ...connection,
           id: `e-${connection.source}-${connection.target}`,
-          animated: true,
-          style: { stroke: '#6366f1' },
+          animated: false,
+          style: { stroke: 'rgba(255, 255, 255, 0.35)', strokeWidth: 1.5 },
         },
         s.edges,
       ),
@@ -190,6 +210,17 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       selectedNodeId: id,
     }))
     get().schedulePersist()
+    return id
+  },
+
+  connectNodes: (source, target, sourceHandle, targetHandle) => {
+    if (!source || !target || source === target) return
+    get().onConnect({
+      source,
+      target,
+      sourceHandle: sourceHandle ?? null,
+      targetHandle: targetHandle ?? null,
+    })
   },
 
   addUploadedAsset: (url, mimeType, filename, position) => {
@@ -256,7 +287,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set({
       project,
       nodes: normalizeCanvasNodes(project.nodes),
-      edges: project.edges,
+      edges: normalizeCanvasEdges(project.edges),
       selectedNodeId: null,
       cloudId: project.id,
     })
@@ -401,8 +432,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       id: `e-${textId}-${n.id}`,
       source: textId,
       target: n.id,
-      animated: true,
-      style: { stroke: '#6366f1' },
+      animated: false,
+      style: { stroke: 'rgba(255, 255, 255, 0.35)', strokeWidth: 1.5 },
     }))
 
     set((s) => ({
