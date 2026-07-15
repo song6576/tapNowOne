@@ -1,11 +1,12 @@
-/** 画布顶栏：Logo 菜单、可编辑项目名、修改时间 */
+/** 画布顶栏：Logo 菜单、可编辑项目名、修改时间；右上角积分 / 社区 / 分享 */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TapNowLogo } from '../auth/TapNowLogo'
-import { MOCK_USER } from '../../mock/data'
 import { useCanvasStore } from '../../store/canvasStore'
 import { useI18n } from '../../store/langStore'
+import { useTeamStore } from '../../store/teamStore'
 import { useRelativeTime } from '../../hooks/useRelativeTime'
+import { useToastStore } from '../../store/toastStore'
 
 interface CanvasTopBarProps {
   projectName: string
@@ -28,6 +29,8 @@ export function CanvasTopBar({
   const [draftName, setDraftName] = useState('')
   const navigate = useNavigate()
   const persist = useCanvasStore((s) => s.persist)
+  const tapiesBalance = useTeamStore((s) => s.tapiesBalance)
+  const showToast = useToastStore((s) => s.showToast)
   const { t } = useI18n()
   const c = t.canvas
   const nav = t.nav
@@ -140,14 +143,23 @@ export function CanvasTopBar({
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="canvas-credits-pill">
+        <div className="canvas-credits-pill" title="Tapies">
           <span className="text-amber-400/90">◆</span>
-          {MOCK_USER.credits.toLocaleString()}
+          {tapiesBalance.toLocaleString()}
         </div>
-        <button type="button" className="canvas-community-btn ui-clickable">
+        <button
+          type="button"
+          className="canvas-community-btn ui-clickable"
+          onClick={() => navigate('/taptv')}
+        >
           ✦ {c.community}
         </button>
-        <button type="button" className="canvas-topbar-icon ui-clickable" title={c.share}>
+        <button
+          type="button"
+          className="canvas-topbar-icon ui-clickable"
+          title={c.share}
+          onClick={() => showToast({ type: 'info', message: t.account.comingSoon })}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

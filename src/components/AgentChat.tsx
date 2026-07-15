@@ -19,6 +19,8 @@ export function AgentChat({
   variant = 'default',
   projectId,
   initialPrompt,
+  initialConversationId,
+  initialMessages,
   modelId = DEFAULT_AGENT_MODEL,
   autoModel = true,
   onModelChange,
@@ -27,6 +29,10 @@ export function AgentChat({
   variant?: 'default' | 'canvas'
   projectId?: string
   initialPrompt?: string
+  /** 从历史记录恢复的会话 ID */
+  initialConversationId?: string
+  /** 从历史记录恢复的消息列表 */
+  initialMessages?: Message[]
   modelId?: string
   autoModel?: boolean
   onModelChange?: (modelId: string) => void
@@ -40,6 +46,7 @@ export function AgentChat({
     : 'Hi, I\'m TapNow Agent.\n\n• Chat to add — describe what you want\n• 「生成分镜：脚本」— auto-create storyboard nodes\n• Run Workflow — batch generate all nodes'
 
   const [messages, setMessages] = useState<Message[]>(() => {
+    if (initialMessages?.length) return initialMessages
     const prompt = initialPrompt?.trim()
     if (isCanvas && prompt) {
       return [{ role: 'user', content: prompt }]
@@ -48,7 +55,7 @@ export function AgentChat({
   })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [conversationId, setConversationId] = useState<string | undefined>()
+  const [conversationId, setConversationId] = useState<string | undefined>(initialConversationId)
   const [selectedModelId, setSelectedModelId] = useState(modelId)
   const [selectedAuto, setSelectedAuto] = useState(autoModel)
   const bottomRef = useRef<HTMLDivElement>(null)

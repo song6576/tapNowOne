@@ -87,11 +87,24 @@ export function CanvasPage() {
   const showToast = useToastStore((s) => s.showToast)
 
   const [showAgentPanel, setShowAgentPanel] = useState(agentNavRef.current.open)
+  /** 收起后仍挂载面板以保留对话；并显示画布浮动入口 */
+  const [agentCollapsed, setAgentCollapsed] = useState(false)
   const [agentInitialPrompt, setAgentInitialPrompt] = useState(agentNavRef.current.prompt)
   const [agentModelId, setAgentModelId] = useState(agentNavRef.current.modelId)
   const [agentAutoModel, setAgentAutoModel] = useState(agentNavRef.current.autoModel)
   const [promoDismissed, setPromoDismissed] = useState(false)
   const [showMinimap, setShowMinimap] = useState(true)
+
+  const openAgentPanel = useCallback(() => {
+    setShowAgentPanel(true)
+    setAgentCollapsed(false)
+  }, [])
+
+  const collapseAgentPanel = useCallback(() => {
+    setShowAgentPanel(false)
+    setAgentCollapsed(true)
+    setAgentInitialPrompt(undefined)
+  }, [])
 
   useEffect(() => { wsInit() }, [wsInit])
 
@@ -322,16 +335,16 @@ export function CanvasPage() {
         className="hidden"
         onChange={handleUploadFile}
       />
-      <div className="canvas-page relative flex h-full flex-col bg-[#050505]">
-        <CanvasTopBar
-          projectName={project.name}
-          onProjectNameChange={handleNameChange}
-          projectId={projectId}
-          updatedAt={project.updatedAt}
-          onNewProject={handleNewProject}
-          onDelete={() => navigate('/home/projects')}
-        />
-        <div className="relative flex min-h-0 flex-1 overflow-hidden">
+      <div className="canvas-page relative flex h-full overflow-hidden bg-[#050505]">
+        <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <CanvasTopBar
+            projectName={project.name}
+            onProjectNameChange={handleNameChange}
+            projectId={projectId}
+            updatedAt={project.updatedAt}
+            onNewProject={handleNewProject}
+            onDelete={() => navigate('/home/projects')}
+          />
           <div className="relative flex min-h-0 flex-1 overflow-hidden">
             <FlowCanvas
               hideChrome={isEmpty}
@@ -343,7 +356,7 @@ export function CanvasPage() {
             <CanvasToolbar
               onAddNode={handleAddNode}
               onOpenAddMenu={handleOpenAddMenuFromToolbar}
-              onOpenAgent={() => setShowAgentPanel(true)}
+              onOpenAgent={openAgentPanel}
             />
             {isEmpty && (
               <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
@@ -361,8 +374,28 @@ export function CanvasPage() {
               onToggleMinimap={() => setShowMinimap((v) => !v)}
               onViewportPersist={setViewport}
             />
+            {agentCollapsed && !showAgentPanel && (
+              <button
+                type="button"
+                className="canvas-agent-fab ui-clickable"
+                onClick={openAgentPanel}
+                aria-label={t.canvas.agentPanel.openPanel}
+                title={t.canvas.agentPanel.openPanel}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
           </div>
-          {showAgentPanel && (
+        </div>
+
+        {(showAgentPanel || agentCollapsed) && (
+          <div
+            className="h-full min-h-0 shrink-0 self-stretch"
+            style={{ display: showAgentPanel ? undefined : 'none' }}
+            aria-hidden={!showAgentPanel}
+          >
             <CanvasAgentPanel
               key={projectId ?? 'canvas-agent'}
               projectId={projectId}
@@ -371,13 +404,10 @@ export function CanvasPage() {
               autoModel={agentAutoModel}
               onModelChange={setAgentModelId}
               onAutoModelChange={setAgentAutoModel}
-              onClose={() => {
-                setShowAgentPanel(false)
-                setAgentInitialPrompt(undefined)
-              }}
+              onClose={collapseAgentPanel}
             />
-          )}
-        </div>
+          </div>
+        )}
 
         {!promoDismissed && isEmpty && (
           <div className="canvas-promo-banner">

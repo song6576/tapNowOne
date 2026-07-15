@@ -282,6 +282,11 @@ export type Messages = {
       resize: string
       newFeature: string
       minimize: string
+      history: string
+      historyEmpty: string
+      historyNew: string
+      historyLoading: string
+      openPanel: string
       suggestions: string[]
     }
   }
@@ -795,6 +800,11 @@ const zh: Messages = {
       resize: '调整面板宽度',
       newFeature: '新功能',
       minimize: '收起',
+      history: '历史记录',
+      historyEmpty: '暂无历史对话',
+      historyNew: '新对话',
+      historyLoading: '加载中...',
+      openPanel: '打开 AI 助手',
       suggestions: ['创建一个图片节点', '添加一个文本节点', '创建两个视频节点'],
     },
   },
@@ -1329,7 +1339,12 @@ const en: Messages = {
       send: 'Send',
       resize: 'Resize panel',
       newFeature: 'New',
-      minimize: 'Minimize',
+      minimize: 'Collapse',
+      history: 'History',
+      historyEmpty: 'No conversations yet',
+      historyNew: 'New chat',
+      historyLoading: 'Loading...',
+      openPanel: 'Open AI assistant',
       suggestions: ['Create an image node', 'Add a text node', 'Create two video nodes'],
     },
   },

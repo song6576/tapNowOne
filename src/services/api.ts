@@ -59,6 +59,25 @@ export async function cloneTapTVWork(id: string) {
 export type { TapTVListParams } from '../api/client'
 export type { TapTVCategory, TapTVSort }
 
+export async function listProjectConversations(projectId: string) {
+  if (USE_MOCK) return [] as import('../api/client').AgentConversationMeta[]
+  return real.listProjectConversations(projectId)
+}
+
+export async function getConversation(id: string) {
+  if (USE_MOCK) {
+    return {
+      id,
+      project_id: null,
+      title: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      messages: [] as Array<{ id: string; role: string; content: string; created_at: string }>,
+    }
+  }
+  return real.getConversation(id)
+}
+
 /** Agent 对话：Mock 返回占位文案，真实模式走百炼 Qwen */
 export async function agentChat(
   message: string,
