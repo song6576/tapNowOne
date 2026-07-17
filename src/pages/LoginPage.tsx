@@ -175,14 +175,15 @@ export function LoginPage() {
     'ui-clickable flex h-[52px] w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[16px] text-white transition hover:border-white/35 hover:bg-white/[0.03]'
 
   return (
-    <div className="login-page relative min-h-screen overflow-auto bg-black text-white">
-      <header className="fixed inset-x-0 top-0 z-10 flex items-center justify-between px-6 py-5 md:px-10">
+    <div className="login-page absolute inset-0 overflow-y-auto bg-black text-white">
+      <header className="sticky top-0 z-10 flex items-center justify-between bg-black/80 px-6 py-5 backdrop-blur-sm md:px-10">
         <TapNowLogo size="sm" />
         <LanguageDropdown />
       </header>
 
-      <main className="flex min-h-screen items-center justify-center px-6 pb-12 pt-24">
-        <div className="w-full max-w-[400px]">
+      {/* my-auto 替代 items-center：矮屏溢出时仍可滚到顶部与底部条款 */}
+      <main className="flex min-h-[calc(100%-4.5rem)] flex-col px-6 pb-16 pt-6">
+        <div className="mx-auto my-auto w-full max-w-[400px]">
           <div className="mb-8 flex justify-center">
             <TapNowLogo size="lg" />
           </div>

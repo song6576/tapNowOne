@@ -134,9 +134,15 @@ html, body, #root {
 
 .ui-clickable { cursor: pointer; }
 
-/* Login page — TapNow style */
+/* Login page — TapNow style
+ * 根节点 html/body/#root 为 overflow:hidden，登录页用 absolute inset-0
+ * 自建滚动容器；否则矮屏/键盘弹起时底部服务条款会被裁切且无法滚动。 */
 .login-page {
   font-size: 16px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .login-page .login-input {
