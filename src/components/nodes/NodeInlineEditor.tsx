@@ -4,6 +4,7 @@ import { DEFAULT_AGENT_MODEL } from '../../types/aiModel'
 import { useCanvasStore } from '../../store/canvasStore'
 import { useI18n } from '../../store/langStore'
 import { ModelDropdown } from '../ui/ModelDropdown'
+import { formatVideoParamsSummary } from '../../constants/videoParams'
 import type { NodeData, NodeType } from '../../types'
 
 interface NodeInlineEditorProps {
@@ -95,7 +96,16 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
           ) : (
             <span className="node-inline-editor-model">Group</span>
           )}
-          {type === 'video' && <span className="text-white/30">· 16:9 · 480p · 5s</span>}
+          {type === 'video' && (
+            <span className="text-white/30">
+              · {formatVideoParamsSummary({
+                ratio: data.videoRatio,
+                resolution: data.videoResolution,
+                duration: data.duration,
+                watermark: data.videoWatermark,
+              })}
+            </span>
+          )}
         </div>
         {canGenerate && (
           <div className="node-inline-editor-actions">

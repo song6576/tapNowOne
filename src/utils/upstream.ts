@@ -6,10 +6,14 @@ export function getUpstreamInputs(
   nodeId: string,
   nodes: CanvasNode[],
   edges: CanvasEdge[],
-): { upstreamText?: string; upstreamImageUrl?: string } {
+): {
+  upstreamText?: string
+  upstreamImageUrl?: string
+  upstreamImageUrls: string[]
+} {
   const incoming = edges.filter((e) => e.target === nodeId)
   let upstreamText: string | undefined
-  let upstreamImageUrl: string | undefined
+  const upstreamImageUrls: string[] = []
 
   for (const edge of incoming) {
     const source = nodes.find((n) => n.id === edge.source)
@@ -18,11 +22,15 @@ export function getUpstreamInputs(
       upstreamText = source.data.outputText || source.data.prompt || upstreamText
     }
     if (source.type === 'image' && source.data.outputUrl) {
-      upstreamImageUrl = source.data.outputUrl
+      upstreamImageUrls.push(source.data.outputUrl)
     }
   }
 
-  return { upstreamText, upstreamImageUrl }
+  return {
+    upstreamText,
+    upstreamImageUrl: upstreamImageUrls[0],
+    upstreamImageUrls,
+  }
 }
 
 /** 合并上游文本与节点自身 Prompt */

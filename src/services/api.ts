@@ -132,12 +132,12 @@ export async function generateNode(payload: Parameters<typeof real.submitGenerat
   return result.result_url
 }
 
-export async function composeVideo(clips: real.ComposeClip[], audioUrl?: string): Promise<string> {
+export async function composeVideo(timeline: real.ComposeTimeline): Promise<string> {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 2000))
     return '/static/outputs/mock-compose.mp4'
   }
-  const { task_id } = await real.submitCompose(clips, audioUrl)
+  const { task_id } = await real.submitCompose(timeline)
   const result = await real.pollTask(task_id)
   if (!result.result_url) throw new Error('合成失败')
   return result.result_url

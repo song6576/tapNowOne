@@ -15,12 +15,17 @@ export type GeneratePayload = {
   auto?: boolean
   upstream_text?: string
   upstream_image_url?: string
+  upstream_image_urls?: string[]
   duration?: number
+  resolution?: string
+  ratio?: string
+  watermark?: boolean
 }
 
 export type TaskResult = {
   task_id: string
   state: 'pending' | 'running' | 'completed' | 'failed'
+  progress?: number
   result_url?: string
   error?: string
 }
@@ -29,6 +34,9 @@ export type HealthStatus = {
   status: string
   mock_mode: boolean
   dashscope_configured: boolean
+  ark_configured?: boolean
+  ffmpeg_configured?: boolean
+  providers?: { dashscope: boolean; ark: boolean }
 }
 
 export type ProjectMeta = {
@@ -88,9 +96,31 @@ export type AgentConversationDetail = {
 }
 
 export type ComposeClip = {
+  node_id: string
   url: string
   type: 'image' | 'video'
   duration: number
+}
+
+export type ComposeCaption = {
+  text: string
+  start: number
+  end: number
+}
+
+export type ComposeAudioTrack = {
+  url: string
+  start: number
+  volume: number
+}
+
+export type ComposeTimeline = {
+  clips: ComposeClip[]
+  captions: ComposeCaption[]
+  audio_tracks: ComposeAudioTrack[]
+  width: number
+  height: number
+  fps: number
 }
 
 export type StoryboardScene = {
@@ -554,11 +584,11 @@ export async function submitGenerate(payload: GeneratePayload): Promise<TaskResu
   return res.json()
 }
 
-export async function submitCompose(clips: ComposeClip[], audioUrl?: string): Promise<TaskResult> {
+export async function submitCompose(timeline: ComposeTimeline): Promise<TaskResult> {
   const res = await fetch(`${API_BASE}/compose`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ clips, audio_url: audioUrl }),
+    body: JSON.stringify(timeline),
   })
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
@@ -572,8 +602,8 @@ export async function getTask(taskId: string): Promise<TaskResult> {
   return res.json()
 }
 
-/** 轮询异步生成任务，直到完成/失败/超时 */
-export async function pollTask(taskId: string, intervalMs = 1500, maxAttempts = 120): Promise<TaskResult> {
+/** 轮询异步生成任务，默认允许 Seedance / FFmpeg 最长约 10 分钟 */
+export async function pollTask(taskId: string, intervalMs = 1500, maxAttempts = 400): Promise<TaskResult> {
   for (let i = 0; i < maxAttempts; i++) {
     const task = await getTask(taskId)
     if (task.state === 'completed') return task

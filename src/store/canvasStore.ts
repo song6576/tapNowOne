@@ -14,11 +14,11 @@ import { loadProject, saveProject, createEmptyProject } from '../utils/storage'
 import { generateUUID } from '../utils/uuid'
 import { buildEffectivePrompt, getUpstreamInputs } from '../utils/upstream'
 import { generateNode as apiGenerate, composeVideo, agentChat } from '../services/api'
-import { resolveAgentModel, resolveImageModel } from '../config/agentModels'
+import { resolveAgentModel, resolveNodeModel } from '../config/agentModels'
 import { getWorkflowOrder, buildCanvasContext } from '../utils/workflow'
 import { patchProject, getProject as fetchCloudProject } from '../api/client'
 import { getToken } from '../utils/auth'
-import { collectComposeClips } from '../utils/compose'
+import { collectComposeTimeline } from '../utils/compose'
 import { nextToolbarNodePosition } from '../utils/canvasLayout'
 import type { StoryboardScene } from '../api/client'
 
@@ -323,9 +323,13 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
     const autoModel = node.data.autoModel !== false
     const resolvedModel =
-      node.type === 'image'
-        ? resolveImageModel(node.data.model, autoModel)
-        : resolveAgentModel(node.data.model, autoModel)
+      node.type === 'text'
+        ? resolveAgentModel(node.data.model, autoModel)
+        : resolveNodeModel(
+            node.type as 'image' | 'video' | 'audio',
+            node.data.model,
+            autoModel,
+          )
 
     if (node.type === 'text') {
       const userPrompt = (node.data.prompt || '').trim()
@@ -358,7 +362,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const nodeType = node.type as 'image' | 'video' | 'audio'
     updateNodeData(nodeId, { status: 'generating', errorMessage: undefined })
 
-    const { upstreamText, upstreamImageUrl } = getUpstreamInputs(nodeId, nodes, edges)
+    const { upstreamText, upstreamImageUrl, upstreamImageUrls } = getUpstreamInputs(nodeId, nodes, edges)
     const effectivePrompt = buildEffectivePrompt(node, nodes, edges)
 
     try {
@@ -369,7 +373,11 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         auto: autoModel,
         upstream_text: upstreamText,
         upstream_image_url: upstreamImageUrl,
-        duration: node.data.duration ?? 4,
+        upstream_image_urls: upstreamImageUrls,
+        duration: node.data.duration,
+        resolution: node.data.videoResolution,
+        ratio: node.data.videoRatio,
+        watermark: node.data.videoWatermark,
       })
       updateNodeData(nodeId, { status: 'done', outputUrl: resultUrl })
       return true
@@ -479,9 +487,11 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set({ exporting: true })
     try {
       const { nodes, edges } = get()
-      const { clips, audioUrl } = collectComposeClips(nodes, edges)
-      if (!clips.length) throw new Error('No clips to compose. Generate content first.')
-      return await composeVideo(clips, audioUrl)
+      const timeline = collectComposeTimeline(nodes, edges)
+      if (!timeline.clips.length) {
+        throw new Error('没有可合成的图片或视频，请先生成内容')
+      }
+      return await composeVideo(timeline)
     } finally {
       set({ exporting: false })
     }

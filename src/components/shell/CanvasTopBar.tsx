@@ -7,6 +7,7 @@ import { useI18n } from '../../store/langStore'
 import { useTeamStore } from '../../store/teamStore'
 import { useRelativeTime } from '../../hooks/useRelativeTime'
 import { useToastStore } from '../../store/toastStore'
+import { Portal } from '../ui/Portal'
 
 interface CanvasTopBarProps {
   projectName: string
@@ -27,8 +28,11 @@ export function CanvasTopBar({
   const [menuOpen, setMenuOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [draftName, setDraftName] = useState('')
+  const [exportUrl, setExportUrl] = useState<string | null>(null)
   const navigate = useNavigate()
   const persist = useCanvasStore((s) => s.persist)
+  const exportVideo = useCanvasStore((s) => s.exportVideo)
+  const exporting = useCanvasStore((s) => s.exporting)
   const tapiesBalance = useTeamStore((s) => s.tapiesBalance)
   const showToast = useToastStore((s) => s.showToast)
   const { t } = useI18n()
@@ -43,6 +47,20 @@ export function CanvasTopBar({
 
   const closeMenu = () => setMenuOpen(false)
 
+  const handleExportVideo = async () => {
+    try {
+      const url = await exportVideo()
+      setExportUrl(url)
+      showToast({ type: 'success', message: c.exportComplete })
+    } catch (err) {
+      showToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : c.exportFailed,
+        duration: 5000,
+      })
+    }
+  }
+
   const startRename = () => {
     setDraftName(projectName || '')
     setRenaming(true)
@@ -55,6 +73,7 @@ export function CanvasTopBar({
   }
 
   return (
+    <>
     <header className="canvas-topbar canvas-topbar--fig5 flex h-12 shrink-0 items-center justify-between px-4">
       <div className="canvas-topbar-left flex min-w-0 items-center gap-2.5">
         <div className="relative shrink-0">
@@ -79,7 +98,7 @@ export function CanvasTopBar({
                 >
                   {c.backToWorkspace}
                 </button>
-                <div className="my-1 border-t border-white/[0.06]" />
+                <div className="my-1 border-t border-white/6" />
                 <p className="px-4 py-1 text-[11px] text-white/35">{c.scenes}</p>
                 <button type="button" className="ui-clickable w-full px-4 py-2.5 text-left text-sm text-white/75 hover:bg-white/5" onClick={() => { navigate('/taptv'); closeMenu() }}>
                   {nav.taptv}
@@ -87,7 +106,7 @@ export function CanvasTopBar({
                 <button type="button" className="ui-clickable w-full px-4 py-2.5 text-left text-sm text-white/40 hover:bg-white/5" onClick={closeMenu}>
                   {nav.arena}
                 </button>
-                <div className="my-1 border-t border-white/[0.06]" />
+                <div className="my-1 border-t border-white/6" />
                 <p className="px-4 py-1 text-[11px] text-white/35">{c.projectSection}</p>
                 <button
                   type="button"
@@ -149,6 +168,14 @@ export function CanvasTopBar({
         </div>
         <button
           type="button"
+          disabled={exporting}
+          className="canvas-community-btn ui-clickable disabled:cursor-wait disabled:opacity-50"
+          onClick={() => void handleExportVideo()}
+        >
+          {exporting ? c.exportingVideo : c.exportVideo}
+        </button>
+        <button
+          type="button"
           className="canvas-community-btn ui-clickable"
           onClick={() => navigate('/taptv')}
         >
@@ -166,5 +193,41 @@ export function CanvasTopBar({
         </button>
       </div>
     </header>
+    {exportUrl && (
+      <Portal>
+        <div className="fixed inset-0 z-130 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="account-modal-backdrop absolute inset-0"
+            onClick={() => setExportUrl(null)}
+            aria-label={c.closePreview}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="relative z-10 w-full max-w-3xl rounded-2xl border border-white/10 bg-[#141416] p-5 shadow-2xl"
+          >
+            <video src={exportUrl} controls autoPlay className="max-h-[70vh] w-full rounded-xl bg-black" />
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                className="ui-clickable rounded-full px-4 py-2 text-sm text-white/55 hover:bg-white/5"
+                onClick={() => setExportUrl(null)}
+              >
+                {c.closePreview}
+              </button>
+              <a
+                href={exportUrl}
+                download
+                className="ui-clickable rounded-full bg-white px-5 py-2 text-sm font-medium text-black hover:bg-white/90"
+              >
+                {c.downloadVideo}
+              </a>
+            </div>
+          </div>
+        </div>
+      </Portal>
+    )}
+    </>
   )
 }

@@ -103,6 +103,9 @@ function ModelRow({
       <span className="flex min-w-0 flex-1 items-center gap-2.5">
         <ModelIcon model={model} />
         <span className="truncate text-sm text-white/90">{model.label}</span>
+        <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-white/35">
+          {model.provider === 'ark' ? '方舟' : '百炼'}
+        </span>
         {tierLabel && <TierBadge tier={model.tier} label={tierLabel} />}
       </span>
       {disabled ? (

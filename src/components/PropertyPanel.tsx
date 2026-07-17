@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useCanvasStore } from '../store/canvasStore'
 import { DEFAULT_AGENT_MODEL } from '../types/aiModel'
 import { ModelDropdown } from './ui/ModelDropdown'
+import { VideoParamsFields } from './VideoParamsFields'
 import { NODE_META, type NodeType } from '../types'
 
 const inputCls =
@@ -104,10 +105,13 @@ export function PropertyPanel({ embedded }: PropertyPanelProps) {
         )}
 
         {type === 'video' && (
-          <div>
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-[var(--tn-text-muted)]">Duration (s)</label>
-            <input type="number" min={1} max={15} value={data.duration ?? 4} onChange={(e) => updateNodeData(selectedNode.id, { duration: Number(e.target.value) })} className={inputCls} />
-          </div>
+          <VideoParamsFields
+            duration={data.duration}
+            resolution={data.videoResolution}
+            ratio={data.videoRatio}
+            watermark={data.videoWatermark}
+            onChange={(patch) => updateNodeData(selectedNode.id, patch)}
+          />
         )}
 
         <div className="flex items-center gap-2 text-[10px] text-[var(--tn-text-muted)]">

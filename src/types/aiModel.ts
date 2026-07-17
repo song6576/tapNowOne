@@ -4,6 +4,8 @@ export type AiModelCategory = 'text' | 'image' | 'video' | 'audio'
 export type AiModel = {
   id: string
   slug: string
+  provider: 'dashscope' | 'ark'
+  provider_model_id: string
   label: string
   category: AiModelCategory
   description: string
@@ -22,6 +24,8 @@ export type AiModelsResponse = {
   by_category: Record<AiModelCategory, AiModel[]>
   default_slug: string
   default_image_slug?: string
+  default_video_slug?: string
+  default_audio_slug?: string
 }
 
 /** 画布节点类型 → 模型分类 */
@@ -39,10 +43,14 @@ export function nodeTypeToModelCategory(
 export const FALLBACK_AI_MODELS: AiModelsResponse = {
   default_slug: 'qwen3.7-plus',
   default_image_slug: 'qwen-image-2.0-pro-2026-04-22',
+  default_video_slug: 'happyhorse-1.1-r2v',
+  default_audio_slug: 'sambert-zhide-v1',
   models: [
     {
       id: 'fb-1',
       slug: 'qwen3.7-plus',
+      provider: 'dashscope',
+      provider_model_id: 'qwen3.7-plus',
       label: 'Qwen 3.7 Plus',
       category: 'text',
       description: '适合日常文案、脚本润色与多轮对话，响应快、中文表现稳定。',
@@ -57,6 +65,8 @@ export const FALLBACK_AI_MODELS: AiModelsResponse = {
     {
       id: 'fb-2',
       slug: 'deepseek-v4-flash',
+      provider: 'dashscope',
+      provider_model_id: 'deepseek-v4-flash',
       label: 'DeepSeek V4 Flash',
       category: 'text',
       description: '适合快速推理、代码辅助与结构化输出，性价比高。',
@@ -69,8 +79,26 @@ export const FALLBACK_AI_MODELS: AiModelsResponse = {
       sort_order: 20,
     },
     {
+      id: 'fb-ark-text',
+      slug: 'deepseek-v4-flash-260425',
+      provider: 'ark',
+      provider_model_id: 'deepseek-v4-flash-260425',
+      label: 'DeepSeek V4 Flash（方舟）',
+      category: 'text',
+      description: '火山方舟托管的快速推理模型，适合文案、分镜和结构化输出。',
+      usage_hint: null,
+      icon: 'D',
+      tier: 'medium',
+      is_premium: false,
+      is_coming_soon: false,
+      node_types: ['text'],
+      sort_order: 30,
+    },
+    {
       id: 'fb-img',
       slug: 'qwen-image-2.0-pro-2026-04-22',
+      provider: 'dashscope',
+      provider_model_id: 'qwen-image-2.0-pro-2026-04-22',
       label: 'qwen-image-2.0-pro',
       category: 'image',
       description: '通义万相图片生成/编辑满血版：高保真纹理、光影材质与多语言图内文字；支持文生图与指令编辑。',
@@ -83,8 +111,42 @@ export const FALLBACK_AI_MODELS: AiModelsResponse = {
       sort_order: 10,
     },
     {
+      id: 'fb-ark-image',
+      slug: 'doubao-seedream-4-0-250828',
+      provider: 'ark',
+      provider_model_id: 'doubao-seedream-4-0-250828',
+      label: 'Doubao Seedream 4.0',
+      category: 'image',
+      description: '火山方舟图片生成与编辑模型，支持文生图和参考图生成。',
+      usage_hint: '图片结果会自动保存到本地，避免临时链接过期。',
+      icon: 'A',
+      tier: 'high',
+      is_premium: true,
+      is_coming_soon: false,
+      node_types: ['image'],
+      sort_order: 20,
+    },
+    {
       id: 'fb-3',
+      slug: 'happyhorse-1.1-r2v',
+      provider: 'dashscope',
+      provider_model_id: 'happyhorse-1.1-r2v',
+      label: 'HappyHorse 1.1 R2V',
+      category: 'video',
+      description: '百炼参考生视频：支持多张参考图、可配置分辨率/宽高比/时长/水印。',
+      usage_hint: '在 prompt 中用 [Image 1]、[Image 2] 引用上游图片；最多 9 张参考图。',
+      icon: 'H',
+      tier: 'high',
+      is_premium: true,
+      is_coming_soon: false,
+      node_types: ['video'],
+      sort_order: 10,
+    },
+    {
+      id: 'fb-3b',
       slug: 'happyhorse-1.0-video-edit',
+      provider: 'dashscope',
+      provider_model_id: 'happyhorse-1.0-video-edit',
       label: 'HappyHorse 1.0 Video Edit',
       category: 'video',
       description: '适合短视频片段生成、镜头拼接与画面风格统一。',
@@ -94,11 +156,29 @@ export const FALLBACK_AI_MODELS: AiModelsResponse = {
       is_premium: true,
       is_coming_soon: false,
       node_types: ['video'],
-      sort_order: 10,
+      sort_order: 15,
+    },
+    {
+      id: 'fb-ark-video',
+      slug: 'doubao-seedance-2-0-mini-260615',
+      provider: 'ark',
+      provider_model_id: 'doubao-seedance-2-0-mini-260615',
+      label: 'Doubao Seedance 2.0 Mini',
+      category: 'video',
+      description: '火山方舟视频生成模型，支持文生视频与图片驱动视频。',
+      usage_hint: '视频生成耗时较长，任务会在后台持续执行。',
+      icon: 'V',
+      tier: 'high',
+      is_premium: true,
+      is_coming_soon: false,
+      node_types: ['video'],
+      sort_order: 20,
     },
     {
       id: 'fb-4',
       slug: 'sambert-zhide-v1',
+      provider: 'dashscope',
+      provider_model_id: 'sambert-zhide-v1',
       label: 'Sambert Zhide V1',
       category: 'audio',
       description: '适合中文旁白、解说配音与口播稿朗读。',
@@ -115,6 +195,8 @@ export const FALLBACK_AI_MODELS: AiModelsResponse = {
     {
       id: 'fb-5',
       slug: 'gpt-5.6',
+      provider: 'dashscope',
+      provider_model_id: 'gpt-5.6',
       label: 'GPT 5.6',
       category: 'text',
       description: '适合复杂任务编排、多镜头视频规划与长剧情推理。',
@@ -129,6 +211,8 @@ export const FALLBACK_AI_MODELS: AiModelsResponse = {
     {
       id: 'fb-6',
       slug: 'gemini-3.1-pro',
+      provider: 'dashscope',
+      provider_model_id: 'gemini-3.1-pro',
       label: 'Gemini 3.1 Pro',
       category: 'text',
       description: '适合多模态理解、长文档分析与创意头脑风暴。',
@@ -154,6 +238,10 @@ FALLBACK_AI_MODELS.by_category = {
 export const DEFAULT_AGENT_MODEL = FALLBACK_AI_MODELS.default_slug
 export const DEFAULT_IMAGE_MODEL =
   FALLBACK_AI_MODELS.default_image_slug ?? 'qwen-image-2.0-pro-2026-04-22'
+export const DEFAULT_VIDEO_MODEL =
+  FALLBACK_AI_MODELS.default_video_slug ?? 'happyhorse-1.1-r2v'
+export const DEFAULT_AUDIO_MODEL =
+  FALLBACK_AI_MODELS.default_audio_slug ?? 'sambert-zhide-v1'
 
 export function resolveAgentModel(modelId?: string, autoEnabled = true): string {
   if (autoEnabled || !modelId) return DEFAULT_AGENT_MODEL
@@ -164,4 +252,16 @@ export function resolveAgentModel(modelId?: string, autoEnabled = true): string 
 export function resolveImageModel(modelId?: string, autoEnabled = true): string {
   if (autoEnabled || !modelId) return DEFAULT_IMAGE_MODEL
   return modelId
+}
+
+export function resolveNodeModel(
+  nodeType: AiModelCategory,
+  modelId?: string,
+  autoEnabled = true,
+): string {
+  if (!autoEnabled && modelId) return modelId
+  if (nodeType === 'image') return DEFAULT_IMAGE_MODEL
+  if (nodeType === 'video') return DEFAULT_VIDEO_MODEL
+  if (nodeType === 'audio') return DEFAULT_AUDIO_MODEL
+  return DEFAULT_AGENT_MODEL
 }

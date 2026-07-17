@@ -214,6 +214,12 @@ export type Messages = {
     justNow: string
     community: string
     share: string
+    exportVideo: string
+    exportingVideo: string
+    exportComplete: string
+    exportFailed: string
+    downloadVideo: string
+    closePreview: string
     aiHint: string
     aiSubHint: string
     textToVideo: string
@@ -732,6 +738,12 @@ const zh: Messages = {
     justNow: '刚刚',
     community: '社区',
     share: '分享',
+    exportVideo: '导出视频',
+    exportingVideo: '合成中...',
+    exportComplete: '视频合成完成',
+    exportFailed: '视频导出失败',
+    downloadVideo: '下载视频',
+    closePreview: '关闭预览',
     aiHint: '画布自由生成，或查看模板',
     aiSubHint: '草稿',
     textToVideo: '文字生成视频',
@@ -1272,6 +1284,12 @@ const en: Messages = {
     justNow: 'just now',
     community: 'Community',
     share: 'Share',
+    exportVideo: 'Export video',
+    exportingVideo: 'Composing...',
+    exportComplete: 'Video export complete',
+    exportFailed: 'Video export failed',
+    downloadVideo: 'Download video',
+    closePreview: 'Close preview',
     aiHint: 'Generate on canvas, or browse templates',
     aiSubHint: 'Draft',
     textToVideo: 'Text to video',

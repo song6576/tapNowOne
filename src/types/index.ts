@@ -2,7 +2,17 @@
  * 画布领域类型：节点/边/项目结构，以及各节点类型的默认元数据。
  */
 import type { Node, Edge, Viewport } from '@xyflow/react'
-import { DEFAULT_AGENT_MODEL, DEFAULT_IMAGE_MODEL } from './aiModel'
+import {
+  DEFAULT_AGENT_MODEL,
+  DEFAULT_AUDIO_MODEL,
+  DEFAULT_IMAGE_MODEL,
+  DEFAULT_VIDEO_MODEL,
+} from './aiModel'
+import {
+  DEFAULT_VIDEO_DURATION,
+  DEFAULT_VIDEO_RATIO,
+  DEFAULT_VIDEO_RESOLUTION,
+} from '../constants/videoParams'
 
 /** 画布支持的节点种类 */
 export type NodeType = 'text' | 'image' | 'video' | 'audio' | 'group'
@@ -18,6 +28,9 @@ export interface NodeData {
   status: NodeStatus
   errorMessage?: string
   duration?: number
+  videoResolution?: string
+  videoRatio?: string
+  videoWatermark?: boolean
   [key: string]: unknown
 }
 
@@ -48,13 +61,25 @@ export function createDefaultNodeData(type: NodeType): NodeData {
   const model =
     type === 'image'
       ? DEFAULT_IMAGE_MODEL
-      : type === 'text' || type === 'video' || type === 'audio'
-        ? DEFAULT_AGENT_MODEL
-        : undefined
+      : type === 'video'
+        ? DEFAULT_VIDEO_MODEL
+        : type === 'audio'
+          ? DEFAULT_AUDIO_MODEL
+          : type === 'text'
+            ? DEFAULT_AGENT_MODEL
+            : undefined
   return {
     label: meta.label,
     prompt: '',
     status: 'idle',
     ...(model ? { model, autoModel: true } : {}),
+    ...(type === 'video'
+      ? {
+          duration: DEFAULT_VIDEO_DURATION,
+          videoResolution: DEFAULT_VIDEO_RESOLUTION,
+          videoRatio: DEFAULT_VIDEO_RATIO,
+          videoWatermark: false,
+        }
+      : {}),
   }
 }
