@@ -118,12 +118,12 @@ html, body, #root {
   box-sizing: border-box;
   border-radius: 18px;
   border: 1.5px solid rgba(255, 255, 255, 0.28);
-  background: transparent;
-  transition: border-color 0.15s ease;
+  background: rgba(255, 255, 255, 0.04);
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 .canvas-group-node--selected {
   border-color: rgba(255, 255, 255, 0.55);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
 }
 .canvas-group-node-label {
   position: absolute;
@@ -2408,6 +2408,8 @@ html, body, #root {
   background: rgba(24, 24, 27, 0.96) !important;
   border-radius: 9999px !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  /* 左侧 handle 在 DOM 中早于卡片，需抬高层级，避免被视频内容盖住 */
+  z-index: 20 !important;
 }
 .canvas-node-handle::after {
   content: '+';

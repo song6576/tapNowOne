@@ -64,7 +64,7 @@ export function TextNode(props: NodeProps) {
           />
         ) : display ? (
           <div
-            className="canvas-node-text-preview nowheel nopan nodrag"
+            className="canvas-node-text-preview nowheel"
             onDoubleClick={(e) => {
               if (generating) return
               e.stopPropagation()
@@ -72,7 +72,6 @@ export function TextNode(props: NodeProps) {
               setEditing(true)
             }}
             onWheel={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
           >
             {display}
           </div>
