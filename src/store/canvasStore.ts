@@ -20,6 +20,7 @@ import { patchProject, getProject as fetchCloudProject } from '../api/client'
 import { getToken } from '../utils/auth'
 import { collectComposeTimeline } from '../utils/compose'
 import { nextToolbarNodePosition } from '../utils/canvasLayout'
+import { buildNodesById, getAbsolutePosition, getNodeSize } from '../utils/nodeBounds'
 import type { StoryboardScene } from '../api/client'
 
 const TEXT_NODE_DEFAULT_WIDTH = 280
@@ -90,6 +91,11 @@ interface CanvasStore {
   ) => void
   updateNodeData: (id: string, data: Partial<NodeData>) => void
   selectNode: (id: string | null) => void
+  /** 将当前选中的 ≥2 个非组节点打成一组 */
+  groupSelected: () => string | null
+  /** 解组：子节点还原为绝对坐标并移除组节点 */
+  ungroupNode: (groupId: string) => boolean
+  renameGroup: (groupId: string, label: string) => void
   deleteSelected: () => void
   /** 节点右键菜单 / ⌘C：复制当前选中节点到内部剪贴板 */
   copySelected: () => boolean
@@ -114,8 +120,8 @@ interface CanvasStore {
 let persistTimer: ReturnType<typeof setTimeout> | null = null
 let cloudPersistTimer: ReturnType<typeof setTimeout> | null = null
 
-/** 画布内部剪贴板（不走系统剪贴板，避免敏感 URL 泄露） */
-let nodeClipboard: CanvasNode | null = null
+/** 画布内部剪贴板（不走系统剪贴板，避免敏感 URL 泄露）；支持多选复制 */
+let nodeClipboard: CanvasNode[] | null = null
 
 const PASTE_OFFSET = 40
 
@@ -161,7 +167,31 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   setEdges: (edges) => set({ edges: normalizeCanvasEdges(edges) }),
 
   onNodesChange: (changes) => {
-    set((s) => ({ nodes: applyNodeChanges(changes, s.nodes) }))
+    set((s) => {
+      let nodes = applyNodeChanges(changes, s.nodes)
+      const hasSelectChange = changes.some((c) => c.type === 'select')
+      if (!hasSelectChange) return { nodes }
+
+      // 同时选中组与其子节点时，取消组选中，避免挡住对子节点的操作
+      const selectedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
+      const parentsToClear = new Set<string>()
+      for (const n of nodes) {
+        if (n.selected && n.parentId && selectedIds.has(n.parentId)) {
+          parentsToClear.add(n.parentId)
+        }
+      }
+      if (parentsToClear.size > 0) {
+        nodes = nodes.map((n) =>
+          parentsToClear.has(n.id) ? { ...n, selected: false } : n,
+        )
+      }
+
+      const selected = nodes.filter((n) => n.selected)
+      return {
+        nodes,
+        selectedNodeId: selected.length > 0 ? selected[selected.length - 1]!.id : null,
+      }
+    })
     get().schedulePersist()
   },
 
@@ -294,52 +324,184 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }))
   },
 
-  deleteSelected: () => {
-    const { selectedNodeId, nodes, edges } = get()
-    if (!selectedNodeId) return
+  groupSelected: () => {
+    const { nodes } = get()
+    const selected = nodes.filter((n) => n.selected && n.type !== 'group')
+    if (selected.length < 2) return null
+
+    const byId = buildNodesById(nodes)
+    const padding = 28
+    const headerGap = 36
+
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    const absItems = selected.map((node) => {
+      const abs = getAbsolutePosition(node, byId)
+      const { w, h } = getNodeSize(node)
+      minX = Math.min(minX, abs.x)
+      minY = Math.min(minY, abs.y)
+      maxX = Math.max(maxX, abs.x + w)
+      maxY = Math.max(maxY, abs.y + h)
+      return { node, abs, w, h }
+    })
+
+    const groupX = minX - padding
+    const groupY = minY - padding - headerGap
+    const groupW = Math.max(240, maxX - minX + padding * 2)
+    const groupH = Math.max(160, maxY - minY + padding * 2 + headerGap)
+    const groupId = generateUUID()
+
+    const groupNode: CanvasNode = {
+      id: groupId,
+      type: 'group',
+      position: { x: groupX, y: groupY },
+      width: groupW,
+      height: groupH,
+      style: { width: groupW, height: groupH },
+      data: { ...createDefaultNodeData('group'), label: 'Group' },
+      zIndex: -1,
+      selected: true,
+      dragging: false,
+    }
+
+    const selectedIds = new Set(selected.map((n) => n.id))
+    const nextNodes = nodes.map((node) => {
+      if (!selectedIds.has(node.id)) {
+        return { ...node, selected: false }
+      }
+      const item = absItems.find((a) => a.node.id === node.id)!
+      return {
+        ...node,
+        parentId: groupId,
+        extent: 'parent' as const,
+        /** 禁止拖子节点时撑破父组，保证节点不超出 group */
+        expandParent: false,
+        position: {
+          x: item.abs.x - groupX,
+          y: item.abs.y - groupY,
+        },
+        selected: false,
+        dragging: false,
+      }
+    })
+
     set({
-      nodes: nodes.filter((n) => n.id !== selectedNodeId),
-      edges: edges.filter((e) => e.source !== selectedNodeId && e.target !== selectedNodeId),
+      nodes: [groupNode, ...nextNodes],
+      selectedNodeId: groupId,
+    })
+    get().schedulePersist()
+    return groupId
+  },
+
+  ungroupNode: (groupId) => {
+    const { nodes } = get()
+    const group = nodes.find((n) => n.id === groupId && n.type === 'group')
+    if (!group) return false
+
+    const byId = buildNodesById(nodes)
+    const childrenIds = new Set(nodes.filter((n) => n.parentId === groupId).map((n) => n.id))
+    const result: CanvasNode[] = []
+    for (const node of nodes) {
+      if (node.id === groupId) continue
+      if (childrenIds.has(node.id)) {
+        const abs = getAbsolutePosition(node, byId)
+        result.push({
+          ...node,
+          parentId: undefined,
+          extent: undefined,
+          position: abs,
+          selected: true,
+          dragging: false,
+        })
+      } else {
+        result.push({ ...node, selected: false })
+      }
+    }
+
+    set({
+      nodes: result,
+      selectedNodeId: result.find((n) => n.selected)?.id ?? null,
+    })
+    get().schedulePersist()
+    return true
+  },
+
+  renameGroup: (groupId, label) => {
+    const trimmed = label.trim() || 'Group'
+    get().updateNodeData(groupId, { label: trimmed })
+  },
+
+  deleteSelected: () => {
+    const { nodes, edges } = get()
+    const selectedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
+    if (selectedIds.size === 0) return
+
+    const byId = buildNodesById(nodes)
+    // 删除组时保留子节点：先还原绝对坐标再去掉 parent
+    const nextNodes = nodes
+      .filter((n) => !selectedIds.has(n.id))
+      .map((node) => {
+        if (node.parentId && selectedIds.has(node.parentId)) {
+          const abs = getAbsolutePosition(node, byId)
+          return {
+            ...node,
+            parentId: undefined,
+            extent: undefined,
+            position: abs,
+            selected: false,
+          }
+        }
+        return { ...node, selected: false }
+      })
+
+    set({
+      nodes: nextNodes,
+      edges: edges.filter((e) => !selectedIds.has(e.source) && !selectedIds.has(e.target)),
       selectedNodeId: null,
     })
     get().persist()
   },
 
   copySelected: () => {
-    const { selectedNodeId, nodes } = get()
-    if (!selectedNodeId) return false
-    const node = nodes.find((n) => n.id === selectedNodeId)
-    if (!node) return false
-    nodeClipboard = structuredClone(node)
+    const selected = get().nodes.filter((n) => n.selected)
+    if (selected.length === 0) return false
+    nodeClipboard = structuredClone(selected)
     return true
   },
 
-  hasClipboard: () => nodeClipboard !== null,
+  hasClipboard: () => nodeClipboard !== null && nodeClipboard.length > 0,
 
   pasteClipboard: (position) => {
-    if (!nodeClipboard) return false
-    const source = nodeClipboard
-    const id = generateUUID()
-    const pos = position ?? {
-      x: source.position.x + PASTE_OFFSET,
-      y: source.position.y + PASTE_OFFSET,
+    if (!nodeClipboard?.length) return false
+    const sources = nodeClipboard
+    const origin = sources[0]!
+    const basePos = position ?? {
+      x: origin.position.x + PASTE_OFFSET,
+      y: origin.position.y + PASTE_OFFSET,
     }
-    const newNode: CanvasNode = {
+    const dx = basePos.x - origin.position.x
+    const dy = basePos.y - origin.position.y
+    const newNodes: CanvasNode[] = sources.map((source) => ({
       ...structuredClone(source),
-      id,
-      position: pos,
+      id: generateUUID(),
+      position: {
+        x: source.position.x + dx,
+        y: source.position.y + dy,
+      },
       selected: true,
       dragging: false,
-    }
+    }))
     set((s) => ({
-      nodes: [...s.nodes.map((n) => ({ ...n, selected: false })), newNode],
-      selectedNodeId: id,
+      nodes: [...s.nodes.map((n) => ({ ...n, selected: false })), ...newNodes],
+      selectedNodeId: newNodes[newNodes.length - 1]?.id ?? null,
     }))
     // 连续粘贴时下次落点继续错开
-    nodeClipboard = {
-      ...nodeClipboard,
-      position: { x: pos.x, y: pos.y },
-    }
+    nodeClipboard = sources.map((source, i) => ({
+      ...source,
+      position: newNodes[i]!.position,
+    }))
     get().schedulePersist()
     return true
   },

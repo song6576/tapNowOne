@@ -1,22 +1,31 @@
-/** 分组容器节点 */
-import type { NodeProps } from '@xyflow/react'
+/** 分组容器：圆角透明底、可选中空白、选中后可拉宽高；子节点不可拖出 */
+import { NodeResizer, type NodeProps } from '@xyflow/react'
 import type { NodeData } from '../../types'
+import { useCanvasStore } from '../../store/canvasStore'
+
+const GROUP_MIN_WIDTH = 200
+const GROUP_MIN_HEIGHT = 140
 
 export function GroupNode({ data, selected }: NodeProps) {
   const nodeData = data as NodeData
+  const selectedCount = useCanvasStore((s) => s.nodes.reduce((n, node) => n + (node.selected ? 1 : 0), 0))
+  const soloSelected = !!selected && selectedCount === 1
 
   return (
-    <div
-      className={`h-full w-full rounded-2xl border-2 border-dashed transition-colors ${
-        selected
-          ? 'border-[var(--tn-text-muted)] bg-[var(--tn-bg-hover)]/30'
-          : 'border-[var(--tn-border)] bg-[var(--tn-bg-panel)]/20'
-      }`}
-    >
-      <div className="absolute -top-7 left-2 flex items-center gap-1.5 rounded-md bg-[var(--tn-bg-elevated)] px-2 py-0.5 text-[10px] font-medium text-[var(--tn-text-muted)]">
-        <span>▦</span>
-        {nodeData.label || 'Group'}
+    <>
+      <NodeResizer
+        isVisible={soloSelected}
+        minWidth={GROUP_MIN_WIDTH}
+        minHeight={GROUP_MIN_HEIGHT}
+        lineClassName="canvas-node-resize-line"
+        handleClassName="canvas-node-resize-handle"
+      />
+      <div className={`canvas-group-node ${selected ? 'canvas-group-node--selected' : ''}`}>
+        <div className="canvas-group-node-label" title={nodeData.label || 'Group'}>
+          <span className="canvas-group-node-label-icon">▦</span>
+          <span className="canvas-group-node-label-text">{nodeData.label || 'Group'}</span>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

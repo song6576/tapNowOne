@@ -60,14 +60,151 @@ html, body, #root {
   stroke-dasharray: none !important;
 }
 .react-flow__minimap {
-  background: rgba(36, 36, 40, 0.95) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-radius: 12px !important;
-  backdrop-filter: blur(12px);
+  background: #121214 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+.react-flow__minimap-mask {
+  fill: rgba(0, 0, 0, 0.62) !important;
+  cursor: grab;
+}
+.react-flow__minimap-mask:active {
+  cursor: grabbing;
+}
+.react-flow__minimap-node {
+  fill: #7d8290 !important;
+  stroke: #9aa0ad !important;
 }
 .canvas-minimap {
-  width: 140px !important;
-  height: 100px !important;
+  width: 200px !important;
+  height: 132px !important;
+}
+
+/* 框选矩形：半透明灰 + 圆角描边（参考桌面文件夹多选） */
+.react-flow__selection {
+  background: rgba(140, 142, 150, 0.22) !important;
+  border: 1px solid rgba(220, 222, 228, 0.55) !important;
+  border-radius: 12px !important;
+}
+.react-flow__nodesselection-rect {
+  background: rgba(140, 142, 150, 0.12) !important;
+  border: 1px solid rgba(220, 222, 228, 0.4) !important;
+  border-radius: 12px !important;
+}
+
+/* 分组：圆角描边 + 透明底（覆盖 RF 默认 group 样式；宽高由节点 style/width 控制） */
+.react-flow__node-group {
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 18px !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  overflow: visible !important;
+}
+.react-flow__node-group.selectable:hover,
+.react-flow__node-group.selectable.selected,
+.react-flow__node-group.selectable:focus,
+.react-flow__node-group.selectable:focus-visible {
+  box-shadow: none !important;
+}
+.canvas-group-node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 18px;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  transition: border-color 0.15s ease;
+}
+.canvas-group-node--selected {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: transparent;
+}
+.canvas-group-node-label {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  padding: 2px 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  font-weight: 500;
+  pointer-events: none;
+}
+.canvas-group-node-label-icon {
+  opacity: 0.7;
+}
+.canvas-group-node-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 多选 / 组操作栏：贴近选区上方 */
+.canvas-selection-toolbar {
+  position: absolute;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transform: translateX(-50%);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(28, 28, 32, 0.96);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+}
+.canvas-selection-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.canvas-selection-toolbar-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+.canvas-selection-toolbar-btn:disabled {
+  color: rgba(255, 255, 255, 0.28);
+  cursor: default;
+}
+.canvas-selection-toolbar-rename {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+.canvas-selection-toolbar-input {
+  width: 140px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+.canvas-selection-toolbar-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
 }
 .react-flow__controls {
   border: 1px solid var(--tn-border) !important;

@@ -67,14 +67,17 @@ function ReadonlyFlowInner({
       <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#27272a" />
       {showMinimap && (
         <MiniMap
-          nodeColor={(n) => {
-            const colors: Record<string, string> = {
-              text: '#60a5fa', image: '#a78bfa', video: '#fbbf24', audio: '#34d399',
-            }
-            return colors[n.type ?? 'text'] ?? '#71717a'
-          }}
-          maskColor="rgba(9,9,11,0.85)"
-          className="!bottom-20 !left-4"
+          pannable
+          zoomable
+          nodeColor="#7d8290"
+          nodeStrokeColor="#9aa0ad"
+          nodeStrokeWidth={1}
+          nodeBorderRadius={4}
+          bgColor="#121214"
+          maskColor="rgba(0, 0, 0, 0.62)"
+          maskStrokeColor="rgba(255, 255, 255, 0.28)"
+          maskStrokeWidth={1.2}
+          className="canvas-minimap !bottom-20 !left-4"
         />
       )}
     </ReactFlow>

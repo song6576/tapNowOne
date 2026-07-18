@@ -1,10 +1,11 @@
 /** ReactFlow 画布：节点交互、viewport 同步、拉线松手选节点、Delete 删节点 */
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import {
   ReactFlow,
   Background,
   MiniMap,
   BackgroundVariant,
+  SelectionMode,
   useReactFlow,
   type FinalConnectionState,
   type NodeMouseHandler,
@@ -13,6 +14,7 @@ import {
 } from '@xyflow/react'
 import { useCanvasStore } from '../store/canvasStore'
 import { nodeTypes } from './nodes'
+import { CanvasSelectionToolbar } from './shell/CanvasSelectionToolbar'
 
 export type ConnectDropPayload = {
   nodeId: string
@@ -90,7 +92,6 @@ export function FlowCanvas({
 }) {
   const nodes = useCanvasStore((s) => s.nodes)
   const edges = useCanvasStore((s) => s.edges)
-  const selectedNodeId = useCanvasStore((s) => s.selectedNodeId)
   const project = useCanvasStore((s) => s.project)
   const onNodesChange = useCanvasStore((s) => s.onNodesChange)
   const onEdgesChange = useCanvasStore((s) => s.onEdgesChange)
@@ -102,13 +103,12 @@ export function FlowCanvas({
   const setViewport = useCanvasStore((s) => s.setViewport)
   const { screenToFlowPosition } = useReactFlow()
 
-  const flowNodes = useMemo(
-    () => nodes.map((n) => ({ ...n, selected: n.id === selectedNodeId })),
-    [nodes, selectedNodeId],
-  )
-
   const onNodeClick: NodeMouseHandler = useCallback(
-    (_event, node) => selectNode(node.id),
+    (event, node) => {
+      // ⌘/Ctrl/Shift 交给 React Flow 多选；普通点击单选
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return
+      selectNode(node.id)
+    },
     [selectNode],
   )
 
@@ -191,7 +191,7 @@ export function FlowCanvas({
   return (
     <div ref={containerRef} className="relative flex-1 bg-[var(--tn-bg)]">
       <ReactFlow
-        nodes={flowNodes}
+        nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
@@ -212,6 +212,12 @@ export function FlowCanvas({
         maxZoom={2}
         zoomOnDoubleClick={false}
         deleteKeyCode={null}
+        /** 左键空白处拖拽 = 框选；中键/右键拖拽 = 平移；滚轮/触控板 = 平移 */
+        selectionOnDrag
+        selectionMode={SelectionMode.Partial}
+        panOnDrag={[1, 2]}
+        panOnScroll
+        panActivationKeyCode="Space"
         proOptions={{ hideAttribution: true }}
       >
         {(onPaneDoubleClick || onPaneContextMenu) && (
@@ -222,15 +228,19 @@ export function FlowCanvas({
           />
         )}
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#ffffff4d" />
+        <CanvasSelectionToolbar />
         {showMinimap && (
           <MiniMap
-            nodeColor={(n) => {
-              const colors: Record<string, string> = {
-                text: '#60a5fa', image: '#a78bfa', video: '#fbbf24', audio: '#34d399',
-              }
-              return colors[n.type ?? 'text'] ?? '#71717a'
-            }}
-            maskColor="rgba(9,9,11,0.85)"
+            pannable
+            zoomable
+            nodeColor="#7d8290"
+            nodeStrokeColor="#9aa0ad"
+            nodeStrokeWidth={1}
+            nodeBorderRadius={4}
+            bgColor="#121214"
+            maskColor="rgba(0, 0, 0, 0.62)"
+            maskStrokeColor="rgba(255, 255, 255, 0.28)"
+            maskStrokeWidth={1.2}
             className="canvas-minimap !bottom-[68px] !left-4 !right-auto"
           />
         )}

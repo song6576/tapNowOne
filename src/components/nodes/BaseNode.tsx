@@ -44,7 +44,9 @@ export function BaseNode({
 
   const isEmptyMedia =
     (type === 'image' || type === 'video') && !nodeData.outputUrl
-  const showUpload = !!selected && isEmptyMedia && !generating
+  const selectedCount = useCanvasStore((s) => s.nodes.reduce((n, node) => n + (node.selected ? 1 : 0), 0))
+  const soloSelected = !!selected && selectedCount === 1
+  const showUpload = soloSelected && isEmptyMedia && !generating
   const accept = type === 'video' ? 'video/*' : 'image/*'
   const showHeader = !filled
 
@@ -154,7 +156,7 @@ export function BaseNode({
         </div>
       </NodeToolbar>
 
-      <NodeToolbar position={Position.Bottom} offset={12 * zoom} isVisible={!!selected}>
+      <NodeToolbar position={Position.Bottom} offset={12 * zoom} isVisible={soloSelected}>
         <div
           className="node-inline-editor-scale"
           style={{

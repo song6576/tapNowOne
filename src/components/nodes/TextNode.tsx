@@ -15,6 +15,7 @@ export const TEXT_NODE_MIN_HEIGHT = 120
 export function TextNode(props: NodeProps) {
   const data = props.data as NodeData
   const updateNodeData = useCanvasStore((s) => s.updateNodeData)
+  const selectedCount = useCanvasStore((s) => s.nodes.reduce((n, node) => n + (node.selected ? 1 : 0), 0))
   const { t } = useI18n()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(data.outputText || data.prompt || '')
@@ -22,6 +23,7 @@ export function TextNode(props: NodeProps) {
   const display = data.outputText || data.prompt
   const placeholder = t.canvas.nodeEditor.textPlaceholder
   const generating = data.status === 'generating'
+  const soloSelected = !!props.selected && selectedCount === 1
 
   useEffect(() => {
     if (!editing) {
@@ -37,7 +39,7 @@ export function TextNode(props: NodeProps) {
   return (
     <>
       <NodeResizer
-        isVisible={!!props.selected && !generating}
+        isVisible={soloSelected && !generating}
         minWidth={TEXT_NODE_MIN_WIDTH}
         maxWidth={TEXT_NODE_MAX_WIDTH}
         minHeight={TEXT_NODE_MIN_HEIGHT}

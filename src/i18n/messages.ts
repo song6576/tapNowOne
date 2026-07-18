@@ -275,6 +275,16 @@ export type Messages = {
       delete: string
       feedback: string
     }
+    selectionBar: {
+      saveToLibrary: string
+      group: string
+      feedback: string
+      ungroup: string
+      rename: string
+      grouped: string
+      ungrouped: string
+      comingSoon: string
+    }
     nodeEditor: {
       placeholder: string
       appendPlaceholder: string
@@ -818,6 +828,16 @@ const zh: Messages = {
       download: '下载',
       delete: '删除',
       feedback: '反馈问题',
+    },
+    selectionBar: {
+      saveToLibrary: '保存到素材库',
+      group: '打组',
+      feedback: '反馈问题',
+      ungroup: '解组',
+      rename: '命名',
+      grouped: '已打组',
+      ungrouped: '已解组',
+      comingSoon: '即将推出',
     },
     nodeEditor: {
       placeholder: '描述任何你想要生成的内容',
@@ -1384,6 +1404,16 @@ const en: Messages = {
       download: 'Download',
       delete: 'Delete',
       feedback: 'Feedback',
+    },
+    selectionBar: {
+      saveToLibrary: 'Save to library',
+      group: 'Group',
+      feedback: 'Feedback',
+      ungroup: 'Ungroup',
+      rename: 'Rename',
+      grouped: 'Grouped',
+      ungrouped: 'Ungrouped',
+      comingSoon: 'Coming soon',
     },
     nodeEditor: {
       placeholder: 'Describe what you want to generate',
