@@ -1,13 +1,14 @@
-/** 节点右键菜单：复制 / 粘贴 / 删除；素材库、副本、反馈暂置灰 */
+/** 节点右键菜单：复制 / 粘贴 / 下载 / 删除；素材库、副本、反馈暂置灰 */
 import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../../store/langStore'
 
-export type NodeContextAction = 'copy' | 'paste' | 'delete'
+export type NodeContextAction = 'copy' | 'paste' | 'delete' | 'download'
 
 interface NodeContextMenuProps {
   x: number
   y: number
   canPaste: boolean
+  canDownload: boolean
   onAction: (action: NodeContextAction) => void
   onClose: () => void
 }
@@ -44,7 +45,14 @@ function MenuDivider() {
   return <div className="node-ctx-menu-divider" role="separator" />
 }
 
-export function NodeContextMenu({ x, y, canPaste, onAction, onClose }: NodeContextMenuProps) {
+export function NodeContextMenu({
+  x,
+  y,
+  canPaste,
+  canDownload,
+  onAction,
+  onClose,
+}: NodeContextMenuProps) {
   const { t } = useI18n()
   const m = t.canvas.nodeContextMenu
   const panelRef = useRef<HTMLDivElement>(null)
@@ -95,6 +103,11 @@ export function NodeContextMenu({ x, y, canPaste, onAction, onClose }: NodeConte
           onClick={() => run('paste')}
         />
         <MenuItem label={m.duplicate} disabled />
+        <MenuItem
+          label={m.download}
+          disabled={!canDownload}
+          onClick={() => run('download')}
+        />
         <MenuDivider />
         <MenuItem label={m.delete} shortcut="⌫, del" onClick={() => run('delete')} />
         <MenuDivider />

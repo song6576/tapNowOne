@@ -79,7 +79,9 @@ interface CanvasStore {
   onEdgesChange: (changes: EdgeChange<CanvasEdge>[]) => void
   onConnect: (connection: Connection) => void
   addNode: (type: NodeType, position?: { x: number; y: number }, dataPatch?: Partial<NodeData>) => string
-  addUploadedAsset: (url: string, mimeType: string, filename: string, position?: { x: number; y: number }) => void
+  addUploadedAsset: (url: string, mimeType: string, filename: string, position?: { x: number; y: number }) => string
+  /** 将上传结果填入已有空节点（不新建） */
+  fillNodeWithAsset: (nodeId: string, url: string, filename: string) => void
   connectNodes: (
     source: string,
     target: string,
@@ -260,6 +262,20 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       selectedNodeId: id,
     }))
     get().schedulePersist()
+    return id
+  },
+
+  fillNodeWithAsset: (nodeId, url, filename) => {
+    const node = get().nodes.find((n) => n.id === nodeId)
+    if (!node || (node.type !== 'image' && node.type !== 'video' && node.type !== 'audio')) return
+    const label = filename.replace(/\.[^.]+$/, '') || node.data.label
+    get().updateNodeData(nodeId, {
+      label,
+      status: 'done',
+      outputUrl: url,
+      errorMessage: undefined,
+    })
+    get().selectNode(nodeId)
   },
 
   updateNodeData: (id, data) => {
@@ -409,15 +425,23 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }
 
     const nodeType = node.type as 'image' | 'video' | 'audio'
-    updateNodeData(nodeId, { status: 'generating', errorMessage: undefined })
-
     const { upstreamText, upstreamImageUrl, upstreamImageUrls } = getUpstreamInputs(nodeId, nodes, edges)
+    const appendPrompt = (node.data.prompt || '').trim()
     const effectivePrompt = buildEffectivePrompt(node, nodes, edges)
+    if (!effectivePrompt) {
+      updateNodeData(nodeId, {
+        status: 'error',
+        errorMessage: '请先连接文本节点或输入生成内容',
+      })
+      return false
+    }
+
+    updateNodeData(nodeId, { status: 'generating', errorMessage: undefined })
 
     try {
       const resultUrl = await apiGenerate({
         node_type: nodeType,
-        prompt: effectivePrompt,
+        prompt: appendPrompt,
         model: resolvedModel,
         auto: autoModel,
         upstream_text: upstreamText,

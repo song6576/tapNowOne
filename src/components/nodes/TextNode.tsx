@@ -46,7 +46,7 @@ export function TextNode(props: NodeProps) {
         handleClassName="canvas-node-resize-handle"
       />
 
-      <BaseNode {...props} type="text" hasInput={false} hasOutput>
+      <BaseNode {...props} type="text" hasInput={false} hasOutput filled={Boolean(display)}>
         {editing ? (
           <textarea
             autoFocus

@@ -950,6 +950,92 @@ export async function recordTapTVShare(id: string): Promise<{ shares: number }> 
   return res.json()
 }
 
+export type MediaFavoriteMeta = {
+  id: string
+  media_url: string
+  media_type: 'video' | 'image' | string
+  title?: string | null
+  cover_url?: string | null
+  project_id?: string | null
+  node_id?: string | null
+  created_at: string
+  favorited?: boolean
+}
+
+export type ToggleMediaFavoritePayload = {
+  mediaUrl: string
+  mediaType: 'video' | 'image'
+  title?: string
+  coverUrl?: string
+  projectId?: string
+  nodeId?: string
+}
+
+const MEDIA_FAV_COVER =
+  'linear-gradient(160deg,#1a1a1e 0%,#2d2d35 45%,#111827 100%)'
+
+export function mapMediaFavoriteItem(row: MediaFavoriteMeta): TapTVItem {
+  return {
+    id: row.id,
+    title: row.title?.trim() || (row.media_type === 'image' ? '画布图片' : '画布视频'),
+    author: '我',
+    authorAvatar: '我',
+    cover: row.cover_url?.trim() || MEDIA_FAV_COVER,
+    videoUrl: row.media_url,
+    forks: 0,
+    likes: 0,
+    favorites: 1,
+    shares: 0,
+    tags: ['画布'],
+    nodeCount: 0,
+    category: 'canvas',
+    publishedAt: row.created_at,
+    favoritedByMe: true,
+    source: 'media',
+    projectId: row.project_id,
+  }
+}
+
+/** GET /api/media-favorites — 画布素材收藏 */
+export async function listMediaFavorites(): Promise<TapTVItem[]> {
+  const res = await fetch(`${API_BASE}/media-favorites`, { headers: { ...authHeaders() } })
+  if (!res.ok) throw new Error(await parseError(res))
+  const rows = (await res.json()) as MediaFavoriteMeta[]
+  return rows.map(mapMediaFavoriteItem)
+}
+
+/** GET /api/media-favorites/status?url= */
+export async function getMediaFavoriteStatus(
+  mediaUrl: string,
+): Promise<{ favorited: boolean; id?: string }> {
+  const q = new URLSearchParams({ url: mediaUrl })
+  const res = await fetch(`${API_BASE}/media-favorites/status?${q}`, {
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+/** POST /api/media-favorites/toggle */
+export async function toggleMediaFavorite(
+  payload: ToggleMediaFavoritePayload,
+): Promise<{ favorited: boolean; id: string }> {
+  const res = await fetch(`${API_BASE}/media-favorites/toggle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({
+      mediaUrl: payload.mediaUrl,
+      mediaType: payload.mediaType,
+      title: payload.title,
+      coverUrl: payload.coverUrl,
+      projectId: payload.projectId,
+      nodeId: payload.nodeId,
+    }),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
 export async function followTapTVUser(userId: number): Promise<{ following: boolean }> {
   const res = await fetch(`${API_BASE}/taptv/users/${userId}/follow`, {
     method: 'POST',

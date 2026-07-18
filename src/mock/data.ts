@@ -124,6 +124,9 @@ export type TapTVItem = {
   likedByMe?: boolean
   favoritedByMe?: boolean
   followingAuthor?: boolean
+  /** taptv=社区作品；media=画布星标素材 */
+  source?: 'taptv' | 'media'
+  projectId?: string | null
 }
 
 export type TapTVCategory =

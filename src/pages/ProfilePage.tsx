@@ -6,7 +6,7 @@ import { uploadBanner, uploadAvatar } from '../api/client'
 import { ProjectGridCard } from '../components/project/ProjectGridCard'
 import { NewProjectCard } from '../components/project/NewProjectCard'
 import type { TapTVItem } from '../mock/data'
-import { listTapTVFavorites, toggleTapTVFavorite, toggleTapTVLike } from '../services/api'
+import { listAllFavorites, toggleTapTVFavorite, toggleTapTVLike, toggleMediaFavorite } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import { useProfileStore } from '../store/profileStore'
 import { useWorkspaceStore } from '../store/workspaceStore'
@@ -77,7 +77,7 @@ export function ProfilePage() {
     if (mainTab !== 'saved' || !user) return
     let cancelled = false
     setFavLoading(true)
-    void listTapTVFavorites()
+    void listAllFavorites()
       .then((list) => {
         if (!cancelled) setFavorites(list)
       })
@@ -101,6 +101,7 @@ export function ProfilePage() {
   }
 
   const handleFavoriteLike = async (item: TapTVItem) => {
+    if (item.source === 'media') return
     if (!getToken()) {
       navigate('/login')
       return
@@ -119,6 +120,16 @@ export function ProfilePage() {
       return
     }
     try {
+      if (item.source === 'media') {
+        const res = await toggleMediaFavorite({
+          mediaUrl: item.videoUrl,
+          mediaType: 'video',
+          title: item.title,
+          projectId: item.projectId ?? undefined,
+        })
+        patchFavorite(item.id, { favoritedByMe: res.favorited, favorites: res.favorited ? 1 : 0 })
+        return
+      }
       const res = await toggleTapTVFavorite(item.id)
       patchFavorite(item.id, { favoritedByMe: res.favorited, favorites: res.favorites })
     } catch (err) {
@@ -292,9 +303,16 @@ export function ProfilePage() {
                   <div className="taptv-explore-grid">
                     {favorites.map((item) => (
                       <TapTVCard
-                        key={item.id}
+                        key={`${item.source ?? 'taptv'}-${item.id}`}
                         item={item}
-                        onClick={() => navigate(`/taptv/${item.id}`)}
+                        onClick={() => {
+                          if (item.source === 'media') {
+                            if (item.projectId) navigate(`/canvas/${item.projectId}`)
+                            else showToast({ type: 'info', message: p.savedCanvasHint })
+                            return
+                          }
+                          navigate(`/taptv/${item.id}`)
+                        }}
                         onLike={() => void handleFavoriteLike(item)}
                         onFavorite={() => void handleFavoriteToggle(item)}
                       />

@@ -1,35 +1,74 @@
-/** 上游节点输入解析：从连线 source 收集 text 输出与 image URL */
+/** 上游节点输入解析：收集全部祖先 text / image（含间接连线） */
 import type { CanvasNode, CanvasEdge, NodeType } from '../types'
 
-/** 遍历指向 nodeId 的入边，汇总上游 text/image 输出 */
+export type UpstreamTextRef = {
+  nodeId: string
+  label: string
+  text: string
+}
+
+export type UpstreamImageRef = {
+  nodeId: string
+  label: string
+  url: string
+}
+
+/** BFS 遍历入边祖先，汇总全部 text / image（支持多路与间接引用） */
 export function getUpstreamInputs(
   nodeId: string,
   nodes: CanvasNode[],
   edges: CanvasEdge[],
 ): {
   upstreamText?: string
+  upstreamTexts: UpstreamTextRef[]
   upstreamImageUrl?: string
   upstreamImageUrls: string[]
+  upstreamImages: UpstreamImageRef[]
 } {
-  const incoming = edges.filter((e) => e.target === nodeId)
-  let upstreamText: string | undefined
-  const upstreamImageUrls: string[] = []
+  const upstreamTexts: UpstreamTextRef[] = []
+  const upstreamImages: UpstreamImageRef[] = []
+  const visited = new Set<string>([nodeId])
+  const queue: string[] = [nodeId]
 
-  for (const edge of incoming) {
-    const source = nodes.find((n) => n.id === edge.source)
-    if (!source) continue
-    if (source.type === 'text') {
-      upstreamText = source.data.outputText || source.data.prompt || upstreamText
-    }
-    if (source.type === 'image' && source.data.outputUrl) {
-      upstreamImageUrls.push(source.data.outputUrl)
+  while (queue.length > 0) {
+    const current = queue.shift()!
+    for (const edge of edges) {
+      if (edge.target !== current) continue
+      const source = nodes.find((n) => n.id === edge.source)
+      if (!source || visited.has(source.id)) continue
+      visited.add(source.id)
+      queue.push(source.id)
+
+      if (source.type === 'text') {
+        const text = (source.data.outputText || source.data.prompt || '').trim()
+        if (text) {
+          upstreamTexts.push({
+            nodeId: source.id,
+            label: source.data.label || 'Text',
+            text,
+          })
+        }
+      }
+
+      if (source.type === 'image' && source.data.outputUrl) {
+        upstreamImages.push({
+          nodeId: source.id,
+          label: source.data.label || 'Image',
+          url: source.data.outputUrl,
+        })
+      }
     }
   }
 
+  const upstreamImageUrls = upstreamImages.map((item) => item.url)
+  const upstreamText = upstreamTexts.map((item) => item.text).join('') || undefined
+
   return {
     upstreamText,
+    upstreamTexts,
     upstreamImageUrl: upstreamImageUrls[0],
     upstreamImageUrls,
+    upstreamImages,
   }
 }
 
@@ -47,8 +86,12 @@ export function buildEffectivePrompt(
   }
 
   if (node.type === 'image' || node.type === 'video') {
-    if (upstreamText && self) return `${upstreamText}。${self}`
+    if (upstreamText && self) return `${upstreamText}${self}`
     return self || upstreamText || ''
+  }
+
+  if (node.type === 'text' && upstreamText && self) {
+    return `${upstreamText}${self}`
   }
 
   return self

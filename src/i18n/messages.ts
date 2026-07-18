@@ -271,11 +271,13 @@ export type Messages = {
       copy: string
       paste: string
       duplicate: string
+      download: string
       delete: string
       feedback: string
     }
     nodeEditor: {
       placeholder: string
+      appendPlaceholder: string
       textPlaceholder: string
       waitingImage: string
       thinking: string
@@ -283,6 +285,15 @@ export type Messages = {
       add: string
       swap: string
       generate: string
+      upload: string
+      uploading: string
+      uploadSuccess: string
+      uploadFailed: string
+      loginRequired: string
+      downloadFailed: string
+      favorited: string
+      unfavorited: string
+      favoriteFailed: string
     }
     agentPanel: {
       title: string
@@ -342,6 +353,7 @@ export type Messages = {
     tabSaved: string
     savedLocked: string
     savedEmpty: string
+    savedCanvasHint: string
     featuredWorks: string
     featuredEmpty: string
     addFeatured: string
@@ -803,11 +815,13 @@ const zh: Messages = {
       copy: '复制',
       paste: '粘贴',
       duplicate: '副本',
+      download: '下载',
       delete: '删除',
       feedback: '反馈问题',
     },
     nodeEditor: {
       placeholder: '描述任何你想要生成的内容',
+      appendPlaceholder: '追加描述，将接在上方文本之后',
       textPlaceholder: '双击开始编辑...',
       waitingImage: '等待生成图片...',
       thinking: '思考中...',
@@ -815,6 +829,15 @@ const zh: Messages = {
       add: '添加',
       swap: '切换',
       generate: '生成',
+      upload: '上传',
+      uploading: '上传中…',
+      uploadSuccess: '资源已上传',
+      uploadFailed: '上传失败',
+      loginRequired: '请先登录后再上传',
+      downloadFailed: '下载失败',
+      favorited: '已加入我的收藏',
+      unfavorited: '已取消收藏',
+      favoriteFailed: '收藏失败',
     },
     agentPanel: {
       title: 'AI功能与服务介绍',
@@ -873,7 +896,8 @@ const zh: Messages = {
     tabPortfolio: '我的作品集',
     tabSaved: '我的收藏',
     savedLocked: '暂未开放',
-    savedEmpty: '还没有收藏的作品，去 TapTV 探索吧',
+    savedEmpty: '还没有收藏，去 TapTV 探索或在画布里点星标吧',
+    savedCanvasHint: '这是画布收藏的素材',
     featuredWorks: '代表作',
     featuredEmpty: '向全世界展示你最得意的创作。',
     addFeatured: '添加代表作',
@@ -1357,11 +1381,13 @@ const en: Messages = {
       copy: 'Copy',
       paste: 'Paste',
       duplicate: 'Duplicate',
+      download: 'Download',
       delete: 'Delete',
       feedback: 'Feedback',
     },
     nodeEditor: {
       placeholder: 'Describe what you want to generate',
+      appendPlaceholder: 'Add more — appended after the text above',
       textPlaceholder: 'Double-click to edit...',
       waitingImage: 'Waiting for image...',
       thinking: 'Thinking...',
@@ -1369,6 +1395,15 @@ const en: Messages = {
       add: 'Add',
       swap: 'Swap',
       generate: 'Generate',
+      upload: 'Upload',
+      uploading: 'Uploading…',
+      uploadSuccess: 'Upload complete',
+      uploadFailed: 'Upload failed',
+      loginRequired: 'Sign in to upload',
+      downloadFailed: 'Download failed',
+      favorited: 'Saved to My favorites',
+      unfavorited: 'Removed from favorites',
+      favoriteFailed: 'Could not update favorite',
     },
     agentPanel: {
       title: 'AI features & services',
@@ -1427,7 +1462,8 @@ const en: Messages = {
     tabPortfolio: 'My portfolio',
     tabSaved: 'My favorites',
     savedLocked: 'Coming soon',
-    savedEmpty: 'No favorites yet — explore TapTV to find works you love',
+    savedEmpty: 'No favorites yet — star a canvas video or explore TapTV',
+    savedCanvasHint: 'This is a canvas media favorite',
     featuredWorks: 'Featured works',
     featuredEmpty: 'Show the world your best creations.',
     addFeatured: 'Add featured work',

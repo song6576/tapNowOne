@@ -41,6 +41,43 @@ export async function listTapTVFavorites() {
   return real.listTapTVFavorites()
 }
 
+/** 画布素材收藏列表（个人主页「我的收藏」合并展示） */
+export async function listMediaFavorites() {
+  if (USE_MOCK) {
+    const { listMediaFavoritesLocal } = await import('../utils/mediaFavoriteLocal')
+    return listMediaFavoritesLocal()
+  }
+  return real.listMediaFavorites()
+}
+
+export async function getMediaFavoriteStatus(mediaUrl: string) {
+  if (USE_MOCK) {
+    const { getMediaFavoriteStatusLocal } = await import('../utils/mediaFavoriteLocal')
+    return getMediaFavoriteStatusLocal(mediaUrl)
+  }
+  return real.getMediaFavoriteStatus(mediaUrl)
+}
+
+export async function toggleMediaFavorite(payload: real.ToggleMediaFavoritePayload) {
+  if (USE_MOCK) {
+    const { toggleMediaFavoriteLocal } = await import('../utils/mediaFavoriteLocal')
+    return toggleMediaFavoriteLocal(payload)
+  }
+  return real.toggleMediaFavorite(payload)
+}
+
+/** 合并 TapTV + 画布素材收藏，按时间倒序 */
+export async function listAllFavorites() {
+  const [taptv, media] = await Promise.all([listTapTVFavorites(), listMediaFavorites()])
+  const merged = [
+    ...taptv.map((item) => ({ ...item, source: item.source ?? ('taptv' as const) })),
+    ...media,
+  ]
+  return merged.sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  )
+}
+
 export async function recordTapTVShare(id: string) {
   if (USE_MOCK) return { shares: 0 }
   return real.recordTapTVShare(id)

@@ -88,6 +88,9 @@ export function CanvasPage() {
     y: number
     flowPosition: { x: number; y: number }
     canPaste: boolean
+    canDownload: boolean
+    downloadUrl?: string
+    downloadName?: string
   } | null>(null)
 
   // 首页跳转参数必须在首屏同步读取，不能等 useEffect（replaceState 后会丢失）
@@ -96,6 +99,7 @@ export function CanvasPage() {
   const canvasBootstrappedRef = useRef(false)
   const uploadInputRef = useRef<HTMLInputElement>(null)
   const uploadPositionRef = useRef<{ x: number; y: number } | undefined>(undefined)
+  const uploadConnectFromRef = useRef<ConnectDropPayload | undefined>(undefined)
   const showToast = useToastStore((s) => s.showToast)
 
   const [showAgentPanel, setShowAgentPanel] = useState(agentNavRef.current.open)
@@ -240,6 +244,7 @@ export function CanvasPage() {
   const handleAddFromMenu = useCallback((type: CanvasAddAction) => {
     if (type === 'upload') {
       uploadPositionRef.current = addMenu?.flowPosition
+      uploadConnectFromRef.current = addMenu?.connectFrom
       setAddMenu(null)
       if (!getToken()) {
         navigate('/login')
@@ -280,9 +285,10 @@ export function CanvasPage() {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
+    const connectFrom = uploadConnectFromRef.current
     try {
       const result = await uploadProjectAsset(file, projectId)
-      addUploadedAsset(
+      const newId = addUploadedAsset(
         result.url,
         result.mime_type,
         result.filename,
@@ -290,15 +296,24 @@ export function CanvasPage() {
           ? nodePositionAtCursor(uploadPositionRef.current)
           : undefined,
       )
-      uploadPositionRef.current = undefined
+      if (connectFrom && newId) {
+        if (connectFrom.handleType === 'target') {
+          connectNodes(newId, connectFrom.nodeId, null, connectFrom.handleId)
+        } else {
+          connectNodes(connectFrom.nodeId, newId, connectFrom.handleId, null)
+        }
+      }
       showToast({ type: 'success', message: '资源已上传' })
     } catch (err) {
       showToast({
         type: 'info',
         message: err instanceof Error ? err.message : '上传失败',
       })
+    } finally {
+      uploadPositionRef.current = undefined
+      uploadConnectFromRef.current = undefined
     }
-  }, [projectId, addUploadedAsset, showToast])
+  }, [projectId, addUploadedAsset, connectNodes, showToast])
 
   const handlePaneDoubleClick = useCallback((e: MouseEvent, flowPosition: { x: number; y: number }) => {
     openAddMenu(e.clientX, e.clientY, flowPosition)
@@ -311,19 +326,27 @@ export function CanvasPage() {
 
   const handleNodeContextMenu = useCallback((
     e: MouseEvent,
-    _nodeId: string,
+    nodeId: string,
     flowPosition: { x: number; y: number },
   ) => {
     setAddMenu(null)
+    const node = useCanvasStore.getState().nodes.find((n) => n.id === nodeId)
+    const url = node?.data.outputUrl
+    const canDownload = Boolean(
+      url && (node?.type === 'image' || node?.type === 'video' || node?.type === 'audio'),
+    )
     setNodeMenu({
       x: e.clientX,
       y: e.clientY,
       flowPosition,
       canPaste: hasClipboard(),
+      canDownload,
+      downloadUrl: canDownload ? url : undefined,
+      downloadName: node?.data.label || node?.type || 'download',
     })
   }, [hasClipboard])
 
-  const handleNodeMenuAction = useCallback((action: NodeContextAction) => {
+  const handleNodeMenuAction = useCallback(async (action: NodeContextAction) => {
     if (action === 'copy') {
       copySelected()
       return
@@ -334,6 +357,27 @@ export function CanvasPage() {
     }
     if (action === 'delete') {
       deleteSelected()
+      return
+    }
+    if (action === 'download' && nodeMenu?.downloadUrl) {
+      try {
+        const res = await fetch(nodeMenu.downloadUrl)
+        if (!res.ok) throw new Error('fetch failed')
+        const blob = await res.blob()
+        const ext =
+          blob.type.includes('video') ? '.mp4'
+            : blob.type.includes('audio') ? '.mp3'
+              : blob.type.includes('png') ? '.png'
+                : blob.type.includes('jpeg') || blob.type.includes('jpg') ? '.jpg'
+                  : ''
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = `${nodeMenu.downloadName || 'download'}${ext}`
+        a.click()
+        URL.revokeObjectURL(a.href)
+      } catch {
+        window.open(nodeMenu.downloadUrl, '_blank', 'noopener,noreferrer')
+      }
     }
   }, [copySelected, pasteClipboard, deleteSelected, nodeMenu])
 
@@ -474,7 +518,8 @@ export function CanvasPage() {
             x={nodeMenu.x}
             y={nodeMenu.y}
             canPaste={nodeMenu.canPaste}
-            onAction={handleNodeMenuAction}
+            canDownload={nodeMenu.canDownload}
+            onAction={(action) => void handleNodeMenuAction(action)}
             onClose={() => setNodeMenu(null)}
           />
         )}
