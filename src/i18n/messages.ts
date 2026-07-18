@@ -266,6 +266,14 @@ export type Messages = {
       beta: string
       comingSoon: string
     }
+    nodeContextMenu: {
+      saveToLibrary: string
+      copy: string
+      paste: string
+      duplicate: string
+      delete: string
+      feedback: string
+    }
     nodeEditor: {
       placeholder: string
       textPlaceholder: string
@@ -789,6 +797,14 @@ const zh: Messages = {
       upload: '上传',
       beta: 'Beta',
       comingSoon: '即将推出',
+    },
+    nodeContextMenu: {
+      saveToLibrary: '保存到素材库',
+      copy: '复制',
+      paste: '粘贴',
+      duplicate: '副本',
+      delete: '删除',
+      feedback: '反馈问题',
     },
     nodeEditor: {
       placeholder: '描述任何你想要生成的内容',
@@ -1335,6 +1351,14 @@ const en: Messages = {
       upload: 'Upload',
       beta: 'Beta',
       comingSoon: 'Coming soon',
+    },
+    nodeContextMenu: {
+      saveToLibrary: 'Save to library',
+      copy: 'Copy',
+      paste: 'Paste',
+      duplicate: 'Duplicate',
+      delete: 'Delete',
+      feedback: 'Feedback',
     },
     nodeEditor: {
       placeholder: 'Describe what you want to generate',

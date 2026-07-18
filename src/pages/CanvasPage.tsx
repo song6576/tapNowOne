@@ -5,6 +5,7 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { CanvasTopBar } from '../components/shell/CanvasTopBar'
 import { CanvasToolbar } from '../components/shell/CanvasToolbar'
 import { CanvasContextMenu, type CanvasAddAction } from '../components/shell/CanvasContextMenu'
+import { NodeContextMenu, type NodeContextAction } from '../components/shell/NodeContextMenu'
 import { FlowCanvas, type ConnectDropPayload } from '../components/FlowCanvas'
 import { CanvasAgentPanel } from '../components/canvas/CanvasAgentPanel'
 import { CanvasQuickActions } from '../components/canvas/CanvasQuickActions'
@@ -64,6 +65,10 @@ export function CanvasPage() {
   const connectNodes = useCanvasStore((s) => s.connectNodes)
   const addUploadedAsset = useCanvasStore((s) => s.addUploadedAsset)
   const applyStoryboard = useCanvasStore((s) => s.applyStoryboard)
+  const copySelected = useCanvasStore((s) => s.copySelected)
+  const pasteClipboard = useCanvasStore((s) => s.pasteClipboard)
+  const deleteSelected = useCanvasStore((s) => s.deleteSelected)
+  const hasClipboard = useCanvasStore((s) => s.hasClipboard)
 
   const wsInit = useWorkspaceStore((s) => s.init)
   const getProject = useWorkspaceStore((s) => s.getProject)
@@ -76,6 +81,13 @@ export function CanvasPage() {
     flowPosition?: { x: number; y: number }
     /** 从节点手柄拉线松手后，选类型并自动连线 */
     connectFrom?: ConnectDropPayload
+  } | null>(null)
+
+  const [nodeMenu, setNodeMenu] = useState<{
+    x: number
+    y: number
+    flowPosition: { x: number; y: number }
+    canPaste: boolean
   } | null>(null)
 
   // 首页跳转参数必须在首屏同步读取，不能等 useEffect（replaceState 后会丢失）
@@ -221,6 +233,7 @@ export function CanvasPage() {
     flowPosition?: { x: number; y: number },
     connectFrom?: ConnectDropPayload,
   ) => {
+    setNodeMenu(null)
     setAddMenu({ x, y, flowPosition, connectFrom })
   }, [])
 
@@ -292,8 +305,37 @@ export function CanvasPage() {
   }, [openAddMenu])
 
   const handlePaneContextMenu = useCallback((e: MouseEvent, flowPosition: { x: number; y: number }) => {
+    setNodeMenu(null)
     openAddMenu(e.clientX, e.clientY, flowPosition)
   }, [openAddMenu])
+
+  const handleNodeContextMenu = useCallback((
+    e: MouseEvent,
+    _nodeId: string,
+    flowPosition: { x: number; y: number },
+  ) => {
+    setAddMenu(null)
+    setNodeMenu({
+      x: e.clientX,
+      y: e.clientY,
+      flowPosition,
+      canPaste: hasClipboard(),
+    })
+  }, [hasClipboard])
+
+  const handleNodeMenuAction = useCallback((action: NodeContextAction) => {
+    if (action === 'copy') {
+      copySelected()
+      return
+    }
+    if (action === 'paste') {
+      pasteClipboard(nodeMenu?.flowPosition)
+      return
+    }
+    if (action === 'delete') {
+      deleteSelected()
+    }
+  }, [copySelected, pasteClipboard, deleteSelected, nodeMenu])
 
   const handleOpenAddMenuFromToolbar = useCallback(() => {
     const btn = document.querySelector('.canvas-float-add')
@@ -351,6 +393,7 @@ export function CanvasPage() {
               showMinimap={showMinimap}
               onPaneDoubleClick={handlePaneDoubleClick}
               onPaneContextMenu={handlePaneContextMenu}
+              onNodeContextMenu={handleNodeContextMenu}
               onConnectDrop={handleConnectDrop}
             />
             <CanvasToolbar
@@ -424,6 +467,15 @@ export function CanvasPage() {
             y={addMenu.y}
             onAdd={handleAddFromMenu}
             onClose={() => setAddMenu(null)}
+          />
+        )}
+        {nodeMenu && (
+          <NodeContextMenu
+            x={nodeMenu.x}
+            y={nodeMenu.y}
+            canPaste={nodeMenu.canPaste}
+            onAction={handleNodeMenuAction}
+            onClose={() => setNodeMenu(null)}
           />
         )}
       </div>

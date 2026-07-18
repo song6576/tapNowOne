@@ -68,12 +68,18 @@ export function FlowCanvas({
   showMinimap = false,
   onPaneDoubleClick,
   onPaneContextMenu,
+  onNodeContextMenu,
   onConnectDrop,
 }: {
   hideChrome?: boolean
   showMinimap?: boolean
   onPaneDoubleClick?: (event: MouseEvent, flowPosition: { x: number; y: number }) => void
   onPaneContextMenu?: (event: MouseEvent, flowPosition: { x: number; y: number }) => void
+  onNodeContextMenu?: (
+    event: MouseEvent,
+    nodeId: string,
+    flowPosition: { x: number; y: number },
+  ) => void
   /** 从节点手柄拉线后松在空白处：弹出选节点菜单 */
   onConnectDrop?: (
     clientX: number,
@@ -91,6 +97,8 @@ export function FlowCanvas({
   const onConnect = useCanvasStore((s) => s.onConnect)
   const selectNode = useCanvasStore((s) => s.selectNode)
   const deleteSelected = useCanvasStore((s) => s.deleteSelected)
+  const copySelected = useCanvasStore((s) => s.copySelected)
+  const pasteClipboard = useCanvasStore((s) => s.pasteClipboard)
   const setViewport = useCanvasStore((s) => s.setViewport)
   const { screenToFlowPosition } = useReactFlow()
 
@@ -102,6 +110,17 @@ export function FlowCanvas({
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => selectNode(node.id),
     [selectNode],
+  )
+
+  const handleNodeContextMenu: NodeMouseHandler = useCallback(
+    (event, node) => {
+      event.preventDefault()
+      event.stopPropagation()
+      selectNode(node.id)
+      const flowPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      onNodeContextMenu?.(event.nativeEvent, node.id, flowPosition)
+    },
+    [selectNode, onNodeContextMenu, screenToFlowPosition],
   )
 
   const onPaneClick = useCallback(() => selectNode(null), [selectNode])
@@ -147,15 +166,25 @@ export function FlowCanvas({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && e.key.toLowerCase() === 'c') {
+        if (copySelected()) e.preventDefault()
+        return
+      }
+      if (mod && e.key.toLowerCase() === 'v') {
+        if (pasteClipboard()) e.preventDefault()
+        return
+      }
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        const target = e.target as HTMLElement
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
         deleteSelected()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [deleteSelected])
+  }, [deleteSelected, copySelected, pasteClipboard])
 
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -169,6 +198,7 @@ export function FlowCanvas({
         onConnect={onConnect}
         onConnectEnd={handleConnectEnd}
         onNodeClick={onNodeClick}
+        onNodeContextMenu={handleNodeContextMenu}
         onPaneClick={onPaneClick}
         onMoveEnd={onMoveEnd}
         nodeTypes={nodeTypes}

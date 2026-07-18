@@ -142,6 +142,7 @@ export type AgentChatResult = {
 
 export type UploadResult = {
   url: string
+  key?: string
   filename: string
   mime_type: string
   size: number
@@ -217,8 +218,79 @@ export async function fetchMe(): Promise<User> {
 
 // ── Uploads ──
 
-/** 画布项目素材上传（图片 / 视频 / 音频） */
+/** 画布项目素材上传（图片 / 视频 / 音频）— 优先预签名直传对象存储 */
 export async function uploadProjectAsset(
+  file: File,
+  projectId?: string,
+): Promise<UploadResult> {
+  try {
+    return await uploadProjectAssetViaPresign(file, projectId)
+  } catch (err) {
+    // 对象存储未启用或 CORS 未配好时回退 multipart
+    if (err instanceof Error && /对象存储未启用|CORS|Failed to fetch|NetworkError/i.test(err.message)) {
+      return uploadProjectAssetMultipart(file, projectId)
+    }
+    // presign 404/501 等也回退
+    try {
+      return await uploadProjectAssetMultipart(file, projectId)
+    } catch {
+      throw err
+    }
+  }
+}
+
+async function uploadProjectAssetViaPresign(
+  file: File,
+  projectId?: string,
+): Promise<UploadResult> {
+  const presignRes = await fetch(`${API_BASE}/uploads/presign`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({
+      filename: file.name,
+      content_type: file.type || 'application/octet-stream',
+      category: 'project',
+      project_id: projectId,
+      size: file.size,
+    }),
+  })
+  if (!presignRes.ok) throw new Error(await parseError(presignRes))
+  const ticket = (await presignRes.json()) as {
+    key: string
+    upload_url: string
+    public_url: string
+    headers?: Record<string, string>
+  }
+
+  const putHeaders: Record<string, string> = {
+    ...(ticket.headers ?? {}),
+    'Content-Type': file.type || 'application/octet-stream',
+  }
+  const putRes = await fetch(ticket.upload_url, {
+    method: 'PUT',
+    headers: putHeaders,
+    body: file,
+  })
+  if (!putRes.ok) {
+    throw new Error(`直传对象存储失败 (${putRes.status})`)
+  }
+
+  const completeRes = await fetch(`${API_BASE}/uploads/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({
+      key: ticket.key,
+      filename: file.name,
+      mime_type: file.type || 'application/octet-stream',
+      size: file.size,
+      category: 'project',
+    }),
+  })
+  if (!completeRes.ok) throw new Error(await parseError(completeRes))
+  return completeRes.json()
+}
+
+async function uploadProjectAssetMultipart(
   file: File,
   projectId?: string,
 ): Promise<UploadResult> {

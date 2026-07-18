@@ -89,6 +89,11 @@ interface CanvasStore {
   updateNodeData: (id: string, data: Partial<NodeData>) => void
   selectNode: (id: string | null) => void
   deleteSelected: () => void
+  /** 节点右键菜单 / ⌘C：复制当前选中节点到内部剪贴板 */
+  copySelected: () => boolean
+  /** 节点右键菜单 / ⌘V：从剪贴板粘贴节点 */
+  pasteClipboard: (position?: { x: number; y: number }) => boolean
+  hasClipboard: () => boolean
   setViewport: (viewport: CanvasProject['viewport']) => void
   loadProject: (project: CanvasProject) => void
   persist: () => void
@@ -106,6 +111,11 @@ interface CanvasStore {
 /** 防抖写入 localStorage / 云端，避免拖拽节点时频繁 IO */
 let persistTimer: ReturnType<typeof setTimeout> | null = null
 let cloudPersistTimer: ReturnType<typeof setTimeout> | null = null
+
+/** 画布内部剪贴板（不走系统剪贴板，避免敏感 URL 泄露） */
+let nodeClipboard: CanvasNode | null = null
+
+const PASTE_OFFSET = 40
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
   project: createEmptyProject(),
@@ -277,6 +287,45 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       selectedNodeId: null,
     })
     get().persist()
+  },
+
+  copySelected: () => {
+    const { selectedNodeId, nodes } = get()
+    if (!selectedNodeId) return false
+    const node = nodes.find((n) => n.id === selectedNodeId)
+    if (!node) return false
+    nodeClipboard = structuredClone(node)
+    return true
+  },
+
+  hasClipboard: () => nodeClipboard !== null,
+
+  pasteClipboard: (position) => {
+    if (!nodeClipboard) return false
+    const source = nodeClipboard
+    const id = generateUUID()
+    const pos = position ?? {
+      x: source.position.x + PASTE_OFFSET,
+      y: source.position.y + PASTE_OFFSET,
+    }
+    const newNode: CanvasNode = {
+      ...structuredClone(source),
+      id,
+      position: pos,
+      selected: true,
+      dragging: false,
+    }
+    set((s) => ({
+      nodes: [...s.nodes.map((n) => ({ ...n, selected: false })), newNode],
+      selectedNodeId: id,
+    }))
+    // 连续粘贴时下次落点继续错开
+    nodeClipboard = {
+      ...nodeClipboard,
+      position: { x: pos.x, y: pos.y },
+    }
+    get().schedulePersist()
+    return true
   },
 
   setViewport: (viewport) => {
