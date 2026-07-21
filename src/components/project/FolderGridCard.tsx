@@ -1,4 +1,4 @@
-/** 文件夹网格卡片：TapNow 口袋叠层 + 右上角菜单 */
+/** 文件夹网格卡片：TapNow 文件夹外形叠层 + 右上角菜单 */
 import { memo } from 'react'
 import { FolderCardMenu } from './FolderCardMenu'
 import { FolderStackPreview } from './FolderStackPreview'
