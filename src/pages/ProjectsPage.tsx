@@ -36,6 +36,7 @@ export function ProjectsPage() {
   const createProject = useWorkspaceStore((s) => s.createProject)
   const countProjectsInFolder = useWorkspaceStore((s) => s.countProjectsInFolder)
   const getFolder = useWorkspaceStore((s) => s.getFolder)
+  const loading = useWorkspaceStore((s) => s.loading)
 
   const [tab, setTab] = useState<WorkspaceTab>('personal')
   const [search, setSearch] = useState('')
@@ -194,8 +195,8 @@ export function ProjectsPage() {
   const itemCount = rows.length
 
   return (
-    <main className={`home-page flex-1 overflow-y-auto px-5 py-6 md:px-8 ${selectMode ? 'home-page--select-mode' : ''}`}>
-      <div className="w-full">
+    <main className={`home-page workspace-page flex-1 overflow-y-auto px-5 py-5 md:px-8 md:py-6 ${selectMode ? 'home-page--select-mode' : ''}`}>
+      <div className="workspace-content">
         <div className="workspace-page-toolbar mb-6">
           <div className="workspace-page-toolbar__row">
             <div className="workspace-page-toolbar__start">
@@ -223,12 +224,12 @@ export function ProjectsPage() {
             </div>
 
             <div className="workspace-page-toolbar__actions">
-              <SearchInput value={search} onChange={setSearch} placeholder={ws.search} className="w-full sm:w-[200px]" />
+              <SearchInput value={search} onChange={setSearch} placeholder={ws.search} className="w-full sm:w-50" />
               <WorkspaceFilterDropdown value={filter} onChange={setFilter} />
               <WorkspaceViewToggle value={viewMode} onChange={setViewMode} />
               {!selectMode && (
                 <>
-                  <button type="button" className="workspace-icon-btn ui-clickable" title={ws.newFolder} onClick={() => setFolderDialogOpen(true)}>
+                  <button type="button" className="workspace-icon-btn ui-clickable" title={ws.newFolder} aria-label={ws.newFolder} onClick={() => setFolderDialogOpen(true)}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
                       <path d="M12 11v6M9 14h6" strokeLinecap="round" />
@@ -243,8 +244,12 @@ export function ProjectsPage() {
           </div>
         </div>
 
-        {tab === 'team' && activeTeamId === PERSONAL_TEAM_ID && !currentFolder ? (
-          <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
+        {loading ? (
+          <div className="workspace-grid-skeleton" role="status" aria-label={t.routeState.loading}>
+            {Array.from({ length: 8 }, (_, index) => <span key={index} />)}
+          </div>
+        ) : tab === 'team' && activeTeamId === PERSONAL_TEAM_ID && !currentFolder ? (
+          <div className="flex min-h-60 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 text-sm text-white/35">
             <span>{ws.empty}</span>
           </div>
         ) : viewMode === 'list' ? (

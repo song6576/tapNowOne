@@ -91,6 +91,9 @@ export type Messages = {
     typeFolder: string
     typeProject: string
     projectCountUnit: string
+    viewMode: string
+    gridView: string
+    listView: string
     projectMenu: {
       open: string
       rename: string
@@ -680,6 +683,9 @@ const zh: Messages = {
     typeFolder: '文件夹',
     typeProject: '项目',
     projectCountUnit: '个项目',
+    viewMode: '视图模式',
+    gridView: '网格视图',
+    listView: '列表视图',
     projectMenu: {
       open: '打开',
       rename: '重命名',
@@ -749,8 +755,8 @@ const zh: Messages = {
     publish: '发布作品',
     categories: {
       all: '全部',
-      animation: '动画',
-      canvas: '精选幕布',
+      animation: '动画黑客松',
+      canvas: '精选画布',
       ad: '电视广告',
       anime: '动画',
       short: '叙事短片',
@@ -1291,6 +1297,9 @@ const en: Messages = {
     typeFolder: 'Folder',
     typeProject: 'Project',
     projectCountUnit: 'projects',
+    viewMode: 'View mode',
+    gridView: 'Grid view',
+    listView: 'List view',
     projectMenu: {
       open: 'Open',
       rename: 'Rename',
@@ -1360,8 +1369,8 @@ const en: Messages = {
     publish: 'Publish',
     categories: {
       all: 'All',
-      animation: 'Animation',
-      canvas: 'Canvas',
+      animation: 'Animation Jam',
+      canvas: 'Curated Canvas',
       ad: 'TV Ads',
       anime: 'Anime',
       short: 'Short films',

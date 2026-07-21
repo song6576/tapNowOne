@@ -11,9 +11,9 @@ export function AppLayout() {
   }, [])
 
   return (
-    <div className="relative flex h-full flex-col bg-black">
+    <div className="relative flex h-full flex-col bg-[var(--home-bg,#0c0c11)]">
       <HomeTopNav />
-      <div className="flex flex-1 flex-col overflow-hidden pt-[var(--tn-topbar-h)]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <Suspense fallback={<RouteLoading compact />}>
           <Outlet />
         </Suspense>

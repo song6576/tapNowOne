@@ -52,13 +52,13 @@ export function TeamJoinPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-white/40">…</div>
+      <div className="flex min-h-[60vh] items-center justify-center pt-[var(--tn-topbar-h)] text-sm text-white/40">…</div>
     )
   }
 
   if (!preview?.valid) {
     return (
-      <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-6 text-center">
+      <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-6 pt-[var(--tn-topbar-h)] text-center">
         <p className="text-lg font-medium text-white">{v.invalid}</p>
         <button
           type="button"
@@ -72,7 +72,7 @@ export function TeamJoinPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-6 text-center">
+    <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-6 pt-[var(--tn-topbar-h)] text-center">
       <h1 className="text-2xl font-semibold text-white">{v.title}</h1>
       <p className="mt-2 text-sm text-white/45">{v.desc}</p>
       <div className="team-join-card mt-8 w-full rounded-2xl border border-white/10 bg-white/[0.03] p-6">

@@ -20,6 +20,22 @@ test.describe('1440×900 视觉基线', () => {
     await expect(page).toHaveScreenshot('home.png')
   })
 
+  test('工作空间', async ({ page }) => {
+    await page.goto('/home/projects')
+    await expect(page.getByRole('button', { name: '个人', exact: true })).toBeVisible()
+    await expect(page.locator('.workspace-project-grid')).toBeVisible()
+
+    await expect(page).toHaveScreenshot('workspace.png')
+  })
+
+  test('TapTV', async ({ page }) => {
+    await page.goto('/taptv')
+    await expect(page.getByRole('button', { name: '编辑精选' })).toBeVisible()
+    await expect(page.locator('.taptv-card').first()).toBeVisible()
+
+    await expect(page).toHaveScreenshot('taptv.png')
+  })
+
   test('空画布', async ({ page }) => {
     await page.goto('/canvas')
     await expect(page.getByRole('button', { name: '文字生成视频' })).toBeVisible()

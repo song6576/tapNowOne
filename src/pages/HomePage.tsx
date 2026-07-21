@@ -11,9 +11,11 @@ import { useHomeDashboard } from '../hooks/useHomeQueries'
 import { queryKeys } from '../lib/queryKeys'
 import type { HomeDashboard } from '../api/client'
 import { useWorkspaceStore } from '../store/workspaceStore'
+import { useI18n } from '../store/langStore'
 
 export function HomePage() {
   const queryClient = useQueryClient()
+  const { t } = useI18n()
   const workspaceReady = useWorkspaceStore((s) => s.initialized)
   const { data, isLoading } = useHomeDashboard()
 
@@ -28,7 +30,7 @@ export function HomePage() {
   }
 
   return (
-    <main className="home-page flex flex-1 flex-col overflow-y-auto">
+    <main className="home-page home-dashboard flex flex-1 flex-col overflow-y-auto">
       <div className="home-page-grid flex flex-col">
         <section className="home-hero-pad pb-6 pt-8 md:pt-10">
           <div className="home-hero-stack">
@@ -39,15 +41,19 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="home-featured-section home-section-pad border-t border-white/[0.04]">
+        <section className="home-featured-section home-section-pad border-t border-white/4">
           <div className="home-wide-stack">
             {isLoading ? <FeaturedCarouselSkeleton /> : <FeaturedCarousel items={featured} />}
           </div>
         </section>
 
-        <section className="home-taptv-section home-section-pad border-t border-white/[0.04] py-10 md:py-12">
+        <section className="home-taptv-section home-section-pad border-t border-white/4 py-10 md:py-12">
           <div className="home-wide-stack">
-            {!isLoading && (
+            {isLoading ? (
+              <div className="taptv-list-skeleton" role="status" aria-label={t.routeState.loading}>
+                {Array.from({ length: 8 }, (_, index) => <span key={index} />)}
+              </div>
+            ) : (
               <TapTVExploreSection
                 items={taptv}
                 onItemsChange={handleTapTVItemsChange}

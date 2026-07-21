@@ -10,22 +10,29 @@ export const HeroPrompt = memo(function HeroPrompt() {
   const [prompt, setPrompt] = useState('')
   const [modelId, setModelId] = useState(DEFAULT_AGENT_MODEL)
   const [autoModel, setAutoModel] = useState(true)
+  const [creating, setCreating] = useState(false)
   const navigate = useNavigate()
   const { t } = useI18n()
   const createProject = useWorkspaceStore((s) => s.createProject)
 
   /** 创建工作空间项目并跳转画布，携带 initialPrompt 供 CanvasPage 生成分镜 */
   const submit = async () => {
+    if (creating) return
     const text = prompt.trim()
-    const proj = await createProject(null)
-    navigate(`/canvas/${proj.id}`, {
-      state: {
-        initialPrompt: text || undefined,
-        modelId,
-        autoModel,
-        openAgentPanel: true,
-      },
-    })
+    setCreating(true)
+    try {
+      const proj = await createProject(null)
+      navigate(`/canvas/${proj.id}`, {
+        state: {
+          initialPrompt: text || undefined,
+          modelId,
+          autoModel,
+          openAgentPanel: true,
+        },
+      })
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
@@ -37,7 +44,7 @@ export const HeroPrompt = memo(function HeroPrompt() {
             <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
           </svg>
         </span>
-        <h1 className="text-[30px] font-semibold tracking-tight text-white md:text-[30px]">
+        <h1 className="home-hero-title text-[30px] font-semibold tracking-tight text-white md:text-[30px]">
           {t.home.heroTitle}
         </h1>
       </div>
@@ -69,13 +76,20 @@ export const HeroPrompt = memo(function HeroPrompt() {
             <span className="home-prompt-divider" aria-hidden />
             <button
               type="button"
-              onClick={submit}
+              onClick={() => void submit()}
+              disabled={creating}
               className="home-prompt-submit ui-clickable"
-              title="开始创作"
+              title={t.home.newProject}
+              aria-label={t.home.newProject}
+              aria-busy={creating}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {creating ? (
+                <span className="home-prompt-submit-spinner" aria-hidden />
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
             </button>
           </div>
         </div>

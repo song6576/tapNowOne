@@ -10,6 +10,8 @@ import {
   type FeaturedItem,
   type MockProject,
   type TapTVItem,
+  type TapTVCategory,
+  type TapTVSort,
   type GenerationTask,
 } from './data'
 import type { CanvasProject } from '../types'
@@ -45,9 +47,38 @@ export async function mockListProjects(): Promise<MockProject[]> {
   return MOCK_PROJECTS
 }
 
-export async function mockGetTapTV(): Promise<TapTVItem[]> {
+export async function mockGetTapTV(params?: {
+  sort?: TapTVSort
+  category?: TapTVCategory
+  search?: string
+}): Promise<TapTVItem[]> {
   await delay()
-  return withLocalFlags(MOCK_TAPTV)
+  let items = [...MOCK_TAPTV]
+
+  if (params?.category && params.category !== 'all') {
+    items = items.filter((item) => item.category === params.category)
+  }
+
+  const query = params?.search?.trim().toLowerCase()
+  if (query) {
+    items = items.filter((item) =>
+      [item.title, item.author, item.description, ...item.tags]
+        .filter(Boolean)
+        .some((value) => value?.toLowerCase().includes(query)),
+    )
+  }
+
+  if (params?.sort === 'following') {
+    items = items.filter((item) => item.followingAuthor)
+  } else if (params?.sort === 'hot') {
+    items.sort((a, b) => b.likes + b.favorites - (a.likes + a.favorites))
+  } else if (params?.sort === 'latest') {
+    items.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+  } else {
+    items.sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)))
+  }
+
+  return withLocalFlags(items)
 }
 
 /** Mock：GET /api/taptv/favorites — 从 MOCK_TAPTV 过滤已收藏 id */

@@ -2,7 +2,7 @@
 import { memo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { TapTVItem } from '../../mock/data'
-import { toggleTapTVFavorite, toggleTapTVLike } from '../../services/api'
+import { toggleTapTVFavorite } from '../../services/api'
 import { useI18n } from '../../store/langStore'
 import { useToastStore } from '../../store/toastStore'
 import { getToken } from '../../utils/auth'
@@ -35,16 +35,6 @@ export const TapTVExploreSection = memo(function TapTVExploreSection({
     return false
   }
 
-  const handleLike = async (item: TapTVItem) => {
-    if (!requireLogin()) return
-    try {
-      const res = await toggleTapTVLike(item.id)
-      patchItem(item.id, { likedByMe: res.liked, likes: res.likes })
-    } catch (err: unknown) {
-      showToast({ type: 'info', message: err instanceof Error ? err.message : t.taptv.detail.loading })
-    }
-  }
-
   const handleFavorite = async (item: TapTVItem) => {
     if (!requireLogin()) return
     try {
@@ -71,7 +61,6 @@ export const TapTVExploreSection = memo(function TapTVExploreSection({
             key={item.id}
             item={item}
             onClick={() => navigate(`/taptv/${item.id}`)}
-            onLike={() => void handleLike(item)}
             onFavorite={() => void handleFavorite(item)}
           />
         ))}

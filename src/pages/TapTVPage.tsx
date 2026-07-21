@@ -8,7 +8,7 @@ import { FilterPills } from '../components/ui/FilterPills'
 import { TapTVCard } from '../components/taptv/TapTVCard'
 import { OverlayLoading } from '../components/ui/RouteBoundary'
 import { TAPTV_CATEGORY_IDS, type TapTVCategory, type TapTVItem, type TapTVSort } from '../mock/data'
-import { toggleTapTVFavorite, toggleTapTVLike } from '../services/api'
+import { toggleTapTVFavorite } from '../services/api'
 import { useTapTVList } from '../hooks/useTapTVList'
 import { queryKeys } from '../lib/queryKeys'
 import { useI18n } from '../store/langStore'
@@ -68,16 +68,6 @@ export function TapTVPage() {
     return false
   }
 
-  const handleLike = async (item: TapTVItem) => {
-    if (!requireLogin()) return
-    try {
-      const res = await toggleTapTVLike(item.id)
-      patchItem(item.id, { likedByMe: res.liked, likes: res.likes })
-    } catch (err: unknown) {
-      showToast({ type: 'info', message: err instanceof Error ? err.message : tv.detail.loading })
-    }
-  }
-
   const handleFavorite = async (item: TapTVItem) => {
     if (!requireLogin()) return
     try {
@@ -89,52 +79,54 @@ export function TapTVPage() {
   }
 
   return (
-    <main className="home-page flex-1 overflow-y-auto">
-      <div className="home-section-pad py-6 md:py-8">
-        <div className="home-wide-stack">
-          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <TabBar<TapTVSort> tabs={sortTabs} active={sort} onChange={setSort} />
-          <div className="flex flex-wrap items-center gap-2">
-            <SearchInput value={search} onChange={setSearch} placeholder={t.workspace.search} className="w-full sm:w-[200px]" />
-            <button type="button" className="home-primary-pill" onClick={() => setPublishOpen(true)}>
-              + {tv.publish}
-            </button>
+    <main className="home-page taptv-page flex-1 overflow-y-auto">
+      <div className="home-section-pad py-5 md:py-6">
+        <div className="taptv-content">
+          <div className="taptv-toolbar">
+            <TabBar<TapTVSort> tabs={sortTabs} active={sort} onChange={setSort} />
+            <div className="taptv-toolbar__actions">
+              <SearchInput value={search} onChange={setSearch} placeholder={t.workspace.search} className="taptv-search" />
+              <button type="button" className="taptv-publish-btn ui-clickable" onClick={() => setPublishOpen(true)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+                {tv.publish}
+              </button>
+            </div>
           </div>
-        </div>
 
-        <FilterPills<TapTVCategory> options={categoryOptions} active={category} onChange={setCategory} className="mb-6" />
+          <FilterPills<TapTVCategory> options={categoryOptions} active={category} onChange={setCategory} className="taptv-category-bar" />
 
-        {isLoading ? (
-          <div className="taptv-list-skeleton" role="status" aria-label={t.taptv.detail.loading}>
-            {Array.from({ length: 6 }, (_, index) => <span key={index} />)}
-          </div>
-        ) : isError ? (
-          <div className="taptv-list-state" role="alert">
-            <strong>{t.taptv.detail.loadFailed}</strong>
-            <button type="button" className="ui-clickable" onClick={() => void refetch()}>
-              {t.taptv.detail.retry}
-            </button>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="taptv-list-state">
-            <strong>{t.workspace.empty}</strong>
-            <button type="button" className="ui-clickable" onClick={() => setPublishOpen(true)}>
-              {t.taptv.publish}
-            </button>
-          </div>
-        ) : (
-          <div className="taptv-explore-grid">
-            {items.map((item) => (
-              <TapTVCard
-                key={item.id}
-                item={item}
-                onClick={() => navigate(`/taptv/${item.id}`)}
-                onLike={() => void handleLike(item)}
-                onFavorite={() => void handleFavorite(item)}
-              />
-            ))}
-          </div>
-        )}
+          {isLoading ? (
+            <div className="taptv-list-skeleton" role="status" aria-label={t.taptv.detail.loading}>
+              {Array.from({ length: 12 }, (_, index) => <span key={index} />)}
+            </div>
+          ) : isError ? (
+            <div className="taptv-list-state" role="alert">
+              <strong>{t.taptv.detail.loadFailed}</strong>
+              <button type="button" className="ui-clickable" onClick={() => void refetch()}>
+                {t.taptv.detail.retry}
+              </button>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="taptv-list-state">
+              <strong>{t.workspace.empty}</strong>
+              <button type="button" className="ui-clickable" onClick={() => setPublishOpen(true)}>
+                {t.taptv.publish}
+              </button>
+            </div>
+          ) : (
+            <div className="taptv-explore-grid">
+              {items.map((item) => (
+                <TapTVCard
+                  key={item.id}
+                  item={item}
+                  onClick={() => navigate(`/taptv/${item.id}`)}
+                  onFavorite={() => void handleFavorite(item)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

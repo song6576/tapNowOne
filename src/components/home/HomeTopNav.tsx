@@ -1,6 +1,6 @@
-/** 主应用顶栏：Logo、导航、用户菜单 */
-import { memo } from 'react'
-import { NavLink } from 'react-router-dom'
+/** 主应用顶栏：Logo、导航、用户菜单；默认透明，内容顶到顶栏后再显示背景 */
+import { memo, useEffect, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { TapNowLogo } from '../auth/TapNowLogo'
 import { NAV_ITEMS } from '../../mock/data'
 import { useI18n } from '../../store/langStore'
@@ -41,47 +41,112 @@ function NavIcon({ type }: { type: string }) {
   }
 }
 
+function readTopbarHeight() {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--tn-topbar-h').trim()
+  const parsed = Number.parseFloat(raw)
+  return Number.isFinite(parsed) ? parsed : 56
+}
+
 export const HomeTopNav = memo(function HomeTopNav() {
   const { t } = useI18n()
+  const location = useLocation()
+  const [solid, setSolid] = useState(false)
+
+  useEffect(() => {
+    const scrollRoot = document.querySelector<HTMLElement>(
+      'main.home-page, main.profile-page, main.taptv-detail-page',
+    )
+    if (!scrollRoot) {
+      setSolid(false)
+      return
+    }
+
+    let frame = 0
+    const updateSolid = () => {
+      frame = 0
+      const headerH = readTopbarHeight()
+      const heroTitle = scrollRoot.querySelector<HTMLElement>('.home-hero-title')
+      if (heroTitle) {
+        setSolid(heroTitle.getBoundingClientRect().top <= headerH)
+        return
+      }
+      setSolid(scrollRoot.scrollTop > 12)
+    }
+
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(updateSolid)
+    }
+
+    updateSolid()
+    scrollRoot.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      scrollRoot.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [location.pathname])
 
   return (
-    <header className="home-topnav fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.06] bg-black/80 px-5 backdrop-blur-md md:px-8">
-      <div className="flex items-center gap-3">
-        <NavLink to="/home">
-          <TapNowLogo size="sm" />
-        </NavLink>
-      </div>
+    <>
+      <header
+        className={`home-topnav fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between px-5 md:px-8${solid ? ' home-topnav--solid' : ''}`}
+      >
+        <div className="flex items-center gap-3">
+          <NavLink to="/home">
+            <TapNowLogo size="sm" />
+          </NavLink>
+        </div>
 
-      <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
-        {NAV_ITEMS.map((item) =>
-          item.disabled ? (
-            <span
-              key={item.path}
-              className="home-topnav-tab home-topnav-tab--disabled"
-              title={t.nav.arenaSoon}
-            >
-              <NavIcon type={item.icon} />
-              {t.nav[item.labelKey]}
-            </span>
-          ) : (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/home'}
-              className={({ isActive }) =>
-                `home-topnav-tab ui-clickable ${isActive ? 'home-topnav-tab--active' : ''}`
-              }
-            >
-              <NavIcon type={item.icon} />
-              {t.nav[item.labelKey]}
-            </NavLink>
-          ),
-        )}
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex" aria-label={t.nav.home}>
+          {NAV_ITEMS.map((item) =>
+            item.disabled ? (
+              <span
+                key={item.path}
+                className="home-topnav-tab home-topnav-tab--disabled"
+                title={t.nav.arenaSoon}
+              >
+                <NavIcon type={item.icon} />
+                {t.nav[item.labelKey]}
+              </span>
+            ) : (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/home'}
+                className={({ isActive }) =>
+                  `home-topnav-tab ui-clickable ${isActive ? 'home-topnav-tab--active' : ''}`
+                }
+              >
+                <NavIcon type={item.icon} />
+                {t.nav[item.labelKey]}
+              </NavLink>
+            ),
+          )}
+        </nav>
+
+        <div className="flex items-center gap-2 md:gap-4">
+          <UserMenuDropdown />
+        </div>
+      </header>
+
+      <nav className="home-mobile-nav md:hidden" aria-label={t.nav.home}>
+        {NAV_ITEMS.filter((item) => !item.disabled).map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === '/home'}
+            className={({ isActive }) =>
+              `home-mobile-nav__item ui-clickable ${isActive ? 'home-mobile-nav__item--active' : ''}`
+            }
+          >
+            <NavIcon type={item.icon} />
+            <span>{t.nav[item.labelKey]}</span>
+          </NavLink>
+        ))}
       </nav>
-
-      <div className="flex items-center gap-2 md:gap-4">
-        <UserMenuDropdown />
-      </div>
-    </header>
+    </>
   )
 })

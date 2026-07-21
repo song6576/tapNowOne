@@ -1,5 +1,6 @@
 /** 网格 / 列表视图切换（同一圆角容器内） */
 import type { WorkspaceViewMode } from '../../store/workspaceStore'
+import { useI18n } from '../../store/langStore'
 
 type Props = {
   value: WorkspaceViewMode
@@ -26,12 +27,14 @@ function ListIcon() {
 }
 
 export function WorkspaceViewToggle({ value, onChange }: Props) {
+  const { t } = useI18n()
   return (
-    <div className="workspace-view-toggle" role="group" aria-label="View mode">
+    <div className="workspace-view-toggle" role="group" aria-label={t.workspace.viewMode}>
       <button
         type="button"
         className={`workspace-view-toggle__btn ui-clickable ${value === 'grid' ? 'workspace-view-toggle__btn--active' : ''}`}
-        title="Grid view"
+        title={t.workspace.gridView}
+        aria-label={t.workspace.gridView}
         aria-pressed={value === 'grid'}
         onClick={() => onChange('grid')}
       >
@@ -40,7 +43,8 @@ export function WorkspaceViewToggle({ value, onChange }: Props) {
       <button
         type="button"
         className={`workspace-view-toggle__btn ui-clickable ${value === 'list' ? 'workspace-view-toggle__btn--active' : ''}`}
-        title="List view"
+        title={t.workspace.listView}
+        aria-label={t.workspace.listView}
         aria-pressed={value === 'list'}
         onClick={() => onChange('list')}
       >
