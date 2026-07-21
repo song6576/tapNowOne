@@ -67,6 +67,7 @@ function PaneInteractionHandlers({
 }
 
 export function FlowCanvas({
+  hideChrome = false,
   showMinimap = false,
   onPaneDoubleClick,
   onPaneContextMenu,
@@ -100,6 +101,8 @@ export function FlowCanvas({
   const deleteSelected = useCanvasStore((s) => s.deleteSelected)
   const copySelected = useCanvasStore((s) => s.copySelected)
   const pasteClipboard = useCanvasStore((s) => s.pasteClipboard)
+  const groupSelected = useCanvasStore((s) => s.groupSelected)
+  const ungroupNode = useCanvasStore((s) => s.ungroupNode)
   const setViewport = useCanvasStore((s) => s.setViewport)
   const { screenToFlowPosition } = useReactFlow()
 
@@ -178,18 +181,29 @@ export function FlowCanvas({
         if (pasteClipboard()) e.preventDefault()
         return
       }
+      if (mod && e.key.toLowerCase() === 'g') {
+        if (e.shiftKey) {
+          const selectedGroup = useCanvasStore.getState().nodes.find(
+            (node) => node.selected && node.type === 'group',
+          )
+          if (selectedGroup && ungroupNode(selectedGroup.id)) e.preventDefault()
+        } else if (groupSelected()) {
+          e.preventDefault()
+        }
+        return
+      }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         deleteSelected()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [deleteSelected, copySelected, pasteClipboard])
+  }, [deleteSelected, copySelected, pasteClipboard, groupSelected, ungroupNode])
 
   const containerRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div ref={containerRef} className="relative flex-1 bg-[var(--tn-bg)]">
+    <div ref={containerRef} className="relative flex-1 bg-(--tn-bg)">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -204,7 +218,7 @@ export function FlowCanvas({
         nodeTypes={nodeTypes}
         defaultEdgeOptions={{
           animated: false,
-          style: { stroke: 'rgba(255, 255, 255, 0.35)', strokeWidth: 1.5 },
+          style: { stroke: 'rgba(255, 255, 255, 0.22)', strokeWidth: 1.25 },
         }}
         defaultViewport={project.viewport}
         fitView={nodes.length === 0}
@@ -215,6 +229,7 @@ export function FlowCanvas({
         /** 左键空白处拖拽 = 框选；中键/右键拖拽 = 平移；滚轮/触控板 = 平移 */
         selectionOnDrag
         selectionMode={SelectionMode.Partial}
+        multiSelectionKeyCode={['Meta', 'Control', 'Shift']}
         panOnDrag={[1, 2]}
         panOnScroll
         panActivationKeyCode="Space"
@@ -227,9 +242,9 @@ export function FlowCanvas({
             onPaneContextMenu={onPaneContextMenu}
           />
         )}
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#ffffff4d" />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#ffffff26" />
         <CanvasSelectionToolbar />
-        {showMinimap && (
+        {showMinimap && !hideChrome && (
           <MiniMap
             pannable
             zoomable
@@ -241,7 +256,7 @@ export function FlowCanvas({
             maskColor="rgba(0, 0, 0, 0.62)"
             maskStrokeColor="rgba(255, 255, 255, 0.28)"
             maskStrokeWidth={1.2}
-            className="canvas-minimap !bottom-[68px] !left-4 !right-auto"
+            className="canvas-minimap bottom-17! left-4! right-auto!"
           />
         )}
       </ReactFlow>

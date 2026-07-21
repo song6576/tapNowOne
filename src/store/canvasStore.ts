@@ -54,8 +54,8 @@ function normalizeCanvasEdges(edges: CanvasEdge[]): CanvasEdge[] {
     ...edge,
     animated: false,
     style: {
-      stroke: 'rgba(255, 255, 255, 0.35)',
-      strokeWidth: 1.5,
+      stroke: 'rgba(255, 255, 255, 0.22)',
+      strokeWidth: 1.25,
       ...edge.style,
       strokeDasharray: undefined,
     },
@@ -120,8 +120,14 @@ interface CanvasStore {
 let persistTimer: ReturnType<typeof setTimeout> | null = null
 let cloudPersistTimer: ReturnType<typeof setTimeout> | null = null
 
-/** 画布内部剪贴板（不走系统剪贴板，避免敏感 URL 泄露）；支持多选复制 */
-let nodeClipboard: CanvasNode[] | null = null
+type CanvasClipboard = {
+  nodes: CanvasNode[]
+  edges: CanvasEdge[]
+  pasteCount: number
+}
+
+/** 画布内部剪贴板（不走系统剪贴板，避免敏感 URL 泄露）；保留组层级与内部连线 */
+let canvasClipboard: CanvasClipboard | null = null
 
 const PASTE_OFFSET = 40
 
@@ -208,7 +214,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
           ...connection,
           id: `e-${connection.source}-${connection.target}`,
           animated: false,
-          style: { stroke: 'rgba(255, 255, 255, 0.35)', strokeWidth: 1.5 },
+          style: { stroke: 'rgba(255, 255, 255, 0.22)', strokeWidth: 1.25 },
         },
         s.edges,
       ),
@@ -331,7 +337,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
     const byId = buildNodesById(nodes)
     const padding = 28
-    const headerGap = 36
+    const headerGap = 16
 
     let minX = Infinity
     let minY = Infinity
@@ -465,43 +471,97 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   copySelected: () => {
-    const selected = get().nodes.filter((n) => n.selected)
-    if (selected.length === 0) return false
-    nodeClipboard = structuredClone(selected)
+    const { nodes, edges } = get()
+    const copiedIds = new Set(nodes.filter((node) => node.selected).map((node) => node.id))
+    if (copiedIds.size === 0) return false
+
+    // 复制组时必须连同所有后代一起复制，否则粘贴后会得到空组。
+    let addedDescendant = true
+    while (addedDescendant) {
+      addedDescendant = false
+      for (const node of nodes) {
+        if (node.parentId && copiedIds.has(node.parentId) && !copiedIds.has(node.id)) {
+          copiedIds.add(node.id)
+          addedDescendant = true
+        }
+      }
+    }
+
+    const byId = buildNodesById(nodes)
+    const copiedNodes = nodes
+      .filter((node) => copiedIds.has(node.id))
+      .map((node) => {
+        const parentIncluded = !!node.parentId && copiedIds.has(node.parentId)
+        return {
+          ...structuredClone(node),
+          position: parentIncluded ? { ...node.position } : getAbsolutePosition(node, byId),
+          parentId: parentIncluded ? node.parentId : undefined,
+          extent: parentIncluded ? node.extent : undefined,
+          selected: false,
+          dragging: false,
+        }
+      })
+    const copiedEdges = edges.filter(
+      (edge) => copiedIds.has(edge.source) && copiedIds.has(edge.target),
+    )
+    canvasClipboard = {
+      nodes: copiedNodes,
+      edges: structuredClone(copiedEdges),
+      pasteCount: 1,
+    }
     return true
   },
 
-  hasClipboard: () => nodeClipboard !== null && nodeClipboard.length > 0,
+  hasClipboard: () => canvasClipboard !== null && canvasClipboard.nodes.length > 0,
 
   pasteClipboard: (position) => {
-    if (!nodeClipboard?.length) return false
-    const sources = nodeClipboard
-    const origin = sources[0]!
+    if (!canvasClipboard?.nodes.length) return false
+    const { nodes: sources, edges: sourceEdges, pasteCount } = canvasClipboard
+    const sourceIds = new Set(sources.map((source) => source.id))
+    const roots = sources.filter(
+      (source) => !source.parentId || !sourceIds.has(source.parentId),
+    )
+    const origin = roots[0] ?? sources[0]!
+    const offset = PASTE_OFFSET * pasteCount
     const basePos = position ?? {
-      x: origin.position.x + PASTE_OFFSET,
-      y: origin.position.y + PASTE_OFFSET,
+      x: origin.position.x + offset,
+      y: origin.position.y + offset,
     }
     const dx = basePos.x - origin.position.x
     const dy = basePos.y - origin.position.y
-    const newNodes: CanvasNode[] = sources.map((source) => ({
-      ...structuredClone(source),
-      id: generateUUID(),
-      position: {
-        x: source.position.x + dx,
-        y: source.position.y + dy,
-      },
-      selected: true,
-      dragging: false,
-    }))
+    const idMap = new Map(sources.map((source) => [source.id, generateUUID()]))
+    const newNodes: CanvasNode[] = sources.map((source) => {
+      const parentCopied = !!source.parentId && sourceIds.has(source.parentId)
+      return {
+        ...structuredClone(source),
+        id: idMap.get(source.id)!,
+        parentId: parentCopied ? idMap.get(source.parentId!) : undefined,
+        extent: parentCopied ? source.extent : undefined,
+        position: parentCopied
+          ? { ...source.position }
+          : { x: source.position.x + dx, y: source.position.y + dy },
+        selected: !parentCopied,
+        dragging: false,
+      }
+    })
+    const newEdges: CanvasEdge[] = sourceEdges.map((edge) => {
+      const source = idMap.get(edge.source)!
+      const target = idMap.get(edge.target)!
+      return {
+        ...structuredClone(edge),
+        id: `e-${source}-${target}`,
+        source,
+        target,
+        selected: false,
+      }
+    })
+    const selectedRoots = newNodes.filter((node) => node.selected)
     set((s) => ({
       nodes: [...s.nodes.map((n) => ({ ...n, selected: false })), ...newNodes],
-      selectedNodeId: newNodes[newNodes.length - 1]?.id ?? null,
+      edges: [...s.edges.map((edge) => ({ ...edge, selected: false })), ...newEdges],
+      selectedNodeId: selectedRoots[selectedRoots.length - 1]?.id ?? null,
     }))
-    // 连续粘贴时下次落点继续错开
-    nodeClipboard = sources.map((source, i) => ({
-      ...source,
-      position: newNodes[i]!.position,
-    }))
+    canvasClipboard = { ...canvasClipboard, pasteCount: pasteCount + 1 }
     get().schedulePersist()
     return true
   },

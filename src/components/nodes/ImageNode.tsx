@@ -14,7 +14,7 @@ export function ImageNode(props: NodeProps) {
   return (
     <BaseNode {...props} type="image" hasInput hasOutput filled={filled}>
       {data.outputUrl ? (
-        <img src={data.outputUrl} alt="" className="canvas-node-media" />
+        <img src={data.outputUrl} alt={data.label} className="canvas-node-media" />
       ) : (
         <div className="canvas-node-placeholder">
           <NodeTypeIcon type="image" />

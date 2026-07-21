@@ -1,4 +1,5 @@
 /** TapTV 创作过程只读页：节点流程预览 + 克隆项目 */
+import '@xyflow/react/dist/style.css'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ReadonlyWorkflowCanvas } from '../components/taptv/ReadonlyWorkflowCanvas'

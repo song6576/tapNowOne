@@ -17,7 +17,7 @@ export function VideoNode(props: NodeProps) {
     <BaseNode {...props} type="video" hasInput hasOutput filled={filled}>
       {data.outputUrl ? (
         isImagePreview(data.outputUrl) ? (
-          <img src={data.outputUrl} alt="" className="canvas-node-media" />
+          <img src={data.outputUrl} alt={data.label} className="canvas-node-media" />
         ) : (
           <NodeVideoPlayer
             src={data.outputUrl}

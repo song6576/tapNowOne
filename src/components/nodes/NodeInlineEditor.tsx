@@ -10,7 +10,7 @@ import {
   type UpstreamTextRef,
 } from '../../utils/upstream'
 import { ModelDropdown } from '../ui/ModelDropdown'
-import { formatVideoParamsSummary } from '../../constants/videoParams'
+import { VideoParamsPicker } from '../ui/VideoParamsPicker'
 import type { NodeData, NodeType } from '../../types'
 
 interface NodeInlineEditorProps {
@@ -191,15 +191,8 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
       )}
 
       <div className="node-inline-editor">
-        <div className="node-inline-editor-toolbar">
-          <button type="button" className="node-inline-editor-icon ui-clickable" title={n.magic}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5" strokeLinecap="round" />
-            </svg>
-          </button>
-
-          <div className="node-inline-editor-toolbar-divider" aria-hidden />
-
+        {showRefs && (
+          <div className="node-inline-editor-toolbar">
           <div className="node-inline-editor-refs" role="list">
             {visibleTexts.map((item) => (
               <div
@@ -246,19 +239,9 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
                 </button>
               </div>
             ))}
-            <button type="button" className="node-inline-editor-icon ui-clickable" title={n.add}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-              </svg>
-            </button>
           </div>
-
-          <button type="button" className="node-inline-editor-icon ui-clickable" title={n.swap}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
+          </div>
+        )}
 
         <textarea
           value={prompt}
@@ -292,14 +275,14 @@ export function NodeInlineEditor({ nodeId, type, data }: NodeInlineEditorProps) 
               <span className="node-inline-editor-model">Group</span>
             )}
             {type === 'video' && (
-              <span className="text-white/30">
-                · {formatVideoParamsSummary({
-                  ratio: data.videoRatio,
-                  resolution: data.videoResolution,
-                  duration: data.duration,
-                  watermark: data.videoWatermark,
-                })}
-              </span>
+              <VideoParamsPicker
+                compact
+                disabled={busy}
+                ratio={data.videoRatio}
+                resolution={data.videoResolution}
+                duration={data.duration}
+                onChange={(patch) => updateNodeData(nodeId, patch)}
+              />
             )}
           </div>
           {canGenerate && (

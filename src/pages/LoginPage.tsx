@@ -172,19 +172,19 @@ export function LoginPage() {
   }
 
   const outlineBtn =
-    'ui-clickable flex h-[52px] w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[16px] text-white transition hover:border-white/35 hover:bg-white/[0.03]'
+    'ui-clickable flex h-14 w-full items-center justify-center gap-3 rounded-full border border-white/20 bg-transparent text-[16px] text-white transition hover:border-white/35 hover:bg-white/[0.03]'
 
   return (
     <div className="login-page absolute inset-0 overflow-y-auto bg-black text-white">
-      <header className="sticky top-0 z-10 flex items-center justify-between bg-black/80 px-6 py-5 backdrop-blur-sm md:px-10">
+      <header className="sticky top-0 z-10 flex items-center justify-between bg-black/80 px-6 py-5 backdrop-blur-sm">
         <TapNowLogo size="sm" />
         <LanguageDropdown />
       </header>
 
       {/* my-auto 替代 items-center：矮屏溢出时仍可滚到顶部与底部条款 */}
       <main className="flex min-h-[calc(100%-4.5rem)] flex-col px-6 pb-16 pt-6">
-        <div className="mx-auto my-auto w-full max-w-[400px]">
-          <div className="mb-8 flex justify-center">
+        <div className="login-card mx-auto my-auto w-full max-w-97">
+          <div className="mb-2 flex justify-center">
             <TapNowLogo size="lg" />
           </div>
 
@@ -196,7 +196,7 @@ export function LoginPage() {
           </p>
 
           {step === 'main' && (
-            <div className="mt-10 space-y-3">
+            <div className="mt-10 space-y-4">
               {GOOGLE_CLIENT_ID ? (
                 <GoogleSignInButton
                   label={t.google}
@@ -229,7 +229,7 @@ export function LoginPage() {
                 </button>
               )}
 
-              <div className="flex items-center gap-4 py-4">
+              <div className="flex items-center gap-4 py-2">
                 <div className="h-px flex-1 bg-white/10" />
                 <span className="text-[15px] text-white/35">{t.or}</span>
                 <div className="h-px flex-1 bg-white/10" />

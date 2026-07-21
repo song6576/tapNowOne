@@ -2,9 +2,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { NodeType } from '../../types'
 import { useI18n } from '../../store/langStore'
-import { useToastStore } from '../../store/toastStore'
 
-export type CanvasAddAction = NodeType | 'group' | 'playlist' | 'world3d' | 'upload'
+export type CanvasAddAction = NodeType | 'group' | 'upload'
 
 interface CanvasContextMenuProps {
   x: number
@@ -43,20 +42,6 @@ function MenuIcon({ type }: { type: string }) {
           <path d="M7 8v8M11 6v12M15 9v6M19 7v10" strokeLinecap="round" />
         </svg>
       )
-    case 'world3d':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-          <circle cx="12" cy="12" r="8" />
-          <ellipse cx="12" cy="12" rx="8" ry="3" />
-          <path d="M12 4v16" strokeLinecap="round" />
-        </svg>
-      )
-    case 'playlist':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
-        </svg>
-      )
     default:
       return (
         <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -70,18 +55,17 @@ interface MenuRowProps {
   icon: string
   label: string
   desc?: string
-  beta?: string
   dot?: boolean
-  active?: boolean
   onClick: () => void
 }
 
-function MenuRow({ icon, label, desc, beta, dot, active, onClick }: MenuRowProps) {
+function MenuRow({ icon, label, desc, dot, onClick }: MenuRowProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`canvas-add-menu-item ui-clickable ${active ? 'canvas-add-menu-item--active' : ''}`}
+      className="canvas-add-menu-item ui-clickable"
+      role="menuitem"
     >
       <span className="canvas-add-menu-icon-wrap">
         {dot && <span className="canvas-add-menu-dot" aria-hidden />}
@@ -90,7 +74,6 @@ function MenuRow({ icon, label, desc, beta, dot, active, onClick }: MenuRowProps
       <span className="min-w-0 flex-1 text-left">
         <span className="flex items-center gap-2">
           <span className="text-sm text-white/90">{label}</span>
-          {beta && <span className="canvas-add-menu-beta">{beta}</span>}
         </span>
         {desc && <span className="mt-0.5 block text-[11px] leading-snug text-white/35">{desc}</span>}
       </span>
@@ -101,7 +84,6 @@ function MenuRow({ icon, label, desc, beta, dot, active, onClick }: MenuRowProps
 export function CanvasContextMenu({ x, y, onAdd, onClose }: CanvasContextMenuProps) {
   const { t } = useI18n()
   const m = t.canvas.nodeMenu
-  const showToast = useToastStore((s) => s.showToast)
   const panelRef = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState({ left: x, top: y })
 
@@ -117,12 +99,16 @@ export function CanvasContextMenu({ x, y, onAdd, onClose }: CanvasContextMenuPro
     left = Math.max(pad, left)
     top = Math.max(pad, top)
     setPos({ left, top })
+    panel.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
   }, [x, y])
 
-  const soon = () => {
-    showToast({ type: 'info', message: m.comingSoon })
-    onClose()
-  }
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const add = (type: CanvasAddAction) => {
     onAdd(type)
@@ -136,22 +122,19 @@ export function CanvasContextMenu({ x, y, onAdd, onClose }: CanvasContextMenuPro
         ref={panelRef}
         className="canvas-add-menu fixed z-50"
         style={{ left: pos.left, top: pos.top }}
+        role="menu"
+        aria-label={m.addNode}
       >
         <p className="canvas-add-menu-section">{m.addNode}</p>
         <MenuRow
           icon="text"
           label={m.text}
           desc={m.textDesc}
-          active
           onClick={() => add('text')}
         />
         <MenuRow icon="image" label={m.image} onClick={() => add('image')} />
         <MenuRow icon="video" label={m.video} onClick={() => add('video')} />
         <MenuRow icon="audio" label={m.audio} dot onClick={() => add('audio')} />
-        <MenuRow icon="world3d" label={m.world3d} beta={m.beta} onClick={soon} />
-
-        <p className="canvas-add-menu-section">{m.auxiliary}</p>
-        <MenuRow icon="playlist" label={m.playlist} beta={m.beta} onClick={soon} />
 
         <p className="canvas-add-menu-section">{m.resources}</p>
         <MenuRow icon="upload" label={m.upload} onClick={() => add('upload')} />

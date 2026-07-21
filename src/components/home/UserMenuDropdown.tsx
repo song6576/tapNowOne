@@ -1,18 +1,24 @@
 /** 用户头像下拉：团队切换、Tapies 余额、创建团队、账户管理等 */
-import { memo, useEffect, useState, type ReactNode } from 'react'
+import { lazy, memo, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { HoverDropdown } from '../ui/HoverDropdown'
 import { UserMenuLanguageItem } from './UserMenuLanguageItem'
 import { UserMenuHelpItem } from './UserMenuHelpItem'
 import { UserMenuTeamItem } from './UserMenuTeamItem'
-import { AccountSettingsModal } from '../account/AccountSettingsModal'
-import { CreateTeamModal } from '../team/CreateTeamModal'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { OverlayLoading } from '../ui/RouteBoundary'
 import { useAuthStore } from '../../store/authStore'
 import { useProfileStore } from '../../store/profileStore'
 import { useTeamStore } from '../../store/teamStore'
 import { useI18n } from '../../store/langStore'
 import { useToastStore } from '../../store/toastStore'
+
+const AccountSettingsModal = lazy(() =>
+  import('../account/AccountSettingsModal').then((module) => ({ default: module.AccountSettingsModal })),
+)
+const CreateTeamModal = lazy(() =>
+  import('../team/CreateTeamModal').then((module) => ({ default: module.CreateTeamModal })),
+)
 
 function UserAvatar({ name, avatarUrl, size = 'sm' }: { name: string; avatarUrl?: string | null; size?: 'sm' | 'md' | 'lg' }) {
   const dim = size === 'lg' ? 'h-12 w-12 text-lg' : size === 'md' ? 'h-9 w-9 text-sm' : 'h-8 w-8 text-sm'
@@ -45,8 +51,10 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const openAccountModal = useProfileStore((s) => s.openAccountModal)
+  const accountModalOpen = useProfileStore((s) => s.accountModalOpen)
   const tapiesBalance = useTeamStore((s) => s.tapiesBalance)
   const openCreateTeamModal = useTeamStore((s) => s.openCreateTeamModal)
+  const createTeamModalOpen = useTeamStore((s) => s.createTeamModalOpen)
   const { t } = useI18n()
   const m = t.userMenu
   const logoutConfirm = t.account.logoutConfirm
@@ -232,8 +240,12 @@ export const UserMenuDropdown = memo(function UserMenuDropdown({
       >
         {panel}
       </HoverDropdown>
-      <AccountSettingsModal />
-      <CreateTeamModal />
+      {(accountModalOpen || createTeamModalOpen) && (
+        <Suspense fallback={<OverlayLoading />}>
+          {accountModalOpen && <AccountSettingsModal />}
+          {createTeamModalOpen && <CreateTeamModal />}
+        </Suspense>
+      )}
       <ConfirmDialog
         open={logoutConfirmOpen}
         title={logoutConfirm.title}

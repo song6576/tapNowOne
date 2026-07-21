@@ -8,21 +8,17 @@ const sizes = {
   xs: { icon: 22, text: 'text-sm' },
   sm: { icon: 28, text: 'text-base' },
   md: { icon: 38, text: 'text-xl' },
-  lg: { icon: 52, text: 'text-3xl' },
+  lg: { icon: 40, text: 'text-2xl' },
 }
 
 export function TapNowLogo({ size = 'md', showText = true }: TapNowLogoProps) {
   const { icon, text } = sizes[size]
 
   return (
-    <div className="flex items-center gap-2.5">
-      <svg width={icon} height={icon} viewBox="0 0 40 40" fill="none" aria-hidden className="overflow-visible">
-        <circle className="logo-circle-1" cx="14" cy="20" r="11" fill="#47bfff" fillOpacity="0.85" />
-        <circle className="logo-circle-2" cx="22" cy="20" r="11" fill="#e879f9" fillOpacity="0.8" />
-        <circle className="logo-circle-3" cx="30" cy="20" r="11" fill="#fbbf24" fillOpacity="0.85" />
-      </svg>
+    <div className="flex items-center gap-1.5">
+      <img src="/tapnow-logo.webp" width={icon} height={icon} alt="" aria-hidden />
       {showText && (
-        <span className={`${text} font-semibold tracking-tight text-white`}>TapNowOne</span>
+        <span className={`${text} font-semibold tracking-tight text-white`}>TapNow</span>
       )}
     </div>
   )

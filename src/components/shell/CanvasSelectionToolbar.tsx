@@ -18,7 +18,7 @@ export function CanvasSelectionToolbar() {
   const renameGroup = useCanvasStore((s) => s.renameGroup)
   const showToast = useToastStore((s) => s.showToast)
   const { flowToScreenPosition } = useReactFlow()
-  const viewport = useViewport()
+  useViewport()
 
   const selected = useMemo(() => nodes.filter((n) => n.selected), [nodes])
   const selectedGroups = useMemo(
@@ -37,6 +37,7 @@ export function CanvasSelectionToolbar() {
   const [renaming, setRenaming] = useState(false)
   const [draftName, setDraftName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const cancelRenameRef = useRef(false)
 
   useEffect(() => {
     setRenaming(false)
@@ -45,12 +46,13 @@ export function CanvasSelectionToolbar() {
 
   useEffect(() => {
     if (renaming) {
+      cancelRenameRef.current = false
       setDraftName(activeGroup?.data.label || 'Group')
       requestAnimationFrame(() => inputRef.current?.select())
     }
   }, [renaming, activeGroup?.data.label])
 
-  const anchorStyle = useMemo(() => {
+  const anchorStyle = (() => {
     if (!canGroup && !activeGroup) return null
     const targets = activeGroup ? [activeGroup] : selectedLeaf
     if (targets.length === 0) return null
@@ -72,12 +74,16 @@ export function CanvasSelectionToolbar() {
       left: topCenter.x,
       top: Math.max(8, topCenter.y - TOOLBAR_HEIGHT - TOOLBAR_GAP),
     }
-  }, [activeGroup, canGroup, selectedLeaf, nodes, flowToScreenPosition, viewport])
+  })()
 
   if ((!canGroup && !activeGroup) || !anchorStyle) return null
 
   const commitRename = () => {
     if (!activeGroup) return
+    if (cancelRenameRef.current) {
+      cancelRenameRef.current = false
+      return
+    }
     renameGroup(activeGroup.id, draftName)
     setRenaming(false)
   }
@@ -86,32 +92,24 @@ export function CanvasSelectionToolbar() {
     <div
       className="canvas-selection-toolbar pointer-events-auto nowheel nopan nodrag"
       role="toolbar"
+      aria-label={activeGroup ? bar.ungroup : bar.group}
       style={{ left: anchorStyle.left, top: anchorStyle.top }}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
       {canGroup && (
-        <>
-          <button type="button" className="canvas-selection-toolbar-btn" disabled title={bar.comingSoon}>
-            <FolderPlusIcon />
-            <span>{bar.saveToLibrary}</span>
-          </button>
-          <button
-            type="button"
-            className="canvas-selection-toolbar-btn ui-clickable"
-            onClick={() => {
-              const id = groupSelected()
-              if (id) showToast({ type: 'success', message: bar.grouped })
-            }}
-          >
-            <GroupIcon />
-            <span>{bar.group}</span>
-          </button>
-          <button type="button" className="canvas-selection-toolbar-btn" disabled title={bar.comingSoon}>
-            <FeedbackIcon />
-            <span>{bar.feedback}</span>
-          </button>
-        </>
+        <button
+          type="button"
+          className="canvas-selection-toolbar-btn ui-clickable"
+          aria-keyshortcuts="Meta+G Control+G"
+          onClick={() => {
+            const id = groupSelected()
+            if (id) showToast({ type: 'success', message: bar.grouped })
+          }}
+        >
+          <GroupIcon />
+          <span>{bar.group}</span>
+        </button>
       )}
 
       {activeGroup && (
@@ -119,6 +117,7 @@ export function CanvasSelectionToolbar() {
           <button
             type="button"
             className="canvas-selection-toolbar-btn ui-clickable"
+            aria-keyshortcuts="Meta+Shift+G Control+Shift+G"
             onClick={() => {
               if (ungroupNode(activeGroup.id)) {
                 showToast({ type: 'success', message: bar.ungrouped })
@@ -142,7 +141,11 @@ export function CanvasSelectionToolbar() {
                 onChange={(e) => setDraftName(e.target.value)}
                 onBlur={commitRename}
                 onKeyDown={(e) => {
-                  if (e.key === 'Escape') setRenaming(false)
+                  if (e.key === 'Escape') {
+                    e.preventDefault()
+                    cancelRenameRef.current = true
+                    setRenaming(false)
+                  }
                 }}
                 className="canvas-selection-toolbar-input"
                 aria-label={bar.rename}
@@ -164,28 +167,10 @@ export function CanvasSelectionToolbar() {
   )
 }
 
-function FolderPlusIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 19h18" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 function GroupIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M3 7h7v7H3zM14 7h7v7h-7zM8 14h8v7H8z" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function FeedbackIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v5M12 16h.01" strokeLinecap="round" />
     </svg>
   )
 }

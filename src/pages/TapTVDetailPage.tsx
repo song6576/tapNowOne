@@ -20,14 +20,22 @@ export function TapTVDetailPage() {
   const d = t.taptv.detail
   const showToast = useToastStore((s) => s.showToast)
   const [item, setItem] = useState<TapTVItem | null>(null)
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'notFound' | 'error'>('loading')
   const [following, setFollowing] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const reload = useCallback(async () => {
     if (!id) return
-    const row = await getTapTVItem(id)
-    setItem(row ?? null)
-    setFollowing(!!row?.followingAuthor)
+    setLoadState('loading')
+    try {
+      const row = await getTapTVItem(id)
+      setItem(row ?? null)
+      setFollowing(!!row?.followingAuthor)
+      setLoadState(row ? 'ready' : 'notFound')
+    } catch {
+      setItem(null)
+      setLoadState('error')
+    }
   }, [id])
 
   useEffect(() => {
@@ -101,10 +109,26 @@ export function TapTVDetailPage() {
     }
   }
 
-  if (!item) {
+  if (loadState !== 'ready' || !item) {
     return (
-      <div className="flex flex-1 items-center justify-center text-white/40">
-        {d.loading}
+      <div className="taptv-detail-state">
+        {loadState === 'loading' ? (
+          <div className="taptv-detail-state-skeleton" role="status" aria-label={d.loading}>
+            <span />
+            <span />
+            <span className="is-short" />
+          </div>
+        ) : (
+          <div className="taptv-detail-state-message" role="alert">
+            <strong>{loadState === 'notFound' ? d.notFound : d.loadFailed}</strong>
+            <div>
+              {loadState === 'error' && (
+                <button type="button" className="ui-clickable" onClick={() => void reload()}>{d.retry}</button>
+              )}
+              <button type="button" className="ui-clickable" onClick={handleBack}>{d.back}</button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

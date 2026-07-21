@@ -1,12 +1,12 @@
 /** TapTV 列表：排序 Tab、分类 Pills、搜索、发布弹窗 */
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { TabBar } from '../components/ui/TabBar'
 import { SearchInput } from '../components/ui/SearchInput'
 import { FilterPills } from '../components/ui/FilterPills'
 import { TapTVCard } from '../components/taptv/TapTVCard'
-import { PublishModal } from '../components/taptv/PublishModal'
+import { OverlayLoading } from '../components/ui/RouteBoundary'
 import { TAPTV_CATEGORY_IDS, type TapTVCategory, type TapTVItem, type TapTVSort } from '../mock/data'
 import { toggleTapTVFavorite, toggleTapTVLike } from '../services/api'
 import { useTapTVList } from '../hooks/useTapTVList'
@@ -14,6 +14,10 @@ import { queryKeys } from '../lib/queryKeys'
 import { useI18n } from '../store/langStore'
 import { useToastStore } from '../store/toastStore'
 import { getToken } from '../utils/auth'
+
+const PublishModal = lazy(() =>
+  import('../components/taptv/PublishModal').then((module) => ({ default: module.PublishModal })),
+)
 
 export function TapTVPage() {
   const navigate = useNavigate()
@@ -27,7 +31,7 @@ export function TapTVPage() {
   const [publishOpen, setPublishOpen] = useState(false)
 
   const listParams = { sort, category, search }
-  const { data: items = [], isLoading, isError, error } = useTapTVList(listParams)
+  const { data: items = [], isLoading, isError, error, refetch } = useTapTVList(listParams)
 
   const sortTabs = [
     { id: 'featured' as const, label: tv.sortFeatured },
@@ -101,12 +105,22 @@ export function TapTVPage() {
         <FilterPills<TapTVCategory> options={categoryOptions} active={category} onChange={setCategory} className="mb-6" />
 
         {isLoading ? (
-          <div className="flex min-h-[200px] items-center justify-center text-sm text-white/35">
-            {t.taptv.detail.loading}
+          <div className="taptv-list-skeleton" role="status" aria-label={t.taptv.detail.loading}>
+            {Array.from({ length: 6 }, (_, index) => <span key={index} />)}
+          </div>
+        ) : isError ? (
+          <div className="taptv-list-state" role="alert">
+            <strong>{t.taptv.detail.loadFailed}</strong>
+            <button type="button" className="ui-clickable" onClick={() => void refetch()}>
+              {t.taptv.detail.retry}
+            </button>
           </div>
         ) : items.length === 0 ? (
-          <div className="flex min-h-[200px] items-center justify-center text-sm text-white/35">
-            {t.workspace.empty}
+          <div className="taptv-list-state">
+            <strong>{t.workspace.empty}</strong>
+            <button type="button" className="ui-clickable" onClick={() => setPublishOpen(true)}>
+              {t.taptv.publish}
+            </button>
           </div>
         ) : (
           <div className="taptv-explore-grid">
@@ -124,16 +138,20 @@ export function TapTVPage() {
         </div>
       </div>
 
-      <PublishModal
-        open={publishOpen}
-        onClose={() => setPublishOpen(false)}
-        onPublished={() => {
-          setSort('latest')
-          setPublishOpen(false)
-          void queryClient.invalidateQueries({ queryKey: ['taptv'] })
-          void queryClient.invalidateQueries({ queryKey: queryKeys.home.dashboard })
-        }}
-      />
+      {publishOpen && (
+        <Suspense fallback={<OverlayLoading />}>
+          <PublishModal
+            open
+            onClose={() => setPublishOpen(false)}
+            onPublished={() => {
+              setSort('latest')
+              setPublishOpen(false)
+              void queryClient.invalidateQueries({ queryKey: ['taptv'] })
+              void queryClient.invalidateQueries({ queryKey: queryKeys.home.dashboard })
+            }}
+          />
+        </Suspense>
+      )}
     </main>
   )
 }

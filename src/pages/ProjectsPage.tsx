@@ -249,8 +249,11 @@ export function ProjectsPage() {
           </div>
         ) : viewMode === 'list' ? (
           rows.length === 0 ? (
-            <div className="workspace-list-wrap flex min-h-[200px] items-center justify-center rounded-2xl border border-white/[0.08] text-sm text-white/35">
-              {ws.empty}
+            <div className="workspace-list-wrap workspace-empty-state">
+              <span>{ws.empty}</span>
+              <button type="button" className="workspace-new-btn ui-clickable" onClick={() => void handleNewProject()}>
+                + {ws.newProject}
+              </button>
             </div>
           ) : (
             <WorkspaceListView

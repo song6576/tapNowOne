@@ -35,6 +35,11 @@ export type Messages = {
     registerSuccess: string
     authFailed: string
   }
+  routeState: {
+    loading: string
+    loadFailed: string
+    retry: string
+  }
   nav: {
     home: string
     workspace: string
@@ -167,6 +172,9 @@ export type Messages = {
     }
     detail: {
       loading: string
+      loadFailed: string
+      notFound: string
+      retry: string
       follow: string
       viewWorkflow: string
       browseAll: string
@@ -220,6 +228,12 @@ export type Messages = {
     exportFailed: string
     downloadVideo: string
     closePreview: string
+    shareMenu: {
+      title: string
+      copyLink: string
+      copyLinkDesc: string
+      copied: string
+    }
     aiHint: string
     aiSubHint: string
     textToVideo: string
@@ -234,6 +248,17 @@ export type Messages = {
     rename: string
     newProject: string
     delete: string
+    projectState: {
+      loading: string
+      loadFailed: string
+      notFound: string
+      retry: string
+      deleteTitle: string
+      deleteMessage: string
+      deleting: string
+      deleted: string
+      deleteFailed: string
+    }
     tooltips: {
       layers: string
       grid: string
@@ -300,10 +325,20 @@ export type Messages = {
       uploadSuccess: string
       uploadFailed: string
       loginRequired: string
+      generationFailed: string
+      retry: string
       downloadFailed: string
       favorited: string
       unfavorited: string
       favoriteFailed: string
+    }
+    videoParams: {
+      title: string
+      ratio: string
+      resolution: string
+      duration: string
+      watermark: string
+      secondsSuffix: string
     }
     agentPanel: {
       title: string
@@ -589,6 +624,11 @@ const zh: Messages = {
     registerSuccess: '注册成功',
     authFailed: '操作失败',
   },
+  routeState: {
+    loading: '正在加载页面...',
+    loadFailed: '页面加载失败',
+    retry: '刷新重试',
+  },
   nav: {
     home: '主页',
     workspace: '工作空间',
@@ -721,6 +761,9 @@ const zh: Messages = {
     },
     detail: {
       loading: '加载中...',
+      loadFailed: '作品加载失败',
+      notFound: '这个作品不存在或已被作者移除',
+      retry: '重试',
       follow: '关注',
       viewWorkflow: '查看创作过程',
       browseAll: '浏览全部',
@@ -774,6 +817,12 @@ const zh: Messages = {
     exportFailed: '视频导出失败',
     downloadVideo: '下载视频',
     closePreview: '关闭预览',
+    shareMenu: {
+      title: '分享项目',
+      copyLink: '复制链接',
+      copyLinkDesc: '复制当前画布链接，发给同事即可打开',
+      copied: '链接已复制',
+    },
     aiHint: '画布自由生成，或查看模板',
     aiSubHint: '草稿',
     textToVideo: '文字生成视频',
@@ -788,6 +837,17 @@ const zh: Messages = {
     rename: '重命名',
     newProject: '新建项目',
     delete: '删除',
+    projectState: {
+      loading: '正在加载画布',
+      loadFailed: '无法打开这个项目',
+      notFound: '项目不存在或已被删除',
+      retry: '重试',
+      deleteTitle: '删除项目',
+      deleteMessage: '此操作会永久删除项目及其画布内容，且无法撤销。',
+      deleting: '删除中…',
+      deleted: '项目已删除',
+      deleteFailed: '删除项目失败',
+    },
     tooltips: {
       layers: '图层',
       grid: '对齐网格',
@@ -854,13 +914,23 @@ const zh: Messages = {
       uploadSuccess: '资源已上传',
       uploadFailed: '上传失败',
       loginRequired: '请先登录后再上传',
+      generationFailed: '生成失败',
+      retry: '重试',
       downloadFailed: '下载失败',
       favorited: '已加入我的收藏',
       unfavorited: '已取消收藏',
       favoriteFailed: '收藏失败',
     },
+    videoParams: {
+      title: '视频参数',
+      ratio: '画面比例',
+      resolution: '清晰度',
+      duration: '时长',
+      watermark: '添加水印',
+      secondsSuffix: ' 秒',
+    },
     agentPanel: {
-      title: 'AI功能与服务介绍',
+      title: 'TapNow Agent',
       settings: '设置',
       close: '关闭',
       welcome: '你好，我是 TapNow.AI。\n\n可以直接说「创建一个图片节点」或「添加两个视频节点」，我会在画布上帮你创建。也可以继续内容策划与分镜拆解。',
@@ -1165,6 +1235,11 @@ const en: Messages = {
     registerSuccess: 'Account created successfully',
     authFailed: 'Something went wrong',
   },
+  routeState: {
+    loading: 'Loading page...',
+    loadFailed: 'Page failed to load',
+    retry: 'Reload and retry',
+  },
   nav: {
     home: 'Home',
     workspace: 'Workspace',
@@ -1297,6 +1372,9 @@ const en: Messages = {
     },
     detail: {
       loading: 'Loading...',
+      loadFailed: 'Could not load this work',
+      notFound: 'This work does not exist or was removed',
+      retry: 'Retry',
       follow: 'Follow',
       viewWorkflow: 'View creation process',
       browseAll: 'Browse all',
@@ -1350,6 +1428,12 @@ const en: Messages = {
     exportFailed: 'Video export failed',
     downloadVideo: 'Download video',
     closePreview: 'Close preview',
+    shareMenu: {
+      title: 'Share project',
+      copyLink: 'Copy link',
+      copyLinkDesc: 'Copy this canvas link to share with others',
+      copied: 'Link copied',
+    },
     aiHint: 'Generate on canvas, or browse templates',
     aiSubHint: 'Draft',
     textToVideo: 'Text to video',
@@ -1364,6 +1448,17 @@ const en: Messages = {
     rename: 'Rename',
     newProject: 'New project',
     delete: 'Delete',
+    projectState: {
+      loading: 'Loading canvas',
+      loadFailed: 'Unable to open this project',
+      notFound: 'This project does not exist or was deleted',
+      retry: 'Retry',
+      deleteTitle: 'Delete project',
+      deleteMessage: 'This permanently deletes the project and its canvas content. This action cannot be undone.',
+      deleting: 'Deleting…',
+      deleted: 'Project deleted',
+      deleteFailed: 'Could not delete project',
+    },
     tooltips: {
       layers: 'Layers',
       grid: 'Snap to grid',
@@ -1430,13 +1525,23 @@ const en: Messages = {
       uploadSuccess: 'Upload complete',
       uploadFailed: 'Upload failed',
       loginRequired: 'Sign in to upload',
+      generationFailed: 'Generation failed',
+      retry: 'Retry',
       downloadFailed: 'Download failed',
       favorited: 'Saved to My favorites',
       unfavorited: 'Removed from favorites',
       favoriteFailed: 'Could not update favorite',
     },
+    videoParams: {
+      title: 'Video settings',
+      ratio: 'Aspect ratio',
+      resolution: 'Resolution',
+      duration: 'Duration',
+      watermark: 'Add watermark',
+      secondsSuffix: 's',
+    },
     agentPanel: {
-      title: 'AI features & services',
+      title: 'TapNow Agent',
       settings: 'Settings',
       close: 'Close',
       welcome: 'Hi, I\'m TapNow.AI.\n\nSay “create an image node” or “add two video nodes” and I\'ll place them on the canvas. I can also help with planning and storyboards.',

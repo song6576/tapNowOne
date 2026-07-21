@@ -1,4 +1,4 @@
-/** 节点右键菜单：复制 / 粘贴 / 下载 / 删除；素材库、副本、反馈暂置灰 */
+/** 节点右键菜单：只展示当前可交付的复制 / 粘贴 / 下载 / 删除能力 */
 import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../../store/langStore'
 
@@ -34,6 +34,7 @@ function MenuItem({
       disabled={disabled}
       onClick={disabled ? undefined : onClick}
       className={`node-ctx-menu-item ${disabled ? 'node-ctx-menu-item--disabled' : 'ui-clickable'}`}
+      role="menuitem"
     >
       <span className="node-ctx-menu-label">{label}</span>
       {shortcut && <span className="node-ctx-menu-shortcut">{shortcut}</span>}
@@ -71,7 +72,16 @@ export function NodeContextMenu({
     left = Math.max(pad, left)
     top = Math.max(pad, top)
     setPos({ left, top })
+    panel.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')?.focus()
   }, [x, y])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const run = (action: NodeContextAction) => {
     onAction(action)
@@ -94,7 +104,6 @@ export function NodeContextMenu({
         style={{ left: pos.left, top: pos.top }}
         role="menu"
       >
-        <MenuItem label={m.saveToLibrary} disabled />
         <MenuItem label={m.copy} shortcut={`${mod}C`} onClick={() => run('copy')} />
         <MenuItem
           label={m.paste}
@@ -102,7 +111,6 @@ export function NodeContextMenu({
           disabled={!canPaste}
           onClick={() => run('paste')}
         />
-        <MenuItem label={m.duplicate} disabled />
         <MenuItem
           label={m.download}
           disabled={!canDownload}
@@ -110,8 +118,6 @@ export function NodeContextMenu({
         />
         <MenuDivider />
         <MenuItem label={m.delete} shortcut="⌫, del" onClick={() => run('delete')} />
-        <MenuDivider />
-        <MenuItem label={m.feedback} disabled />
       </div>
     </>
   )

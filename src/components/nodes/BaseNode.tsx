@@ -1,6 +1,6 @@
 /** 节点通用外壳：图3 风格卡片 + 选中时内联对话框（随画布缩放）+ 空媒体节点顶部上传 */
 import { useRef, useState } from 'react'
-import { Handle, NodeToolbar, Position, useViewport, type NodeProps } from '@xyflow/react'
+import { Handle, NodeToolbar, Position, type NodeProps } from '@xyflow/react'
 import { useParams } from 'react-router-dom'
 import type { NodeData, NodeType } from '../../types'
 import { NODE_META } from '../../types'
@@ -35,9 +35,9 @@ export function BaseNode({
   const nodeData = data as NodeData
   const generating = nodeData.status === 'generating'
   const { t } = useI18n()
-  const { zoom } = useViewport()
   const { projectId } = useParams()
   const fillNodeWithAsset = useCanvasStore((s) => s.fillNodeWithAsset)
+  const generateNode = useCanvasStore((s) => s.generateNode)
   const showToast = useToastStore((s) => s.showToast)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -48,7 +48,6 @@ export function BaseNode({
   const soloSelected = !!selected && selectedCount === 1
   const showUpload = soloSelected && isEmptyMedia && !generating
   const accept = type === 'video' ? 'video/*' : 'image/*'
-  const showHeader = !filled
 
   const handleUploadClick = () => {
     if (!getToken()) {
@@ -96,13 +95,12 @@ export function BaseNode({
         />
       )}
 
+      <div className="canvas-node-header">
+        <NodeHeaderIcon type={type} />
+        <span className="canvas-node-label">{nodeData.label || meta.label}</span>
+      </div>
+
       <div className="canvas-node-card">
-        {showHeader && (
-          <div className="canvas-node-header">
-            <NodeHeaderIcon type={type} />
-            <span className="canvas-node-label">{nodeData.label || meta.label}</span>
-          </div>
-        )}
         <div className={`canvas-node-body ${filled ? 'canvas-node-body--filled' : ''}`}>
           {children}
         </div>
@@ -129,12 +127,27 @@ export function BaseNode({
           </div>
         </div>
       )}
+      {nodeData.status === 'error' && (
+        <div className="canvas-node-error nowheel nopan nodrag" role="alert">
+          <div className="canvas-node-error-copy">
+            <strong>{t.canvas.nodeEditor.generationFailed}</strong>
+            <span>{nodeData.errorMessage || t.canvas.nodeEditor.generationFailed}</span>
+          </div>
+          <button
+            type="button"
+            className="canvas-node-error-retry ui-clickable"
+            onClick={(event) => {
+              event.stopPropagation()
+              void generateNode(id)
+            }}
+          >
+            {t.canvas.nodeEditor.retry}
+          </button>
+        </div>
+      )}
 
-      <NodeToolbar position={Position.Top} offset={10 * zoom} isVisible={showUpload}>
-        <div
-          className="node-upload-btn-scale"
-          style={{ transform: `scale(${zoom})`, transformOrigin: 'bottom center' }}
-        >
+      <NodeToolbar position={Position.Top} offset={10} isVisible={showUpload}>
+        <div className="node-upload-btn-scale">
           <button
             type="button"
             className="node-upload-btn ui-clickable nowheel nopan nodrag"
@@ -156,14 +169,8 @@ export function BaseNode({
         </div>
       </NodeToolbar>
 
-      <NodeToolbar position={Position.Bottom} offset={12 * zoom} isVisible={soloSelected}>
-        <div
-          className="node-inline-editor-scale"
-          style={{
-            transform: `scale(${zoom})`,
-            transformOrigin: 'top center',
-          }}
-        >
+      <NodeToolbar position={Position.Bottom} offset={12} isVisible={soloSelected}>
+        <div className="node-inline-editor-scale">
           <NodeInlineEditor nodeId={id} type={type} data={nodeData} />
         </div>
       </NodeToolbar>

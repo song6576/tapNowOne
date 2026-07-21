@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:budget": "npm run build && npm run budget",
+    "budget": "node scripts/check-bundle-budget.mjs",
     "lint": "oxlint",
-    "test": "vitest run",
+    "test": "vitest run --exclude 'e2e/**'",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,5 +1,6 @@
 /** 画布页：按路由/location.state 加载或新建项目，空画布快捷操作 */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import '@xyflow/react/dist/style.css'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ReactFlowProvider } from '@xyflow/react'
 import { CanvasTopBar } from '../components/shell/CanvasTopBar'
@@ -7,7 +8,6 @@ import { CanvasToolbar } from '../components/shell/CanvasToolbar'
 import { CanvasContextMenu, type CanvasAddAction } from '../components/shell/CanvasContextMenu'
 import { NodeContextMenu, type NodeContextAction } from '../components/shell/NodeContextMenu'
 import { FlowCanvas, type ConnectDropPayload } from '../components/FlowCanvas'
-import { CanvasAgentPanel } from '../components/canvas/CanvasAgentPanel'
 import { CanvasQuickActions } from '../components/canvas/CanvasQuickActions'
 import { CanvasBottomBar } from '../components/canvas/CanvasBottomBar'
 import { useCanvasStore } from '../store/canvasStore'
@@ -21,6 +21,13 @@ import { useToastStore } from '../store/toastStore'
 import { nodePositionAtCursor } from '../utils/canvasLayout'
 import { DEFAULT_AGENT_MODEL } from '../types/aiModel'
 import { useI18n } from '../store/langStore'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { RouteLoading } from '../components/ui/RouteBoundary'
+import { buildQuickWorkflow, type QuickWorkflowId } from '../utils/quickWorkflows'
+
+const CanvasAgentPanel = lazy(() =>
+  import('../components/canvas/CanvasAgentPanel').then((module) => ({ default: module.CanvasAgentPanel })),
+)
 
 type CanvasNavState = {
   newProject?: boolean
@@ -74,6 +81,7 @@ export function CanvasPage() {
   const getProject = useWorkspaceStore((s) => s.getProject)
   const updateProject = useWorkspaceStore((s) => s.updateProject)
   const createProject = useWorkspaceStore((s) => s.createProject)
+  const deleteProject = useWorkspaceStore((s) => s.deleteProject)
 
   const [addMenu, setAddMenu] = useState<{
     x: number
@@ -110,6 +118,10 @@ export function CanvasPage() {
   const [agentAutoModel, setAgentAutoModel] = useState(agentNavRef.current.autoModel)
   const [promoDismissed, setPromoDismissed] = useState(false)
   const [showMinimap, setShowMinimap] = useState(true)
+  const [projectLoading, setProjectLoading] = useState(Boolean(projectId))
+  const [projectLoadError, setProjectLoadError] = useState<string | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deletingProject, setDeletingProject] = useState(false)
 
   const openAgentPanel = useCallback(() => {
     setShowAgentPanel(true)
@@ -123,6 +135,43 @@ export function CanvasPage() {
   }, [])
 
   useEffect(() => { wsInit() }, [wsInit])
+
+  const loadProjectById = useCallback(async (id: string) => {
+    setProjectLoading(true)
+    setProjectLoadError(null)
+    resetCanvas()
+    try {
+      if (getToken()) {
+        const row = await fetchCloudProject(id)
+        loadProject({
+          ...row.data,
+          id: row.id,
+          name: row.name,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        })
+        return
+      }
+
+      const wp = getProject(id)
+      if (!wp) throw new Error(t.canvas.projectState.notFound)
+      loadProject({
+        id: wp.id,
+        name: wp.name,
+        createdAt: wp.createdAt,
+        updatedAt: wp.updatedAt,
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      })
+    } catch (err) {
+      setProjectLoadError(
+        err instanceof Error && err.message ? err.message : t.canvas.projectState.loadFailed,
+      )
+    } finally {
+      setProjectLoading(false)
+    }
+  }, [getProject, loadProject, resetCanvas, t.canvas.projectState.loadFailed, t.canvas.projectState.notFound])
 
   /** 画布初始化：仅执行一次，避免 replaceState 清空 state 后重复 resetCanvas */
   useEffect(() => {
@@ -171,38 +220,8 @@ export function CanvasPage() {
     }
 
     if (projectId) {
-      resetCanvas()
       window.history.replaceState({}, '')
-
-      if (getToken()) {
-        fetchCloudProject(projectId)
-          .then((row) => {
-            loadProject({
-              ...row.data,
-              id: row.id,
-              name: row.name,
-              createdAt: row.created_at,
-              updatedAt: row.updated_at,
-            })
-          })
-          .catch(() => navigate('/home/projects'))
-        return
-      }
-
-      const wp = getProject(projectId)
-      if (wp) {
-        loadProject({
-          id: wp.id,
-          name: wp.name,
-          createdAt: wp.createdAt,
-          updatedAt: wp.updatedAt,
-          nodes: [],
-          edges: [],
-          viewport: { x: 0, y: 0, zoom: 1 },
-        })
-      } else {
-        navigate('/home/projects')
-      }
+      void loadProjectById(projectId)
       return
     }
 
@@ -213,7 +232,7 @@ export function CanvasPage() {
     }
 
     init()
-  }, [projectId, init, resetCanvas, loadProject, applyStoryboard, navigate, getProject])
+  }, [projectId, init, resetCanvas, loadProject, applyStoryboard, loadProjectById])
 
   const handleNameChange = useCallback((name: string) => {
     setProjectName(name)
@@ -253,8 +272,6 @@ export function CanvasPage() {
       uploadInputRef.current?.click()
       return
     }
-    if (type === 'playlist' || type === 'world3d') return
-
     const position = addMenu?.flowPosition
       ? nodePositionAtCursor(addMenu.flowPosition)
       : undefined
@@ -391,24 +408,34 @@ export function CanvasPage() {
     }
   }, [openAddMenu])
 
-  const handleLoadDemo = useCallback(() => {
-    applyStoryboard(
-      [
-        { label: '分镜 1', prompt: '清晨木桌上的咖啡，热气袅袅' },
-        { label: '分镜 2', prompt: '阳光透过窗户洒在桌面' },
-        { label: '分镜 3', prompt: '镜头推近咖啡杯特写' },
-      ],
-      '清晨，一杯咖啡在木桌上冒着热气。阳光透过窗户洒在桌面。镜头缓缓推近咖啡杯。',
+  const createQuickWorkflow = useCallback((workflowId: QuickWorkflowId) => {
+    const workflow = buildQuickWorkflow(workflowId)
+    const origin = { x: 120, y: 120 }
+    const ids = workflow.nodes.map((node) =>
+      addNode(node.type, { x: origin.x + node.x, y: origin.y + node.y }, node.data),
     )
-  }, [applyStoryboard])
+    for (const [sourceIndex, targetIndex] of workflow.edges) {
+      connectNodes(ids[sourceIndex]!, ids[targetIndex]!)
+    }
+    useCanvasStore.getState().selectNode(ids[workflow.focusIndex] ?? null)
+  }, [addNode, connectNodes])
 
-  const handleQuickVideo = useCallback(() => addNode('video'), [addNode])
-  const handleQuickImage = useCallback(() => addNode('image'), [addNode])
-  const handleMixVideo = useCallback(() => {
-    addNode('video')
-    addNode('audio')
-  }, [addNode])
-  const handleLyrics = useCallback(() => addNode('text'), [addNode])
+  const handleDeleteProject = useCallback(async () => {
+    if (!projectId || deletingProject) return
+    setDeletingProject(true)
+    try {
+      await deleteProject(projectId)
+      showToast({ type: 'success', message: t.canvas.projectState.deleted })
+      navigate('/home/projects')
+    } catch (err) {
+      showToast({
+        type: 'info',
+        message: err instanceof Error ? err.message : t.canvas.projectState.deleteFailed,
+      })
+      setDeletingProject(false)
+      setDeleteConfirmOpen(false)
+    }
+  }, [deleteProject, deletingProject, navigate, projectId, showToast, t.canvas.projectState.deleteFailed, t.canvas.projectState.deleted])
 
   const isEmpty = nodes.length === 0
 
@@ -421,7 +448,7 @@ export function CanvasPage() {
         className="hidden"
         onChange={handleUploadFile}
       />
-      <div className="canvas-page relative flex h-full overflow-hidden bg-[#050505]">
+      <div className="canvas-page relative flex h-full overflow-hidden">
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <CanvasTopBar
             projectName={project.name}
@@ -429,7 +456,7 @@ export function CanvasPage() {
             projectId={projectId}
             updatedAt={project.updatedAt}
             onNewProject={handleNewProject}
-            onDelete={() => navigate('/home/projects')}
+            onDelete={projectId ? () => setDeleteConfirmOpen(true) : undefined}
           />
           <div className="relative flex min-h-0 flex-1 overflow-hidden">
             <FlowCanvas
@@ -445,18 +472,43 @@ export function CanvasPage() {
               onOpenAddMenu={handleOpenAddMenuFromToolbar}
               onOpenAgent={openAgentPanel}
             />
+            {(projectLoading || projectLoadError) && (
+              <div className="canvas-project-state" role={projectLoadError ? 'alert' : 'status'}>
+                {projectLoading ? (
+                  <div className="canvas-project-loading" aria-label={t.canvas.projectState.loading}>
+                    <span className="canvas-project-loading-bar" />
+                    <span className="canvas-project-loading-bar is-short" />
+                    <span>{t.canvas.projectState.loading}</span>
+                  </div>
+                ) : (
+                  <div className="canvas-project-error">
+                    <strong>{t.canvas.projectState.loadFailed}</strong>
+                    <span>{projectLoadError}</span>
+                    <div className="canvas-project-error-actions">
+                      <button type="button" className="ui-clickable" onClick={() => projectId && void loadProjectById(projectId)}>
+                        {t.canvas.projectState.retry}
+                      </button>
+                      <button type="button" className="ui-clickable" onClick={() => navigate('/home/projects')}>
+                        {t.canvas.backToWorkspace}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {isEmpty && (
               <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                 <CanvasQuickActions
-                  onTextToVideo={handleQuickVideo}
-                  onImageToVideo={handleQuickImage}
-                  onSmartVideo={handleLoadDemo}
-                  onMixVideo={handleMixVideo}
-                  onLyrics={handleLyrics}
+                  onTextToVideo={() => createQuickWorkflow('textToVideo')}
+                  onImageToVideo={() => createQuickWorkflow('imageToVideo')}
+                  onSmartVideo={() => createQuickWorkflow('smartVideo')}
+                  onMixVideo={() => createQuickWorkflow('mixVideo')}
+                  onLyrics={() => createQuickWorkflow('lyrics')}
                 />
               </div>
             )}
             <CanvasBottomBar
+              minimapAvailable={!isEmpty}
               showMinimap={showMinimap}
               onToggleMinimap={() => setShowMinimap((v) => !v)}
               onViewportPersist={setViewport}
@@ -479,20 +531,22 @@ export function CanvasPage() {
 
         {(showAgentPanel || agentCollapsed) && (
           <div
-            className="h-full min-h-0 shrink-0 self-stretch"
+            className="canvas-agent-lazy-shell h-full min-h-0 shrink-0 self-stretch"
             style={{ display: showAgentPanel ? undefined : 'none' }}
             aria-hidden={!showAgentPanel}
           >
-            <CanvasAgentPanel
-              key={projectId ?? 'canvas-agent'}
-              projectId={projectId}
-              initialPrompt={agentInitialPrompt}
-              modelId={agentModelId}
-              autoModel={agentAutoModel}
-              onModelChange={setAgentModelId}
-              onAutoModelChange={setAgentAutoModel}
-              onClose={collapseAgentPanel}
-            />
+            <Suspense fallback={<div className="canvas-agent-lazy-loading"><RouteLoading compact /></div>}>
+              <CanvasAgentPanel
+                key={projectId ?? 'canvas-agent'}
+                projectId={projectId}
+                initialPrompt={agentInitialPrompt}
+                modelId={agentModelId}
+                autoModel={agentAutoModel}
+                onModelChange={setAgentModelId}
+                onAutoModelChange={setAgentAutoModel}
+                onClose={collapseAgentPanel}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -523,6 +577,18 @@ export function CanvasPage() {
             onClose={() => setNodeMenu(null)}
           />
         )}
+        <ConfirmDialog
+          open={deleteConfirmOpen}
+          title={t.canvas.projectState.deleteTitle}
+          message={t.canvas.projectState.deleteMessage}
+          confirmLabel={deletingProject ? t.canvas.projectState.deleting : t.canvas.delete}
+          cancelLabel={t.workspace.projectMenu.cancel}
+          danger
+          onCancel={() => {
+            if (!deletingProject) setDeleteConfirmOpen(false)
+          }}
+          onConfirm={() => void handleDeleteProject()}
+        />
       </div>
     </ReactFlowProvider>
   )

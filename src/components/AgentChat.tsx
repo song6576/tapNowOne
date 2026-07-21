@@ -134,6 +134,7 @@ export function AgentChat({
             ...m,
             { role: 'assistant', content: summarizeActions(localActions) },
           ])
+          return
         }
 
         const context = buildCanvasContext(nodes, edges)
@@ -147,16 +148,14 @@ export function AgentChat({
         )
         if (nextConversationId) setConversationId(nextConversationId)
 
-        if (!localActions.length && actions?.length) {
+        if (actions?.length) {
           applyActions(actions)
           const summary = summarizeActions(actions)
           setMessages((m) => [
             ...m,
             { role: 'assistant', content: summary ? `${reply}\n\n${summary}` : reply },
           ])
-        } else if (!localActions.length) {
-          setMessages((m) => [...m, { role: 'assistant', content: reply }])
-        } else if (reply && !reply.includes('已在画布上创建')) {
+        } else {
           setMessages((m) => [...m, { role: 'assistant', content: reply }])
         }
       }
@@ -214,7 +213,7 @@ export function AgentChat({
   return (
     <div className={`flex h-full min-h-0 flex-col ${isCanvas ? 'canvas-agent-chat' : ''}`}>
       {!isCanvas && (
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--tn-border-subtle)] px-3 py-2">
+        <div className="flex items-center justify-between gap-2 border-b border-(--tn-border-subtle) px-3 py-2">
           <ModelDropdown
             value={selectedModelId}
             onChange={(id) => {
@@ -263,8 +262,8 @@ export function AgentChat({
                   ? 'canvas-agent-msg canvas-agent-msg--assistant'
                   : `rounded-lg px-3 py-2 text-xs leading-relaxed ${
                       msg.role === 'user'
-                        ? 'ml-6 bg-[var(--tn-bg-hover)] text-[var(--tn-text-secondary)]'
-                        : 'mr-6 bg-[var(--tn-bg-panel)] text-[var(--tn-text-muted)]'
+                        ? 'ml-6 bg-(--tn-bg-hover) text-(--tn-text-secondary)'
+                        : 'mr-6 bg-(--tn-bg-panel) text-(--tn-text-muted)'
                     }`
               }
             >
@@ -273,14 +272,15 @@ export function AgentChat({
           )
         })}
         {loading && (
-          <div className={`text-sm text-white/35 ${isCanvas ? 'canvas-agent-msg--assistant' : 'mr-6 rounded-lg bg-[var(--tn-bg-panel)] px-3 py-2 text-xs'}`}>
-            {a.thinking}
+          <div className={`text-sm text-white/35 ${isCanvas ? 'canvas-agent-thinking' : 'mr-6 rounded-lg bg-(--tn-bg-panel) px-3 py-2 text-xs'}`} role="status">
+            {isCanvas && <span className="canvas-agent-thinking-mark" aria-hidden><i /><i /><i /></span>}
+            <span>{a.thinking}</span>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      <div className={`shrink-0 border-t border-white/[0.06] ${isCanvas ? 'p-4' : 'p-3'}`}>
+      <div className={`shrink-0 border-t border-white/6 ${isCanvas ? 'p-4' : 'p-3'}`}>
         {isCanvas ? (
           <>
             <div className="canvas-agent-suggestions">
@@ -319,12 +319,6 @@ export function AgentChat({
                   }}
                 />
                 <div className="canvas-agent-input-actions-right">
-                  <button type="button" className="canvas-agent-tool-btn ui-clickable" aria-label={a.autoGenerate}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                  <button type="button" className="canvas-agent-auto-btn ui-clickable">{a.autoGenerate}</button>
                   <button
                     type="button"
                     onClick={send}
@@ -347,7 +341,7 @@ export function AgentChat({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
               placeholder="Chat to add..."
-              className="flex-1 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-bg-panel)] px-3 py-2 text-xs text-[var(--tn-text-secondary)] outline-none focus:border-zinc-500"
+              className="flex-1 rounded-lg border border-(--tn-border) bg-(--tn-bg-panel) px-3 py-2 text-xs text-(--tn-text-secondary) outline-none focus:border-zinc-500"
             />
             <button
               type="button"

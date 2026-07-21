@@ -4,6 +4,7 @@ import { Tooltip } from '../ui/Tooltip'
 import { useI18n } from '../../store/langStore'
 
 interface CanvasBottomBarProps {
+  minimapAvailable?: boolean
   showMinimap: boolean
   onToggleMinimap: () => void
   /** 缩放变化时回写到项目 viewport（可选） */
@@ -11,6 +12,7 @@ interface CanvasBottomBarProps {
 }
 
 export function CanvasBottomBar({
+  minimapAvailable = true,
   showMinimap,
   onToggleMinimap,
   onViewportPersist,
@@ -36,33 +38,30 @@ export function CanvasBottomBar({
 
   return (
     <div className="canvas-bottom-bar pointer-events-auto">
-      <Tooltip label={showMinimap ? tips.minimapHide : tips.minimapShow}>
-        <button
-          type="button"
-          onClick={onToggleMinimap}
-          className={`canvas-bottom-icon ui-clickable ${showMinimap ? 'canvas-bottom-icon--active' : ''}`}
-          aria-pressed={showMinimap}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M2 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z" strokeLinejoin="round" />
-            <path d="M8 5v12M16 8v9" strokeLinecap="round" />
-          </svg>
-        </button>
-      </Tooltip>
-
-      <Tooltip label={tips.grid}>
-        <button type="button" className="canvas-bottom-icon ui-clickable">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <rect x="3" y="3" width="7" height="7" rx="1" />
-            <rect x="14" y="3" width="7" height="7" rx="1" />
-            <rect x="3" y="14" width="7" height="7" rx="1" />
-            <rect x="14" y="14" width="7" height="7" rx="1" />
-          </svg>
-        </button>
-      </Tooltip>
+      {minimapAvailable && (
+        <Tooltip label={showMinimap ? tips.minimapHide : tips.minimapShow}>
+          <button
+            type="button"
+            onClick={onToggleMinimap}
+            className={`canvas-bottom-icon ui-clickable ${showMinimap ? 'canvas-bottom-icon--active' : ''}`}
+            aria-label={showMinimap ? tips.minimapHide : tips.minimapShow}
+            aria-pressed={showMinimap}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M2 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z" strokeLinejoin="round" />
+              <path d="M8 5v12M16 8v9" strokeLinecap="round" />
+            </svg>
+          </button>
+        </Tooltip>
+      )}
 
       <Tooltip label={tips.fitView}>
-        <button type="button" onClick={handleFitView} className="canvas-bottom-icon ui-clickable">
+        <button
+          type="button"
+          onClick={handleFitView}
+          className="canvas-bottom-icon ui-clickable"
+          aria-label={tips.fitView}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" strokeLinecap="round" />
           </svg>
@@ -83,11 +82,6 @@ export function CanvasBottomBar({
         </div>
       </Tooltip>
 
-      <Tooltip label={tips.help}>
-        <button type="button" className="canvas-bottom-help ui-clickable">
-          ?
-        </button>
-      </Tooltip>
     </div>
   )
 }
