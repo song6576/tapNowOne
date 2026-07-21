@@ -509,6 +509,8 @@ html, body, #root {
 }
 
 .home-page {
+  --home-pointer-x: 50%;
+  --home-pointer-y: 28%;
   position: relative;
   isolation: isolate;
   padding-top: var(--tn-topbar-h);
@@ -527,6 +529,39 @@ html, body, #root {
   background:
     radial-gradient(ellipse 75% 65% at 50% 28%, transparent 0%, rgba(12, 12, 17, 0.55) 62%, var(--home-bg) 100%),
     linear-gradient(180deg, rgba(12, 12, 17, 0.25) 0%, transparent 18%, transparent 72%, rgba(12, 12, 17, 0.55) 100%);
+}
+/* 光标附近点阵轻微提亮，贴合 TapNow 空白区域 hover 反馈 */
+.home-dashboard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.34) 1.05px, transparent 1.05px);
+  background-size: 22px 22px;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  -webkit-mask-image: radial-gradient(
+    circle 170px at var(--home-pointer-x) var(--home-pointer-y),
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.4) 38%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(
+    circle 170px at var(--home-pointer-x) var(--home-pointer-y),
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.4) 38%,
+    transparent 72%
+  );
+}
+.home-dashboard.home-page--pointer-active::after {
+  opacity: 1;
+}
+@media (hover: none), (pointer: coarse) {
+  .home-dashboard::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-dashboard::after { transition: none; }
 }
 .home-page > * {
   position: relative;
