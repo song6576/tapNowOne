@@ -1,4 +1,4 @@
-/** 节点通用外壳：图3 风格卡片 + 选中时内联对话框（随画布缩放）+ 空媒体节点顶部上传 */
+/** 节点通用外壳：图3 风格卡片 + 选中时内联对话框（高 zoom 跟上节点）+ 空媒体节点顶部上传 */
 import { useRef, useState } from 'react'
 import { Handle, NodeToolbar, Position, type NodeProps } from '@xyflow/react'
 import { useParams } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { uploadProjectAsset } from '../../api/client'
 import { getToken } from '../../utils/auth'
 import { NodeHeaderIcon } from './NodeTypeIcon'
 import { NodeInlineEditor } from './NodeInlineEditor'
+import { NodeToolbarZoomScale } from './NodeToolbarZoomScale'
 
 interface BaseNodeProps extends NodeProps {
   type: NodeType
@@ -147,7 +148,7 @@ export function BaseNode({
       )}
 
       <NodeToolbar position={Position.Top} offset={10} isVisible={showUpload}>
-        <div className="node-upload-btn-scale">
+        <NodeToolbarZoomScale className="node-upload-btn-scale" origin="bottom center">
           <button
             type="button"
             className="node-upload-btn ui-clickable nowheel nopan nodrag"
@@ -166,13 +167,13 @@ export function BaseNode({
             className="hidden"
             onChange={(e) => void handleFileChange(e)}
           />
-        </div>
+        </NodeToolbarZoomScale>
       </NodeToolbar>
 
       <NodeToolbar position={Position.Bottom} offset={12} isVisible={soloSelected}>
-        <div className="node-inline-editor-scale">
+        <NodeToolbarZoomScale className="node-inline-editor-scale" origin="top center">
           <NodeInlineEditor nodeId={id} type={type} data={nodeData} />
-        </div>
+        </NodeToolbarZoomScale>
       </NodeToolbar>
     </div>
   )

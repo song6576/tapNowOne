@@ -3053,8 +3053,13 @@ html, body, #root {
 .node-inline-ref-chip:hover .node-inline-ref-chip-x {
   opacity: 1;
 }
-.node-upload-btn-scale {
+.node-upload-btn-scale,
+.node-inline-editor-scale {
   will-change: transform;
+  transform-origin: top center;
+}
+.node-upload-btn-scale {
+  transform-origin: bottom center;
 }
 .node-upload-btn {
   display: inline-flex;
@@ -3078,9 +3083,6 @@ html, body, #root {
 .node-upload-btn:disabled {
   opacity: 0.55;
   cursor: wait;
-}
-.node-inline-editor-scale {
-  will-change: transform;
 }
 .node-inline-editor-icon {
   display: flex;
