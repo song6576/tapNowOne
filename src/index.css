@@ -516,7 +516,7 @@ html, body, #root {
   padding-top: var(--tn-topbar-h);
   background-color: var(--home-bg);
   /* 点阵粒子 */
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.11) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.17) 1px, transparent 1px);
   background-size: 22px 22px;
 }
 /* 粒子蒙版：中心略透、边缘渐隐，避免点阵过抢 */
@@ -527,8 +527,8 @@ html, body, #root {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 75% 65% at 50% 28%, transparent 0%, rgba(12, 12, 17, 0.55) 62%, var(--home-bg) 100%),
-    linear-gradient(180deg, rgba(12, 12, 17, 0.25) 0%, transparent 18%, transparent 72%, rgba(12, 12, 17, 0.55) 100%);
+    radial-gradient(ellipse 75% 65% at 50% 28%, transparent 0%, rgba(12, 12, 17, 0.42) 62%, var(--home-bg) 100%),
+    linear-gradient(180deg, rgba(12, 12, 17, 0.18) 0%, transparent 18%, transparent 72%, rgba(12, 12, 17, 0.45) 100%);
 }
 /* 光标附近点阵轻微提亮，贴合 TapNow 空白区域 hover 反馈 */
 .home-dashboard::after {

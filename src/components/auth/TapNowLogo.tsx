@@ -16,9 +16,9 @@ export function TapNowLogo({ size = 'md', showText = true }: TapNowLogoProps) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <img src="/tapnow-logo.webp" width={icon} height={icon} alt="" aria-hidden />
+      <img src="/logo.png" width={icon} height={icon} alt="" aria-hidden />
       {showText && (
-        <span className={`${text} font-semibold tracking-tight text-white`}>TapNow</span>
+        <span className={`${text} font-semibold tracking-tight text-white`}>TapNowOne</span>
       )}
     </div>
   )
