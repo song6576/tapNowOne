@@ -64,6 +64,7 @@ export const TapTVCard = memo(function TapTVCard({ item, onClick, onFavorite }: 
             alt=""
             className={`taptv-card-cover-img${hovering ? ' taptv-card-cover-img--hidden' : ''}`}
             loading="lazy"
+            referrerPolicy="no-referrer"
           />
         ) : (
           <div
@@ -81,6 +82,7 @@ export const TapTVCard = memo(function TapTVCard({ item, onClick, onFavorite }: 
             loop
             playsInline
             preload="metadata"
+            referrerPolicy="no-referrer"
             aria-hidden
           />
         )}

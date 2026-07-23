@@ -156,6 +156,7 @@ export function TapTVDetailPage() {
             muted
             playsInline
             preload="auto"
+            referrerPolicy="no-referrer"
             src={item.videoUrl}
           >
             <track kind="captions" />

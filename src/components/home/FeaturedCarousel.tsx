@@ -1,19 +1,11 @@
 /** 首页精选轮播：横向 snap 滚动，封面图/渐变，有视频时悬停播放 */
-import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { FeaturedItem } from '../../mock/data'
 import { useI18n } from '../../store/langStore'
 
-function featuredCoverStyle(cover: string): CSSProperties {
-  if (/^https?:\/\//i.test(cover) || cover.startsWith('/')) {
-    return {
-      backgroundImage: `url("${cover.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundColor: '#141418',
-    }
-  }
-  return { background: cover }
+function isImageCover(cover: string) {
+  return /^https?:\/\//i.test(cover) || cover.startsWith('/')
 }
 
 const FeaturedCard = memo(function FeaturedCard({
@@ -25,44 +17,74 @@ const FeaturedCard = memo(function FeaturedCard({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [hovering, setHovering] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const coverIsImage = isImageCover(item.cover)
 
-  useEffect(() => {
+  const handleEnter = () => {
+    setHovering(true)
     const video = videoRef.current
     if (!video || !item.videoUrl) return
-    if (hovering) {
-      void video.play().catch(() => undefined)
-    } else {
-      video.pause()
-      video.currentTime = 0
+    video.muted = true
+    const play = video.play()
+    if (play) {
+      void play.then(() => setPlaying(true)).catch(() => setPlaying(false))
     }
-  }, [hovering, item.videoUrl])
+  }
+
+  const handleLeave = () => {
+    setHovering(false)
+    setPlaying(false)
+    const video = videoRef.current
+    if (!video) return
+    video.pause()
+    video.currentTime = 0
+  }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-      className="home-featured-card snap-start ui-clickable text-left"
+    <article
+      className="home-featured-card snap-start"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
     >
-      <div className="home-featured-cover" style={featuredCoverStyle(item.cover)}>
+      <div
+        className="home-featured-cover"
+        style={coverIsImage ? undefined : { background: item.cover }}
+      >
+        {coverIsImage && (
+          <img
+            src={item.cover}
+            alt=""
+            className={`home-featured-cover-img${playing ? ' home-featured-cover-img--hidden' : ''}`}
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            draggable={false}
+          />
+        )}
         {item.videoUrl && (
           <video
             ref={videoRef}
-            className={`home-featured-video${hovering ? ' home-featured-video--active' : ''}`}
+            className={`home-featured-video${playing ? ' home-featured-video--active' : ''}`}
             src={item.videoUrl}
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="none"
+            referrerPolicy="no-referrer"
+            aria-hidden
           />
         )}
+        <button
+          type="button"
+          className="home-featured-hit ui-clickable"
+          onClick={onClick}
+          aria-label={item.title}
+        />
         <div className="home-featured-overlay">
           <h3 className="home-featured-title">{item.title}</h3>
           {item.subtitle && <p className="home-featured-subtitle">{item.subtitle}</p>}
         </div>
       </div>
-    </button>
+    </article>
   )
 })
 
@@ -76,7 +98,6 @@ export const FeaturedCarousel = memo(function FeaturedCarousel({ items }: Featur
   const { t } = useI18n()
   const [activeIndex, setActiveIndex] = useState(0)
 
-  /** 根据视口中心与卡片中心距离，判定当前「居中」项索引 */
   const updateActiveIndex = useCallback(() => {
     const el = scrollRef.current
     if (!el || items.length === 0) return

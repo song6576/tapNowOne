@@ -77,13 +77,13 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="home-featured-section home-section-pad border-t border-white/4">
+        <section className="home-featured-section home-section-pad border-white/4">
           <div className="home-wide-stack">
             {isLoading ? <FeaturedCarouselSkeleton /> : <FeaturedCarousel items={featured} />}
           </div>
         </section>
 
-        <section className="home-taptv-section home-section-pad border-t border-white/4 py-10 md:py-12">
+        <section className="home-taptv-section home-section-pad border-white/4 py-10 md:py-12">
           <div className="home-wide-stack">
             {isLoading ? (
               <div className="taptv-list-skeleton" role="status" aria-label={t.routeState.loading}>
