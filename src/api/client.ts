@@ -744,6 +744,7 @@ export type FeaturedBannerMeta = {
   title: string
   subtitle?: string
   cover: string
+  video_url?: string
   link?: string
 }
 
@@ -781,6 +782,7 @@ export function mapFeaturedItem(row: FeaturedBannerMeta): FeaturedItem {
     title: row.title,
     subtitle: row.subtitle,
     cover: row.cover,
+    videoUrl: row.video_url,
     link: row.link,
   }
 }

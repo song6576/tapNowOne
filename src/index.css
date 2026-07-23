@@ -1083,6 +1083,20 @@ html, body, #root {
   border-radius: 16px;
   overflow: hidden;
 }
+.home-featured-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.home-featured-video--active {
+  opacity: 1;
+}
 @media (min-width: 768px) {
   .home-featured-cover { border-radius: 18px; }
 }
@@ -1090,6 +1104,7 @@ html, body, #root {
 .home-featured-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -1109,6 +1124,10 @@ html, body, #root {
   font-size: clamp(13px, 1vw, 15px);
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.72);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .home-carousel-btn {

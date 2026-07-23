@@ -1,8 +1,20 @@
-/** 首页精选轮播：横向 snap 滚动，中间卡片放大，红条指示当前项 */
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+/** 首页精选轮播：横向 snap 滚动，封面图/渐变，有视频时悬停播放 */
+import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { FeaturedItem } from '../../mock/data'
 import { useI18n } from '../../store/langStore'
+
+function featuredCoverStyle(cover: string): CSSProperties {
+  if (/^https?:\/\//i.test(cover) || cover.startsWith('/')) {
+    return {
+      backgroundImage: `url("${cover.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundColor: '#141418',
+    }
+  }
+  return { background: cover }
+}
 
 const FeaturedCard = memo(function FeaturedCard({
   item,
@@ -11,13 +23,40 @@ const FeaturedCard = memo(function FeaturedCard({
   item: FeaturedItem
   onClick?: () => void
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [hovering, setHovering] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !item.videoUrl) return
+    if (hovering) {
+      void video.play().catch(() => undefined)
+    } else {
+      video.pause()
+      video.currentTime = 0
+    }
+  }, [hovering, item.videoUrl])
+
   return (
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
       className="home-featured-card snap-start ui-clickable text-left"
     >
-      <div className="home-featured-cover" style={{ background: item.cover }}>
+      <div className="home-featured-cover" style={featuredCoverStyle(item.cover)}>
+        {item.videoUrl && (
+          <video
+            ref={videoRef}
+            className={`home-featured-video${hovering ? ' home-featured-video--active' : ''}`}
+            src={item.videoUrl}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+        )}
         <div className="home-featured-overlay">
           <h3 className="home-featured-title">{item.title}</h3>
           {item.subtitle && <p className="home-featured-subtitle">{item.subtitle}</p>}

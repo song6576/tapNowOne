@@ -68,6 +68,7 @@ export type FeaturedItem = {
   title: string
   subtitle?: string
   cover: string
+  videoUrl?: string
   link?: string
 }
 
