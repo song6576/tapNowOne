@@ -1034,10 +1034,6 @@ html, body, #root {
 
 .home-featured-stage {
   position: relative;
-  padding: 0 44px;
-}
-@media (max-width: 767px) {
-  .home-featured-stage { padding: 0; }
 }
 
 .home-carousel-track {
@@ -1080,7 +1076,7 @@ html, body, #root {
 .home-featured-cover {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 10;
   border-radius: 16px;
   overflow: hidden;
   background: #141418;
@@ -1132,9 +1128,13 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 20px 22px;
+  padding: 10px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.15) 45%, transparent 70%);
   pointer-events: none;
+}
+.home-featured-copy {
+  width: min(100%, 760px);
+  padding: 10px 12px;
 }
 .home-featured-title {
   font-size: clamp(17px, 1.3vw, 22px);
@@ -1162,23 +1162,36 @@ html, body, #root {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(0, 0, 0, 0.55);
-  color: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(12, 13, 17, 0.48);
+  color: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 28px rgba(0, 0, 0, 0.32);
   cursor: pointer;
-  transform: translateY(-50%);
-  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 .home-carousel-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.04);
+}
+.home-carousel-btn:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.96);
 }
 .home-carousel-btn:disabled {
-  opacity: 0.25;
+  opacity: 0.32;
   cursor: default;
 }
 @media (min-width: 768px) {
@@ -1208,10 +1221,19 @@ html, body, #root {
   background: #ef4444;
 }
 
-@media (min-width: 768px) {
-  .home-carousel-btn { display: flex; }
-  .home-carousel-btn--prev { left: 0; }
-  .home-carousel-btn--next { right: 0; }
+@media (max-width: 767px) {
+  .home-featured-cover {
+    aspect-ratio: 4 / 3;
+  }
+  .home-carousel-btn {
+    display: flex;
+    width: 38px;
+    height: 38px;
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  .home-carousel-btn--prev { left: 8px; }
+  .home-carousel-btn--next { right: 8px; }
 }
 
 .home-project-grid {
@@ -2003,9 +2025,14 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 11px 12px 10px;
+  padding: 7px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.28) 38%, transparent 72%);
   pointer-events: none;
+}
+.taptv-card-copy {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 6px 4px;
 }
 .taptv-card-author {
   margin-bottom: 4px;

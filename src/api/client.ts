@@ -141,6 +141,7 @@ export type AgentChatResult = {
 
 export type UploadResult = {
   url: string
+  asset_id?: string
   key?: string
   filename: string
   mime_type: string
@@ -256,8 +257,8 @@ async function uploadProjectAssetViaPresign(
   if (!presignRes.ok) throw new Error(await parseError(presignRes))
   const ticket = (await presignRes.json()) as {
     key: string
+    asset_id?: string
     upload_url: string
-    public_url: string
     headers?: Record<string, string>
   }
 
@@ -1059,7 +1060,9 @@ export type PublishTapTVPayload = {
   title: string
   description?: string
   projectId: string
-  videoUrl: string
+  videoAssetId?: string
+  videoUrl?: string
+  coverAssetId?: string
   coverUrl?: string
   subtitleUrl?: string
   category?: string
@@ -1067,7 +1070,7 @@ export type PublishTapTVPayload = {
 
 /**
  * POST /api/taptv/publish — 从画布发布作品
- * coverUrl 写入 taptv_work.cover；videoUrl 用于列表悬浮播放
+ * 新上传优先传 assetId；URL 字段仅用于本地存储或历史兼容。
  */
 export async function publishTapTV(payload: PublishTapTVPayload): Promise<{ id: string; title: string; message: string }> {
   const res = await fetch(`${API_BASE}/taptv/publish`, {

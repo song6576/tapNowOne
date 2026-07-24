@@ -65,7 +65,9 @@ export function PublishModal({ open, onClose, onPublished }: PublishModalProps) 
   const [desc, setDesc] = useState('')
   const [canvas, setCanvas] = useState<CanvasPickerValue | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [videoAssetId, setVideoAssetId] = useState<string | null>(null)
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  const [coverAssetId, setCoverAssetId] = useState<string | null>(null)
   const [subtitleUrl, setSubtitleUrl] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -79,7 +81,9 @@ export function PublishModal({ open, onClose, onPublished }: PublishModalProps) 
     setDesc('')
     setCanvas(null)
     setVideoUrl(null)
+    setVideoAssetId(null)
     setCoverUrl(null)
+    setCoverAssetId(null)
     setSubtitleUrl(null)
   }
 
@@ -90,8 +94,13 @@ export function PublishModal({ open, onClose, onPublished }: PublishModalProps) 
 
   const uploadFile = async (file: File, kind: 'video' | 'cover' | 'subtitle') => {
     const saved = await uploadProjectAsset(file, canvas?.id)
-    if (kind === 'video') setVideoUrl(saved.url)
-    else if (kind === 'cover') setCoverUrl(saved.url)
+    if (kind === 'video') {
+      setVideoUrl(saved.url)
+      setVideoAssetId(saved.asset_id ?? null)
+    } else if (kind === 'cover') {
+      setCoverUrl(saved.url)
+      setCoverAssetId(saved.asset_id ?? null)
+    }
     else setSubtitleUrl(saved.url)
   }
 
@@ -116,7 +125,9 @@ export function PublishModal({ open, onClose, onPublished }: PublishModalProps) 
         title: trimmed,
         description: desc.trim() || undefined,
         projectId: canvas.id,
-        videoUrl,
+        videoAssetId: videoAssetId ?? undefined,
+        videoUrl: videoAssetId ? undefined : videoUrl,
+        coverAssetId: coverAssetId ?? undefined,
         coverUrl: coverUrl ?? canvas.thumbnail,
         subtitleUrl: subtitleUrl ?? undefined,
       })

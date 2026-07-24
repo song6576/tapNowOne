@@ -87,22 +87,24 @@ export const TapTVCard = memo(function TapTVCard({ item, onClick, onFavorite }: 
         )}
         <button type="button" className="taptv-card-hit ui-clickable" onClick={onClick} aria-label={item.title} />
         <div className="taptv-card-overlay">
-          <span className="taptv-card-author">@{item.author}</span>
-          <div className="taptv-card-meta-row">
-            <h3 className="taptv-card-title">{item.title}</h3>
-            <div className="taptv-card-actions flex shrink-0 items-center gap-1">
-              <button
-                type="button"
-                className={`taptv-card-action ui-clickable${item.favoritedByMe ? ' taptv-card-action--fav-active' : ''}`}
-                aria-label="favorite"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onFavorite?.()
-                }}
-              >
-                <FavoriteIcon active={item.favoritedByMe} />
-                <span>{item.favorites}</span>
-              </button>
+          <div className="taptv-card-copy">
+            <span className="taptv-card-author">@{item.author}</span>
+            <div className="taptv-card-meta-row">
+              <h3 className="taptv-card-title">{item.title}</h3>
+              <div className="taptv-card-actions flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  className={`taptv-card-action ui-clickable${item.favoritedByMe ? ' taptv-card-action--fav-active' : ''}`}
+                  aria-label="favorite"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onFavorite?.()
+                  }}
+                >
+                  <FavoriteIcon active={item.favoritedByMe} />
+                  <span>{item.favorites}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

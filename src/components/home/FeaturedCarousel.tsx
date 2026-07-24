@@ -76,8 +76,10 @@ const FeaturedCard = memo(function FeaturedCard({
           aria-label={item.title}
         />
         <div className="home-featured-overlay">
-          <h3 className="home-featured-title">{item.title}</h3>
-          {item.subtitle && <p className="home-featured-subtitle">{item.subtitle}</p>}
+          <div className="home-featured-copy">
+            <h3 className="home-featured-title">{item.title}</h3>
+            {item.subtitle && <p className="home-featured-subtitle">{item.subtitle}</p>}
+          </div>
         </div>
       </div>
     </article>
