@@ -1,7 +1,7 @@
 /** 首页精选轮播：横向 snap 滚动，封面图/渐变，有视频时悬停播放 */
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { FeaturedItem } from '../../mock/data'
+import type { FeaturedItem } from '../../types/taptv'
 import { useI18n } from '../../store/langStore'
 
 function isImageCover(cover: string) {
@@ -16,12 +16,10 @@ const FeaturedCard = memo(function FeaturedCard({
   onClick?: () => void
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [hovering, setHovering] = useState(false)
   const [playing, setPlaying] = useState(false)
   const coverIsImage = isImageCover(item.cover)
 
   const handleEnter = () => {
-    setHovering(true)
     const video = videoRef.current
     if (!video || !item.videoUrl) return
     video.muted = true
@@ -32,7 +30,6 @@ const FeaturedCard = memo(function FeaturedCard({
   }
 
   const handleLeave = () => {
-    setHovering(false)
     setPlaying(false)
     const video = videoRef.current
     if (!video) return
@@ -69,7 +66,6 @@ const FeaturedCard = memo(function FeaturedCard({
             loop
             playsInline
             preload="none"
-            referrerPolicy="no-referrer"
             aria-hidden
           />
         )}

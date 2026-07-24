@@ -6,7 +6,7 @@ import { authHeaders } from '../utils/auth'
 import type { User } from '../utils/auth'
 import type { CanvasProject } from '../types'
 import type { AiModelsResponse } from '../types/aiModel'
-import type { FeaturedItem, TapTVCategory, TapTVItem, TapTVSort } from '../mock/data'
+import type { FeaturedItem, TapTVCategory, TapTVItem, TapTVSort } from '../types/taptv'
 
 export type GeneratePayload = {
   node_type: 'image' | 'video' | 'audio'
@@ -32,7 +32,6 @@ export type TaskResult = {
 
 export type HealthStatus = {
   status: string
-  mock_mode: boolean
   dashscope_configured: boolean
   ark_configured?: boolean
   ffmpeg_configured?: boolean

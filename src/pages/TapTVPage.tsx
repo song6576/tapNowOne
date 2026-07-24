@@ -7,7 +7,12 @@ import { SearchInput } from '../components/ui/SearchInput'
 import { FilterPills } from '../components/ui/FilterPills'
 import { TapTVCard } from '../components/taptv/TapTVCard'
 import { OverlayLoading } from '../components/ui/RouteBoundary'
-import { TAPTV_CATEGORY_IDS, type TapTVCategory, type TapTVItem, type TapTVSort } from '../mock/data'
+import {
+  TAPTV_CATEGORY_IDS,
+  type TapTVCategory,
+  type TapTVItem,
+  type TapTVSort,
+} from '../types/taptv'
 import { toggleTapTVFavorite } from '../services/api'
 import { useTapTVList } from '../hooks/useTapTVList'
 import { queryKeys } from '../lib/queryKeys'

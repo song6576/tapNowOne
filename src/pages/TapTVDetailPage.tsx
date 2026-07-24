@@ -1,7 +1,7 @@
 /** TapTV 详情：紧凑视频 + 首屏作者信息 + 悬浮返回 */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import type { TapTVItem } from '../mock/data'
+import type { TapTVItem } from '../types/taptv'
 import {
   followTapTVUser,
   getTapTVItem,
@@ -156,7 +156,6 @@ export function TapTVDetailPage() {
             muted
             playsInline
             preload="auto"
-            referrerPolicy="no-referrer"
             src={item.videoUrl}
           >
             <track kind="captions" />

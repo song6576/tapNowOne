@@ -1,6 +1,7 @@
 /** 旧版侧边栏（部分页面可能未使用） */
 import { NavLink } from 'react-router-dom'
-import { NAV_ITEMS, MOCK_USER } from '../../mock/data'
+import { NAV_ITEMS } from '../../config/navigation'
+import { useAuthStore } from '../../store/authStore'
 import { useI18n } from '../../store/langStore'
 
 interface AppSidebarProps {
@@ -9,6 +10,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ collapsed }: AppSidebarProps) {
   const { t } = useI18n()
+  const user = useAuthStore((s) => s.user)
 
   return (
     <aside
@@ -51,7 +53,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
 
       {/* Avatar */}
       <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--tn-bg-hover)] text-xs font-medium text-[var(--tn-text-secondary)]">
-        {MOCK_USER.name[0]}
+        {user?.name?.[0] ?? '?'}
       </div>
     </aside>
   )

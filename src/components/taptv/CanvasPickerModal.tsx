@@ -4,15 +4,11 @@ import { Modal } from '../ui/Modal'
 import { TabBar } from '../ui/TabBar'
 import { WorkspaceCoverThumb } from '../project/WorkspaceCoverThumb'
 import { searchWorkspace } from '../../api/client'
-import { MOCK_PROJECTS } from '../../mock/data'
 import { useAuthStore } from '../../store/authStore'
 import { useI18n } from '../../store/langStore'
 import { PERSONAL_TEAM_ID, useTeamStore } from '../../store/teamStore'
-import { useWorkspaceStore, type WorkspaceProject } from '../../store/workspaceStore'
-import { getToken } from '../../utils/auth'
 import { pickWorkspaceCover } from '../../utils/workspaceCover'
 import { formatRelativeTime } from '../../utils/time'
-import { USE_MOCK } from '../../config'
 
 export type CanvasPickerValue = {
   id: string
@@ -50,7 +46,6 @@ export function CanvasPickerModal({ open, onClose, value, onSelect }: Props) {
   const teams = useTeamStore((s) => s.teams)
   const initTeams = useTeamStore((s) => s.init)
   const user = useAuthStore((s) => s.user)
-  const storeProjects = useWorkspaceStore((s) => s.projects)
 
   useEffect(() => {
     if (open && user?.name) void initTeams(user.name)
@@ -68,20 +63,8 @@ export function CanvasPickerModal({ open, onClose, value, onSelect }: Props) {
     const load = async () => {
       setLoading(true)
       try {
-        if (USE_MOCK || !getToken()) {
-          const list = storeProjects.length
-            ? storeProjects
-            : MOCK_PROJECTS.map((p) => ({
-                id: p.id,
-                name: p.name,
-                folderId: null,
-                createdAt: p.updatedAt,
-                updatedAt: p.updatedAt,
-                thumbnail: pickWorkspaceCover(p.id),
-              }))
-          if (!cancelled) {
-            setProjects(list.map((p) => mapProject(p as WorkspaceProject)))
-          }
+        if (!user) {
+          if (!cancelled) setProjects([])
           return
         }
 
@@ -133,7 +116,7 @@ export function CanvasPickerModal({ open, onClose, value, onSelect }: Props) {
 
     void load()
     return () => { cancelled = true }
-  }, [open, tab, teamIds, storeProjects])
+  }, [open, tab, teamIds, user])
 
   const handlePick = (project: CanvasPickerValue) => {
     onSelect(project)

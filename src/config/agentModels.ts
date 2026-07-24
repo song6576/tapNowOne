@@ -7,20 +7,5 @@ export {
   resolveAgentModel,
   resolveImageModel,
   resolveNodeModel,
-  FALLBACK_AI_MODELS,
   type AiModel,
 } from '../types/aiModel'
-
-import { FALLBACK_AI_MODELS } from '../types/aiModel'
-
-export type AiModelOption = {
-  id: string
-  label: string
-  icon: string
-}
-
-export const AI_MODEL_OPTIONS: AiModelOption[] = FALLBACK_AI_MODELS.models.map((m) => ({
-  id: m.slug,
-  label: m.label,
-  icon: m.icon,
-}))

@@ -3,7 +3,6 @@ import { useRef, useState } from 'react'
 import { Modal } from '../ui/Modal'
 import { CanvasPickerModal, type CanvasPickerValue } from './CanvasPickerModal'
 import { publishTapTV, uploadProjectAsset } from '../../api/client'
-import { USE_MOCK } from '../../config'
 import { useI18n } from '../../store/langStore'
 import { useToastStore } from '../../store/toastStore'
 import { WorkspaceCoverThumb } from '../project/WorkspaceCoverThumb'
@@ -90,13 +89,6 @@ export function PublishModal({ open, onClose, onPublished }: PublishModalProps) 
   }
 
   const uploadFile = async (file: File, kind: 'video' | 'cover' | 'subtitle') => {
-    if (USE_MOCK) {
-      const local = URL.createObjectURL(file)
-      if (kind === 'video') setVideoUrl(local)
-      else if (kind === 'cover') setCoverUrl(local)
-      else setSubtitleUrl(local)
-      return
-    }
     const saved = await uploadProjectAsset(file, canvas?.id)
     if (kind === 'video') setVideoUrl(saved.url)
     else if (kind === 'cover') setCoverUrl(saved.url)
@@ -120,12 +112,6 @@ export function PublishModal({ open, onClose, onPublished }: PublishModalProps) 
 
     setSubmitting(true)
     try {
-      if (USE_MOCK) {
-        showToast({ type: 'success', message: p.success })
-        handleClose()
-        onPublished?.()
-        return
-      }
       const res = await publishTapTV({
         title: trimmed,
         description: desc.trim() || undefined,

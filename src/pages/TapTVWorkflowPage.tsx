@@ -3,10 +3,9 @@ import '@xyflow/react/dist/style.css'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ReadonlyWorkflowCanvas } from '../components/taptv/ReadonlyWorkflowCanvas'
-import type { TapTVItem } from '../mock/data'
+import type { TapTVItem } from '../types/taptv'
 import { cloneTapTVWork, getTapTVItem, getTapTVWorkflow } from '../services/api'
 import type { CanvasProject } from '../types'
-import { USE_MOCK } from '../config'
 import { useI18n } from '../store/langStore'
 import { useToastStore } from '../store/toastStore'
 import { getToken } from '../utils/auth'
@@ -42,17 +41,6 @@ export function TapTVWorkflowPage() {
     if (!getToken()) {
       showToast({ type: 'info', message: t.login.title })
       navigate('/login')
-      return
-    }
-    if (USE_MOCK) {
-      const cloned: CanvasProject = {
-        ...workflow,
-        id: `clone-${Date.now()}`,
-        name: item.title,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      navigate('/canvas', { state: { project: cloned } })
       return
     }
     setCloning(true)

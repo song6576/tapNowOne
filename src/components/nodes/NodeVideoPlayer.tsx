@@ -192,7 +192,6 @@ export function NodeVideoPlayer({ src, nodeId, title }: NodeVideoPlayerProps) {
         muted={muted}
         playsInline
         preload="metadata"
-        referrerPolicy="no-referrer"
         draggable={false}
       />
 

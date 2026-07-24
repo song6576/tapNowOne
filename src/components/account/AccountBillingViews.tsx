@@ -1,6 +1,6 @@
 /**
  * 账户计费相关视图：订阅套餐、礼包超市、充值、团队权益、奖励中心、账单
- * 数据来自 GET/POST /api/billing/*（Mock 见 mock/billing.ts）
+ * 数据来自 GET/POST /api/billing/*。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { User } from '../../utils/auth'

@@ -18,8 +18,8 @@ function BackendBadge() {
 
   if (error) return <span className="rounded-full bg-red-900/40 px-2 py-0.5 text-[10px] text-red-400">后端离线</span>
   if (!health) return <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-500">连接中...</span>
-  if (health.mock_mode || !health.dashscope_configured) {
-    return <span className="rounded-full bg-amber-900/40 px-2 py-0.5 text-[10px] text-amber-400">Mock 模式</span>
+  if (!health.dashscope_configured) {
+    return <span className="rounded-full bg-amber-900/40 px-2 py-0.5 text-[10px] text-amber-400">AI 未配置</span>
   }
   return <span className="rounded-full bg-emerald-900/40 px-2 py-0.5 text-[10px] text-emerald-400">AI 已就绪</span>
 }

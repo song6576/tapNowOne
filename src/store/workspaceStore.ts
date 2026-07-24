@@ -1,4 +1,4 @@
-/** 工作空间：文件夹/项目 CRUD，已登录时走云端 API，未登录降级 localStorage */
+/** 工作空间：文件夹/项目 CRUD，所有持久化数据均来自后端/MySQL。 */
 import { create } from 'zustand'
 import {
   createFolder as apiCreateFolder,
@@ -14,10 +14,8 @@ import {
   type ProjectMeta,
   type WorkspaceSearchParams,
 } from '../api/client'
-import { MOCK_PROJECTS } from '../mock/data'
 import { getToken } from '../utils/auth'
 import { pickWorkspaceCover } from '../utils/workspaceCover'
-import { generateUUID } from '../utils/uuid'
 import { createInFlight } from '../utils/inFlight'
 
 export type WorkspaceFolder = {
@@ -44,15 +42,9 @@ export type WorkspaceSortBy = 'updatedAt' | 'createdAt'
 export type WorkspaceSortOrder = 'desc' | 'asc'
 export type WorkspaceViewMode = 'grid' | 'list'
 
-const STORAGE_KEY = 'tapflow_workspace'
-
 interface PersistedWorkspace {
   folders: WorkspaceFolder[]
   projects: WorkspaceProject[]
-}
-
-function nowIso() {
-  return new Date().toISOString()
 }
 
 function mapFolder(f: FolderMeta): WorkspaceFolder {
@@ -77,53 +69,8 @@ function mapProject(p: ProjectMeta): WorkspaceProject {
   }
 }
 
-function seedWorkspace(): PersistedWorkspace {
-  const folderId = 'f-default'
-  const folder: WorkspaceFolder = {
-    id: folderId,
-    name: '未命名文件夹',
-    parentId: null,
-    createdAt: '2026-07-02T10:00:00Z',
-    updatedAt: '2026-07-02T10:00:00Z',
-    cover: pickWorkspaceCover(folderId),
-  }
-  const emptyFolder: WorkspaceFolder = {
-    id: 'f-empty',
-    name: '灵感素材',
-    parentId: null,
-    createdAt: '2026-07-02T12:00:00Z',
-    updatedAt: '2026-07-02T12:00:00Z',
-    cover: pickWorkspaceCover('f-empty'),
-  }
-  const projects: WorkspaceProject[] = MOCK_PROJECTS.map((p, i) => ({
-    id: p.id,
-    name: p.name,
-    folderId: i < 2 ? folderId : null,
-    createdAt: p.updatedAt,
-    updatedAt: p.updatedAt,
-    thumbnail: pickWorkspaceCover(p.id),
-  }))
-  projects.unshift({
-    id: 'p-new',
-    name: 'Untitled',
-    folderId: null,
-    createdAt: '2026-07-02T18:02:00Z',
-    updatedAt: '2026-07-02T18:02:00Z',
-    thumbnail: pickWorkspaceCover('p-new'),
-  })
-  return { folders: [folder, emptyFolder], projects }
-}
-
-function readStorage(): PersistedWorkspace {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as PersistedWorkspace
-  } catch { /* ignore */ }
-  return seedWorkspace()
-}
-
-function writeStorage(data: PersistedWorkspace) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+function requireToken() {
+  if (!getToken()) throw new Error('请先登录')
 }
 
 interface WorkspaceStore extends PersistedWorkspace {
@@ -171,34 +118,35 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       if (get().initialized) return
       set({ loading: true })
       try {
-        if (getToken()) {
-          const teamId = get().scopeTeamId
-          const [foldersRaw, projectsRaw] = await Promise.all([
-            listFolders(teamId),
-            listProjects(teamId),
-          ])
-          set({
-            folders: foldersRaw.map((f) => ({ ...mapFolder(f), cover: pickWorkspaceCover(f.id) })),
-            projects: projectsRaw.map((p) => ({
-              ...mapProject(p),
-              thumbnail: p.thumbnail ?? pickWorkspaceCover(p.id),
-            })),
-            initialized: true,
-            loading: false,
-          })
+        if (!getToken()) {
+          set({ folders: [], projects: [], initialized: true, loading: false })
           return
         }
-        const data = readStorage()
-        set({ ...data, initialized: true, loading: false })
+        const teamId = get().scopeTeamId
+        const [foldersRaw, projectsRaw] = await Promise.all([
+          listFolders(teamId),
+          listProjects(teamId),
+        ])
+        set({
+          folders: foldersRaw.map((f) => ({ ...mapFolder(f), cover: pickWorkspaceCover(f.id) })),
+          projects: projectsRaw.map((p) => ({
+            ...mapProject(p),
+            thumbnail: p.thumbnail ?? pickWorkspaceCover(p.id),
+          })),
+          initialized: true,
+          loading: false,
+        })
       } catch {
-        const data = readStorage()
-        set({ ...data, initialized: true, loading: false })
+        set({ folders: [], projects: [], initialized: true, loading: false })
       }
     })
   },
 
   reload: async () => {
-    if (!getToken()) return
+    if (!getToken()) {
+      set({ folders: [], projects: [], initialized: true, loading: false })
+      return
+    }
     set({ loading: true })
     try {
       const teamId = get().scopeTeamId
@@ -249,69 +197,43 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   },
 
   createFolder: async (parentId, name) => {
+    requireToken()
     const trimmed = name.trim() || '未命名文件夹'
     const teamId = get().scopeTeamId
-    if (getToken()) {
-      const row = await apiCreateFolder(trimmed, parentId, teamId)
-      const folder: WorkspaceFolder = {
-        ...mapFolder(row),
-        cover: pickWorkspaceCover(row.id),
-      }
-      if (get().lastSearchParams) {
-        await get().refreshSearch()
-        return get().folders.find((f) => f.id === folder.id) ?? folder
-      }
-      set((s) => ({ folders: [...s.folders, folder] }))
-      return folder
-    }
-    const id = `f-${generateUUID().slice(0, 8)}`
+    const row = await apiCreateFolder(trimmed, parentId, teamId)
     const folder: WorkspaceFolder = {
-      id,
-      name: trimmed,
-      parentId,
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-      cover: pickWorkspaceCover(id),
+      ...mapFolder(row),
+      cover: pickWorkspaceCover(row.id),
     }
-    set((s) => {
-      const folders = [...s.folders, folder]
-      writeStorage({ folders, projects: s.projects })
-      return { folders }
-    })
+    if (get().lastSearchParams) {
+      await get().refreshSearch()
+      return get().folders.find((f) => f.id === folder.id) ?? folder
+    }
+    set((s) => ({ folders: [...s.folders, folder] }))
     return folder
   },
 
   renameFolder: async (id, name) => {
-    if (getToken()) {
-      const row = await apiUpdateFolder(id, { name })
-      const folder = mapFolder(row)
-      if (get().lastSearchParams) {
-        await get().refreshSearch()
-        return
-      }
-      set((s) => ({
-        folders: s.folders.map((f) =>
-          f.id === id ? { ...f, ...folder, cover: f.cover ?? pickWorkspaceCover(f.id) } : f,
-        ),
-      }))
+    requireToken()
+    const row = await apiUpdateFolder(id, { name })
+    const folder = mapFolder(row)
+    if (get().lastSearchParams) {
+      await get().refreshSearch()
       return
     }
-    set((s) => {
-      const folders = s.folders.map((f) =>
-        f.id === id ? { ...f, name, updatedAt: nowIso() } : f,
-      )
-      writeStorage({ folders, projects: s.projects })
-      return { folders }
-    })
+    set((s) => ({
+      folders: s.folders.map((f) =>
+        f.id === id ? { ...f, ...folder, cover: f.cover ?? pickWorkspaceCover(f.id) } : f,
+      ),
+    }))
   },
 
   deleteFolder: async (id) => {
-    if (getToken()) {
-      await apiDeleteFolder(id)
-      if (get().lastSearchParams) {
-        await get().refreshSearch()
-        return
-      }
+    requireToken()
+    await apiDeleteFolder(id)
+    if (get().lastSearchParams) {
+      await get().refreshSearch()
+      return
     }
     set((s) => {
       const folder = s.folders.find((f) => f.id === id)
@@ -322,71 +244,45 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       const projects = s.projects.map((p) =>
         p.folderId === id ? { ...p, folderId: parentId } : p,
       )
-      if (!getToken()) writeStorage({ folders, projects })
       return { folders, projects }
     })
   },
 
   createProject: async (folderId, name = 'Untitled') => {
+    requireToken()
     const teamId = get().scopeTeamId
-    if (getToken()) {
-      const row = await apiCreateProject(name, folderId, undefined, teamId)
-      const project: WorkspaceProject = {
-        ...mapProject(row),
-        thumbnail: pickWorkspaceCover(row.id),
-      }
-      if (get().lastSearchParams) {
-        await get().refreshSearch()
-        return get().projects.find((p) => p.id === project.id) ?? project
-      }
-      set((s) => ({ projects: [project, ...s.projects] }))
-      return project
-    }
-    const id = `p-${generateUUID().slice(0, 8)}`
+    const row = await apiCreateProject(name, folderId, undefined, teamId)
     const project: WorkspaceProject = {
-      id,
-      name,
-      folderId,
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-      thumbnail: pickWorkspaceCover(id),
+      ...mapProject(row),
+      thumbnail: pickWorkspaceCover(row.id),
     }
-    set((s) => {
-      const projects = [...s.projects, project]
-      writeStorage({ folders: s.folders, projects })
-      return { projects }
-    })
+    if (get().lastSearchParams) {
+      await get().refreshSearch()
+      return get().projects.find((p) => p.id === project.id) ?? project
+    }
+    set((s) => ({ projects: [project, ...s.projects] }))
     return project
   },
 
   getProject: (id) => get().projects.find((p) => p.id === id),
 
   updateProject: async (id, patch) => {
+    requireToken()
     const scopeTeamId = get().scopeTeamId
-    if (getToken()) {
-      const apiPatch: Parameters<typeof patchProject>[1] = {}
-      if (patch.name !== undefined) apiPatch.name = patch.name
-      if (patch.thumbnail !== undefined) apiPatch.thumbnail = patch.thumbnail
-      if (patch.folderId !== undefined) apiPatch.folderId = patch.folderId
-      if (patch.teamId !== undefined) apiPatch.teamId = patch.teamId
-      const row = await patchProject(id, apiPatch)
-      const updated = mapProject(row)
-      const movedOutOfScope =
-        patch.teamId !== undefined && (row.team_id ?? null) !== scopeTeamId
-      set((s) => ({
-        projects: movedOutOfScope
-          ? s.projects.filter((p) => p.id !== id)
-          : s.projects.map((p) => (p.id === id ? { ...p, ...updated, ...patch } : p)),
-      }))
-      return
-    }
-    set((s) => {
-      const projects = s.projects.map((p) =>
-        p.id === id ? { ...p, ...patch, updatedAt: patch.updatedAt ?? nowIso() } : p,
-      )
-      writeStorage({ folders: s.folders, projects })
-      return { projects }
-    })
+    const apiPatch: Parameters<typeof patchProject>[1] = {}
+    if (patch.name !== undefined) apiPatch.name = patch.name
+    if (patch.thumbnail !== undefined) apiPatch.thumbnail = patch.thumbnail
+    if (patch.folderId !== undefined) apiPatch.folderId = patch.folderId
+    if (patch.teamId !== undefined) apiPatch.teamId = patch.teamId
+    const row = await patchProject(id, apiPatch)
+    const updated = mapProject(row)
+    const movedOutOfScope =
+      patch.teamId !== undefined && (row.team_id ?? null) !== scopeTeamId
+    set((s) => ({
+      projects: movedOutOfScope
+        ? s.projects.filter((p) => p.id !== id)
+        : s.projects.map((p) => (p.id === id ? { ...p, ...updated, ...patch } : p)),
+    }))
   },
 
   moveProjectsToTeam: async (ids, teamId) => {
@@ -394,16 +290,14 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   },
 
   deleteProject: async (id) => {
-    if (getToken()) {
-      await deleteProjectCloud(id)
-      if (get().lastSearchParams) {
-        await get().refreshSearch()
-        return
-      }
+    requireToken()
+    await deleteProjectCloud(id)
+    if (get().lastSearchParams) {
+      await get().refreshSearch()
+      return
     }
     set((s) => {
       const projects = s.projects.filter((p) => p.id !== id)
-      if (!getToken()) writeStorage({ folders: s.folders, projects })
       return { projects }
     })
   },

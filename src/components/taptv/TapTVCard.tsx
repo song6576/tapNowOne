@@ -11,7 +11,7 @@
  * - 卡片信息层级与 TapTV 官方列表一致：作者、单行标题、收藏数
  */
 import { memo, useRef, useState } from 'react'
-import type { TapTVItem } from '../../mock/data'
+import type { TapTVItem } from '../../types/taptv'
 import { isTapTVCoverImage } from '../../utils/taptvCover'
 
 interface TapTVCardProps {
@@ -82,7 +82,6 @@ export const TapTVCard = memo(function TapTVCard({ item, onClick, onFavorite }: 
             loop
             playsInline
             preload="metadata"
-            referrerPolicy="no-referrer"
             aria-hidden
           />
         )}

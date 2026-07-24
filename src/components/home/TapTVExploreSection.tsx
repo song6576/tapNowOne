@@ -1,7 +1,7 @@
 /** 首页探索 TapTV 区块：4 列卡片网格 + 查看全部 */
 import { memo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import type { TapTVItem } from '../../mock/data'
+import type { TapTVItem } from '../../types/taptv'
 import { toggleTapTVFavorite } from '../../services/api'
 import { useI18n } from '../../store/langStore'
 import { useToastStore } from '../../store/toastStore'

@@ -2,7 +2,7 @@
 import { memo, useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { TapNowLogo } from '../auth/TapNowLogo'
-import { NAV_ITEMS } from '../../mock/data'
+import { NAV_ITEMS } from '../../config/navigation'
 import { useI18n } from '../../store/langStore'
 import { UserMenuDropdown } from './UserMenuDropdown'
 

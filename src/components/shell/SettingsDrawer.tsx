@@ -1,5 +1,6 @@
 /** 设置抽屉 */
-import { MOCK_USER } from '../../mock/data'
+import { useAuthStore } from '../../store/authStore'
+import { useTeamStore } from '../../store/teamStore'
 
 interface SettingsDrawerProps {
   open: boolean
@@ -7,6 +8,8 @@ interface SettingsDrawerProps {
 }
 
 export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
+  const user = useAuthStore((s) => s.user)
+  const tapiesBalance = useTeamStore((s) => s.tapiesBalance)
   if (!open) return null
 
   return (
@@ -23,22 +26,18 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             <div className="rounded-lg bg-[var(--tn-bg-panel)] p-3 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-[var(--tn-text-muted)]">UID</span>
-                <span className="font-mono text-xs">{MOCK_USER.uid}</span>
+                <span className="font-mono text-xs">{user?.id ?? '—'}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-[var(--tn-text-muted)]">Email</span>
-                <span>{MOCK_USER.email}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--tn-text-muted)]">Plan</span>
-                <span>{MOCK_USER.plan}</span>
+                <span>{user?.email ?? '—'}</span>
               </div>
             </div>
           </section>
           <section>
             <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-[var(--tn-text-muted)]">Credits</h3>
             <div className="rounded-lg bg-[var(--tn-bg-panel)] p-4 text-center">
-              <p className="text-3xl font-semibold">{MOCK_USER.credits.toLocaleString()}</p>
+              <p className="text-3xl font-semibold">{tapiesBalance.toLocaleString()}</p>
               <p className="mt-1 text-xs text-[var(--tn-text-muted)]">remaining credits</p>
               <button type="button" className="tn-btn tn-btn-primary mt-4 w-full">Upgrade Plan</button>
             </div>
